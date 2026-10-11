@@ -95,7 +95,7 @@ export function Animal({
       transition={{ duration: happy ? 0.65 : 6, repeat: happy ? 0 : Infinity, ease: 'easeInOut' }}
     >
       <img
-        src={photo || `/animals/${asset}.jpg`}
+        src={photo || `/animals/${asset}.webp`}
         alt={
           photo ? 'Your pet' : `The supplied ${speciesNames[species].toLowerCase()} illustration`
         }

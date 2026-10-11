@@ -3,9 +3,9 @@ const SHELL = [
   '/',
   '/manifest.webmanifest',
   '/icons/icon.svg',
-  '/animals/dog.jpg',
-  '/animals/cat.jpg',
-  '/animals/rabbit.jpg',
+  '/animals/dog.webp',
+  '/animals/cat.webp',
+  '/animals/rabbit.webp',
 ];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));

@@ -435,15 +435,8 @@ h4 {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  mix-blend-mode: multiply;
+  inset: 0;
   user-select: none;
-}
-.animal-art.cat img,
-.animal-art.rabbit img {
-  width: 230%;
-  height: auto;
-  left: -65%;
-  top: -50%;
 }
 .animal-art.user-photo img {
   width: 100%;
@@ -1754,15 +1747,6 @@ h4 {
   margin-left: auto;
   color: #809765;
 }
-.species-card .animal-art.dog img {
-  width: 88%;
-  height: 88%;
-  inset: 6%;
-}
-.species-card .animal-art.cat img,
-.species-card .animal-art.rabbit img {
-  top: -60%;
-}
 .breed-stage {
   max-width: 670px;
 }
@@ -1957,10 +1941,6 @@ h4 {
 }
 .pet-photo-frame .animal-art.user-photo img {
   border-radius: 0;
-}
-.pet-photo-frame .animal-art.cat img,
-.pet-photo-frame .animal-art.rabbit img {
-  top: -38%;
 }
 .form-label {
   display: block;
@@ -3416,10 +3396,6 @@ h4 {
   .species-card > div:last-child > svg:last-child:not(:first-child) {
     width: 13px;
   }
-  .species-card .animal-art.cat img,
-  .species-card .animal-art.rabbit img {
-    top: -40%;
-  }
   .onboard-controls {
     margin-top: 26px;
     gap: 11px;
@@ -3711,26 +3687,6 @@ h4 {
   background: #d6e2c2;
   opacity: 0.08;
 }
-:root[data-theme='dark'] .animal-art img {
-  mix-blend-mode: screen;
-  filter: brightness(0.83);
-}
-:root[data-theme='dark'] .animal-art.user-photo img {
-  mix-blend-mode: normal;
-  filter: none;
-}
-:root[data-theme='dark'] .discovery-card .animal-art img,
-:root[data-theme='dark'] .carousel-pet .animal-art img,
-:root[data-theme='dark'] .welcome-pet .animal-art img,
-:root[data-theme='dark'] .training-hero-art .animal-art img {
-  mix-blend-mode: multiply;
-  filter: none;
-}
-:root[data-theme='dark'] .discovery-art .animal-art {
-  background: #b9c9a9;
-  border-radius: 48%;
-  overflow: hidden;
-}
 :root[data-theme='dark'] .discovery-art .animal-interaction {
   width: 230px;
   height: 230px;
@@ -3788,11 +3744,6 @@ h4 {
 :root[data-theme='dark'] .training-hero p {
   color: #b2a88f;
 }
-:root[data-theme='dark'] .training-hero-art .animal-art {
-  background: #bcac8d;
-  border-radius: 50%;
-  overflow: hidden;
-}
 :root[data-theme='dark'] .floating-label {
   background: #2e352cdc;
   color: #ced7c2;
@@ -3829,10 +3780,6 @@ h4 {
 :root[data-theme='dark'] .species-card.rabbit .animal-art {
   background: #a9b998;
 }
-:root[data-theme='dark'] .species-card .animal-art img {
-  mix-blend-mode: multiply;
-  filter: none;
-}
 :root[data-theme='dark'] .breed-option.selected {
   background: #35442d;
 }
@@ -3841,10 +3788,6 @@ h4 {
 }
 :root[data-theme='dark'] .photo-upload .animal-art {
   background: #b4c2a0;
-}
-:root[data-theme='dark'] .photo-upload .animal-art img {
-  mix-blend-mode: multiply;
-  filter: none;
 }
 :root[data-theme='dark'] .sheet-backdrop {
   background: #050b0860;
@@ -3883,11 +3826,6 @@ h4 {
 }
 :root[data-theme='dark'] .lesson-detail-art.butter {
   background: #bfb387;
-}
-:root[data-theme='dark'] .fact-detail-art .animal-art img,
-:root[data-theme='dark'] .lesson-detail-art .animal-art img {
-  mix-blend-mode: multiply;
-  filter: none;
 }
 :root[data-theme='dark'] .form-error {
   background: #483128;
@@ -3946,19 +3884,6 @@ h4 {
   }
 }
 
-/* Composite the unchanged supplied artwork as one layer, including during motion. */
-.animal-art,
-.animal-interaction {
-  mix-blend-mode: multiply;
-}
-.animal-art img {
-  max-width: none;
-  mix-blend-mode: normal;
-}
-.animal-art.user-photo,
-.animal-interaction:has(.user-photo) {
-  mix-blend-mode: normal;
-}
 .discovery-card-hit {
   position: absolute;
   inset: 0;
@@ -4007,32 +3932,6 @@ h4 {
     width: 60px;
     height: 60px;
   }
-}
-:root[data-theme='dark'] .animal-art,
-:root[data-theme='dark'] .animal-interaction {
-  mix-blend-mode: screen;
-}
-:root[data-theme='dark'] .animal-art img {
-  mix-blend-mode: normal;
-}
-:root[data-theme='dark'] .discovery-art .animal-art,
-:root[data-theme='dark'] .carousel-pet .animal-art,
-:root[data-theme='dark'] .welcome-pet .animal-art,
-:root[data-theme='dark'] .training-hero-art .animal-art,
-:root[data-theme='dark'] .fact-detail-art .animal-art,
-:root[data-theme='dark'] .lesson-detail-art .animal-art,
-:root[data-theme='dark'] .species-card .animal-art,
-:root[data-theme='dark'] .photo-upload .animal-art {
-  mix-blend-mode: multiply;
-}
-:root[data-theme='dark'] .discovery-art .animal-interaction,
-:root[data-theme='dark'] .welcome-pet .animal-interaction,
-:root[data-theme='dark'] .training-hero-art .animal-interaction {
-  mix-blend-mode: normal;
-}
-:root[data-theme='dark'] .animal-art.user-photo,
-:root[data-theme='dark'] .animal-interaction:has(.user-photo) {
-  mix-blend-mode: normal;
 }
 
 @media (max-width: 760px) {
@@ -4509,53 +4408,6 @@ textarea:focus {
 .carousel-dots button.active {
   background: var(--accent);
 }
-/* Crop only in CSS: all supplied JPEG bytes are preserved. */
-.animal-art.asset-chicken img,
-.animal-art.asset-fish img,
-.animal-art.asset-hamster img,
-.animal-art.asset-bird img,
-.animal-art.asset-angelfish img,
-.animal-art.asset-guinea-pig img,
-.animal-art.asset-budgie img {
-  width: var(--art-zoom, 260%);
-  height: auto;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-.asset-chicken {
-  --art-zoom: 225%;
-}
-.asset-fish {
-  --art-zoom: 280%;
-}
-.asset-bird {
-  --art-zoom: 275%;
-}
-.asset-hamster {
-  --art-zoom: 305%;
-}
-.asset-guinea-pig {
-  --art-zoom: 420%;
-}
-.asset-angelfish,
-.asset-budgie {
-  --art-zoom: 460%;
-}
-.animal-art.asset-angelfish img {
-  clip-path: inset(39% 40% 44% 40%);
-}
-.animal-art.asset-budgie img {
-  clip-path: inset(38% 40% 42% 40%);
-}
-.animal-art.user-photo img {
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  transform: none;
-  clip-path: none;
-}
 :root[data-theme='dark'] .toast {
   background: var(--surface);
   color: var(--ink);
@@ -4563,9 +4415,6 @@ textarea:focus {
 }
 :root[data-theme='dark'] .dock-item.active {
   color: var(--accent);
-}
-:root[data-theme='dark'] .carousel-ghost .animal-art {
-  mix-blend-mode: multiply;
 }
 :root[data-theme='dark'] .carousel-ghost {
   background: #a8bb91;
@@ -4948,7 +4797,7 @@ textarea:focus {
     top: 74px;
   }
 }
-/* Put the art panel behind the composited JPEG, keeping every original color visible. */
+/* Transparent pet cutouts share a softly tinted species panel. */
 .species-card {
   --art-panel: #f0eadf;
   background: var(--art-panel);
@@ -5012,38 +4861,6 @@ textarea::placeholder {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
-}
-.species-card .animal-art.cat img,
-.species-card .animal-art.rabbit img {
-  width: 200%;
-  height: auto;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-.species-card .asset-chicken {
-  --art-zoom: 210%;
-}
-/* The latest supplied animals fill their frames; keep their original JPEGs intact. */
-:root[data-theme]
-  .animal-art:is(.asset-hedgehog, .asset-ferret, .asset-canary, .asset-salamander, .asset-iguana)
-  img {
-  filter: contrast(1.08) brightness(1.26);
-}
-.animal-art.asset-fish img,
-.animal-art.asset-snake img,
-.animal-art.asset-hedgehog img,
-.animal-art.asset-ferret img,
-.animal-art.asset-canary img,
-.animal-art.asset-salamander img,
-.animal-art.asset-iguana img,
-.animal-art.asset-gecko img {
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  transform: none;
-  object-fit: contain;
 }
 .species-card.hedgehog,
 .species-card.ferret,
