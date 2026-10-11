@@ -56,6 +56,8 @@ Self-explanatory actions use square icon buttons with accessible names and toolt
 
 The centered dock has three icons without visible text, with accessible names and filled active states. Spring selections, completion checks, calendar highlights, and pet carousel transitions provide feedback; reduced motion uses calmer transitions. Text and functional icons use adaptive contrast colors across base, elevated, and tinted surfaces. Theme choice applies before the first paint and updates browser chrome and the install manifest.
 
+The launch screen pairs the Nuzzle wordmark with a background-removed adaptation of the supplied aviator animal image. Its transparent artwork uses the app’s active background in both themes. A short entrance and fade respect reduced motion; image failure cannot block entry, and the artwork is included in the offline shell.
+
 The expanded sample collection includes all seven newly supplied animal images. Goldfish and angelfish use different illustrations and habitat guidance; the second budgie is a variety illustration. Existing demo collections gain the new samples without changing stored routines. Personal collections remain intact. New species have sourced nutrition, facts, habitat checks, and guided care or enrichment rather than dog obedience lessons. Suggested times are editable, and life-stage categories are approximate; care must follow the exact species and veterinary guidance.
 
 ## Data and device capabilities

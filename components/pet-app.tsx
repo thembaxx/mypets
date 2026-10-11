@@ -18,6 +18,7 @@ import {
   DeviceMobileIcon,
 } from '@phosphor-icons/react';
 import Onboarding from './onboarding';
+import LaunchSplash from './launch-splash';
 import { MonthCard, MonthReview, BrandStudio } from './history';
 import { createDemoData } from '@/lib/history';
 import { brand } from '@/lib/brand';
@@ -65,6 +66,8 @@ const initialData: AppData & { demoMode?: boolean } = {
 export default function PetApp() {
   const [data, setData] = useState(initialData);
   const [ready, setReady] = useState(false);
+  const [launching, setLaunching] = useState(true);
+  const finishLaunch = useCallback(() => setLaunching(false), []);
   const [tab, setTab] = useState<Tab>('today');
   const [page, setPage] = useState<'main' | 'pets' | 'onboard'>('main');
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -324,14 +327,7 @@ export default function PetApp() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
-  if (!ready)
-    return (
-      <div className="app-loading">
-        <Brand />
-        <span className="loading-mark" />
-        <p>Making room for a good day.</p>
-      </div>
-    );
+  if (!ready || launching) return <LaunchSplash ready={ready} onComplete={finishLaunch} />;
   if (!data.onboarded || page === 'onboard')
     return (
       <MotionConfig reducedMotion="user">
