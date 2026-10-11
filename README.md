@@ -30,7 +30,7 @@ The optional CUDA download from the Transformers Node dependency can be skipped 
 ONNXRUNTIME_NODE_INSTALL_CUDA=skip npm ci
 ```
 
-All inference in this app uses browser WebAssembly, so Node GPU libraries are not needed. The shared Sharp dependency is pinned to 0.35.5 to include current image-decoder security fixes. All direct runtime and development dependencies are pinned to their latest stable versions checked on October 11, 2026. Both the complete and production npm audits report zero vulnerabilities.
+All inference in this app uses browser WebAssembly, so Node GPU libraries are not needed. The export packages the matching CPU-only ONNX runtime locally, caches it on first use, and omits unused optional backend binaries. A build check enforces the host’s 25 MiB per-file limit. Recognition models still require internet on first use. The shared Sharp dependency is pinned to 0.35.5 to include current image-decoder security fixes. All direct runtime and development dependencies are pinned to their latest stable versions checked on October 11, 2026. Both the complete and production npm audits report zero vulnerabilities.
 
 ## Identity and a lived-in demo
 

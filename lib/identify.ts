@@ -11,6 +11,14 @@ export async function identifyBreed(
   progress('Preparing on-device recognition…');
   const { pipeline, env } = await import('@huggingface/transformers');
   env.allowLocalModels = false;
+  // This feature explicitly uses CPU inference. Ship the smaller matching CPU runtime
+  // locally rather than the optional Asyncify / WebGPU binaries emitted by the bundler.
+  const wasm = env.backends.onnx.wasm;
+  if (!wasm) throw new Error('The browser recognition runtime is unavailable.');
+  wasm.wasmPaths = {
+    mjs: '/runtime/ort-wasm-simd-threaded.js',
+    wasm: '/runtime/ort-wasm-simd-threaded.wasm',
+  };
   const classifier = await pipeline('image-classification', 'onnx-community/mobilenet_v2_1.0_224', {
     device: 'wasm',
     dtype: 'fp32',

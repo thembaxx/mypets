@@ -9,6 +9,26 @@ function collect(dir) {
       entry.isDirectory() ? collect(path.join(dir, entry.name)) : [path.join(dir, entry.name)],
     );
 }
+// Recognition uses the CPU-only runtime from the exact locked ONNX release.
+// Copy it after export; it is cached on demand rather than delaying the offline shell.
+const runtimeRoot = path.join(root, 'runtime');
+fs.mkdirSync(runtimeRoot, { recursive: true });
+for (const file of ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm']) {
+  fs.copyFileSync(
+    path.join('node_modules/onnxruntime-web/dist', file),
+    path.join(runtimeRoot, file.replace(/\.mjs$/, '.js')),
+  );
+}
+fs.copyFileSync('third-party/onnxruntime-LICENSE.txt', path.join(runtimeRoot, 'LICENSE.txt'));
+// Turbopack emits optional backend assets even when wasmPaths overrides them.
+// Those copies are unused by this CPU feature and exceed some static-host limits.
+for (const file of collect(path.join(root, '_next/static'))) {
+  if (/^ort-wasm-.*\.wasm$/.test(path.basename(file))) fs.unlinkSync(file);
+}
+for (const file of collect(root)) {
+  if (fs.statSync(file).size > 25 * 1024 * 1024)
+    throw new Error(`Static asset exceeds the 25 MiB hosting limit: ${path.relative(root, file)}`);
+}
 const assets = collect(path.join(root, '_next/static'))
   .filter((file) => /\.(js|css|woff2?)$/.test(file))
   .map((file) => '/' + path.relative(root, file).split(path.sep).join('/'));
