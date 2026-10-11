@@ -336,3 +336,4 @@ input::placeholder,textarea::placeholder { color:var(--muted);opacity:1; }
 .selected .radio-dot { background:var(--accent);border-color:var(--accent);color:var(--on-accent); }
 .species-card .animal-art.cat img,.species-card .animal-art.rabbit img { width:200%;height:auto;left:50%;top:50%;transform:translate(-50%,-50%); }
 .species-card .asset-chicken { --art-zoom:210%; }
+@media (prefers-reduced-transparency:reduce) { .toast { color:var(--ink);border:1px solid var(--control); } }

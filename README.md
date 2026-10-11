@@ -30,7 +30,7 @@ The optional CUDA download from the Transformers Node dependency can be skipped 
 ONNXRUNTIME_NODE_INSTALL_CUDA=skip npm ci
 ```
 
-All inference in this app uses browser WebAssembly, so Node GPU libraries are not needed.
+All inference in this app uses browser WebAssembly, so Node GPU libraries are not needed. The shared Sharp dependency is pinned to 0.35.5 to include current image-decoder security fixes. The remaining npm audit findings are from the unpatched `sprintf-js` chain in the optional ONNX Node installer, which is not used by the deployed browser app.
 
 ## Experience
 
