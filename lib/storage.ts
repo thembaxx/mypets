@@ -1,4 +1,6 @@
-import type { CareEvent, Pet } from './care';
+import { defaultEvents, demoPets, type CareEvent, type Pet } from './care';
+import { speciesList } from './species';
+export type Appearance = 'system' | 'light' | 'dark';
 export interface AppData {
   version: 1;
   pets: Pet[];
@@ -9,6 +11,7 @@ export interface AppData {
   onboarded: boolean;
   sound: boolean;
   demoMode?: boolean;
+  appearance?: Appearance;
 }
 export const STORAGE_KEY = 'mypets-v1';
 export function parseData(raw: string): AppData | null {
@@ -27,7 +30,7 @@ export function parseData(raw: string): AppData | null {
           typeof pet.id === 'string' &&
           typeof pet.name === 'string' &&
           typeof pet.breed === 'string' &&
-          ['dog', 'cat', 'rabbit'].includes(pet.species) &&
+          speciesList.includes(pet.species) &&
           Number.isFinite(pet.ageMonths) &&
           pet.ageMonths >= 1 &&
           pet.ageMonths <= 480,
@@ -49,8 +52,15 @@ export function parseData(raw: string): AppData | null {
       )
     )
       return null;
+    // Extend sample collections while preserving every real profile and saved care moment.
+    const additions = data.demoMode
+      ? demoPets.filter((pet) => !data.pets.some((saved: Pet) => saved.id === pet.id))
+      : [];
     return {
       ...data,
+      pets: [...data.pets, ...additions],
+      events: [...data.events, ...additions.flatMap(defaultEvents)],
+      appearance: ['light', 'dark'].includes(data.appearance) ? data.appearance : 'system',
       activePetId: data.pets.some((pet: Pet) => pet.id === data.activePetId)
         ? data.activePetId
         : data.pets[0].id,

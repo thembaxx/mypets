@@ -24,7 +24,8 @@ import {
   DownloadSimpleIcon,
   CheckCircleIcon,
 } from '@phosphor-icons/react';
-import { Animal, IconButton } from './shared';
+import { discoveryTitles, speciesNames } from '@/lib/species';
+import { Animal, IconButton, haptic } from './shared';
 import {
   ageLabel,
   careGuide,
@@ -92,14 +93,27 @@ export function EventRow({
                 : 'At their own pace'}
         </span>
       </button>
-      <button
+      <motion.button
+        whileTap={{ scale: 0.78 }}
+        animate={{ scale: complete ? [1, 1.22, 1] : 1 }}
+        transition={{ duration: 0.34, ease: 'easeOut' }}
         className={`completion-button ${complete ? 'checked' : ''}`}
         onClick={onToggle}
         aria-label={`${complete ? 'Undo' : 'Complete'} ${event.title}`}
         aria-pressed={complete}
       >
-        {complete && <CheckIcon size={15} weight="bold" />}
-      </button>
+        <AnimatePresence>
+          {complete && (
+            <motion.span
+              initial={{ scale: 0, rotate: -35 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0 }}
+            >
+              <CheckIcon size={15} weight="bold" />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
     </div>
   );
 }
@@ -161,9 +175,7 @@ export function Today({
         <div className="pet-chip">
           <span className="status-dot" />
           <span>
-            {pet.breed === 'Unknown'
-              ? pet.species[0].toUpperCase() + pet.species.slice(1)
-              : pet.breed}
+            {pet.breed === 'Unknown' ? speciesNames[pet.species] : pet.breed}
             <br />
             <small>
               {ageLabel(pet.ageMonths)} · Made for {pet.name}
@@ -194,25 +206,9 @@ export function Today({
             </span>
             <button className="fact-headline" onClick={() => onFact(fact)}>
               <h2>
-                {pet.species === 'dog' ? (
-                  <>
-                    A nose for
-                    <br />
-                    <em>new adventures.</em>
-                  </>
-                ) : pet.species === 'cat' ? (
-                  <>
-                    A little hunter.
-                    <br />
-                    <em>A lot of heart.</em>
-                  </>
-                ) : (
-                  <>
-                    Small ears.
-                    <br />
-                    <em>A curious world.</em>
-                  </>
-                )}
+                {discoveryTitles[pet.species][0]}
+                <br />
+                <em>{discoveryTitles[pet.species][1]}</em>
               </h2>
             </button>
             <p>{fact.teaser}</p>
@@ -226,7 +222,7 @@ export function Today({
           <div className="discovery-art">
             <span className="art-halo" />
             <AmbientScene />
-            <Animal species={pet.species} photo={pet.photo} interactive />
+            <Animal species={pet.species} breed={pet.breed} photo={pet.photo} interactive />
           </div>
           <span className="discovery-note">Tap to delight. Drag to play.</span>
         </motion.section>
@@ -460,17 +456,28 @@ export function Schedule({
         {view !== 'month' && (
           <div className="week-strip">
             {week.map((d) => (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.94 }}
                 key={dateKey(d)}
                 className={`${dateKey(d) === key ? 'selected' : ''} ${dateKey(d) === today ? 'is-today' : ''}`}
-                onClick={() => setSelected(d)}
+                onClick={() => {
+                  setSelected(d);
+                  haptic();
+                }}
                 aria-label={d.toDateString()}
                 aria-pressed={dateKey(d) === key}
               >
+                {dateKey(d) === key && (
+                  <motion.span
+                    className="date-highlight"
+                    layoutId="calendar-date"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
                 <span>{d.toLocaleDateString('en', { weekday: 'short' })}</span>
                 <strong>{d.getDate()}</strong>
                 <i />
-              </button>
+              </motion.button>
             ))}
           </div>
         )}
@@ -669,7 +676,7 @@ export function Training({
           </button>
         </div>
         <div className="training-hero-art">
-          <Animal species={pet.species} interactive photo={pet.photo} />
+          <Animal species={pet.species} breed={pet.breed} interactive photo={pet.photo} />
           <span className="floating-label">
             <ClockIcon size={16} />
             {lessons[0].duration} minutes of together
@@ -682,14 +689,23 @@ export function Training({
           <h2>Your learning collection.</h2>
         </div>
         <span className="quiet-label">
-          {ageLabel(pet.ageMonths)} · {pet.species} training
+          {ageLabel(pet.ageMonths)} · {speciesNames[pet.species].toLowerCase()} learning
         </span>
       </div>
       <div className="filter-tabs">
         {categories.map((c) => (
-          <button key={c} className={filter === c ? 'selected' : ''} onClick={() => setFilter(c)}>
+          <motion.button
+            key={c}
+            className={filter === c ? 'selected' : ''}
+            aria-pressed={filter === c}
+            whileTap={{ scale: 0.94 }}
+            onClick={() => {
+              setFilter(c);
+              haptic();
+            }}
+          >
             {c}
-          </button>
+          </motion.button>
         ))}
       </div>
       <div className="lesson-grid">
@@ -764,6 +780,7 @@ export function PetCollection({
   const move = (d: number) => {
     const next = Math.min(pets.length - 1, Math.max(0, index + d));
     if (next !== index) {
+      haptic();
       setDirection(d);
       setIndex(next);
     }
@@ -806,17 +823,25 @@ export function PetCollection({
               role="group"
               aria-label={`${index + 1} of ${pets.length}: ${pet.name}`}
             >
-              <Animal species={pet.species} photo={pet.photo} />
+              <Animal species={pet.species} breed={pet.breed} photo={pet.photo} />
             </motion.div>
           </AnimatePresence>
           {index > 0 && (
             <div className="carousel-ghost ghost-left">
-              <Animal species={pets[index - 1].species} photo={pets[index - 1].photo} />
+              <Animal
+                species={pets[index - 1].species}
+                breed={pets[index - 1].breed}
+                photo={pets[index - 1].photo}
+              />
             </div>
           )}
           {index < pets.length - 1 && (
             <div className="carousel-ghost ghost-right">
-              <Animal species={pets[index + 1].species} photo={pets[index + 1].photo} />
+              <Animal
+                species={pets[index + 1].species}
+                breed={pets[index + 1].breed}
+                photo={pets[index + 1].photo}
+              />
             </div>
           )}
         </div>
@@ -836,12 +861,14 @@ export function PetCollection({
         animate={{ opacity: 1, y: 0 }}
       >
         <h2>{pet.name}</h2>
-        <p>
-          {pet.breed === 'Unknown' ? 'A one-of-a-kind ' + pet.species : pet.breed} ·{' '}
-          {ageLabel(pet.ageMonths)}
+        <p aria-live="polite">
+          {pet.breed === 'Unknown'
+            ? 'A one-of-a-kind ' + speciesNames[pet.species].toLowerCase()
+            : pet.breed}{' '}
+          · {ageLabel(pet.ageMonths)}
         </p>
       </motion.div>
-      <div className="carousel-dots">
+      <div className="carousel-dots" aria-label="Choose a companion">
         {pets.map((p, i) => (
           <button
             key={p.id}
@@ -849,6 +876,7 @@ export function PetCollection({
             aria-label={`View ${p.name}`}
             aria-pressed={i === index}
             onClick={() => {
+              haptic();
               setDirection(i > index ? 1 : -1);
               setIndex(i);
             }}

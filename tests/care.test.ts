@@ -8,6 +8,7 @@ import {
   factsFor,
   lessonsFor,
   lifeStage,
+  demoPets,
   type Pet,
 } from '../lib/care';
 const dog: Pet = {
@@ -27,6 +28,30 @@ test('young and senior plans adapt exercise, meals and learning', () => {
   assert.ok(careGuide(senior).exercise < careGuide(dog).exercise);
   assert.ok(defaultEvents(puppy).some((e) => e.id === 'test-lunch'));
   assert.ok(lessonsFor(senior).some((l) => l.title === 'Gentle connection'));
+});
+test('additional pets get habitat and enrichment care without dog routines', () => {
+  for (const pet of demoPets.slice(3)) {
+    assert.ok(defaultEvents(pet).length >= 4);
+    assert.ok(defaultEvents(pet).every((event) => event.kind !== 'walk'));
+    assert.ok(factsFor(pet).every((fact) => fact.source.startsWith('https://www.rspca.org.uk/')));
+    assert.ok(lessonsFor(pet).every((lesson) => !['sit', 'leash', 'recall'].includes(lesson.id)));
+  }
+  const hamster = demoPets.find((pet) => pet.species === 'hamster')!;
+  assert.ok(
+    defaultEvents(hamster)
+      .filter((event) => event.kind === 'meal' || event.kind === 'play')
+      .every((event) => event.time >= '19:00'),
+  );
+  assert.match(
+    careGuide(demoPets.find((pet) => pet.species === 'guinea-pig')!).dietBody,
+    /vitamin C/,
+  );
+  const fish = demoPets.find((pet) => pet.species === 'fish')!;
+  assert.match(careGuide({ ...fish, breed: 'Unknown' }).dietBody, /Identify the fish species/);
+  assert.match(careGuide({ ...fish, breed: 'Freshwater Angelfish' }).exerciseNote, /tropical/);
+  const chicken = demoPets.find((pet) => pet.species === 'chicken')!;
+  assert.match(careGuide(chicken).dietBody, /starter or grower/);
+  assert.match(careGuide({ ...chicken, ageMonths: 18 }).dietBody, /laying status/);
 });
 test('breed affects the adult dog starting routine', () => {
   assert.ok(careGuide(dog).exercise > careGuide({ ...dog, breed: 'French Bulldog' }).exercise);

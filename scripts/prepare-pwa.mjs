@@ -20,13 +20,15 @@ const hash = crypto
 const shell = [
   '/',
   '/manifest.webmanifest',
+  '/manifest-dark.webmanifest',
+  '/icons/maskable-512.png',
   '/icons/icon.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
-  '/animals/dog.jpg',
-  '/animals/cat.jpg',
-  '/animals/rabbit.jpg',
+  ...collect(path.join(root, 'animals')).map(
+    (file) => '/' + path.relative(root, file).split(path.sep).join('/'),
+  ),
   ...assets,
 ];
 const worker = fs

@@ -13,9 +13,13 @@ import {
   CatIcon,
   RabbitIcon,
   XIcon,
+  BirdIcon,
+  FishIcon,
+  PawPrintIcon,
 } from '@phosphor-icons/react';
 import { Animal, Brand, IconButton } from './shared';
 import { breedOptions, type Pet, type Species } from '@/lib/care';
+import { speciesList, speciesNames } from '@/lib/species';
 import { photoToDataUrl } from '@/lib/storage';
 import { identifyBreed, type BreedGuess } from '@/lib/identify';
 export default function Onboarding({
@@ -34,7 +38,9 @@ export default function Onboarding({
   const [breed, setBreed] = useState(initial?.breed ?? '');
   const [name, setName] = useState(initial?.name ?? '');
   const [months, setMonths] = useState(initial?.ageMonths ?? 24);
-  const [ageUnit, setAgeUnit] = useState<'years' | 'months'>('years');
+  const [ageUnit, setAgeUnit] = useState<'years' | 'months'>(
+    initial && initial.ageMonths < 12 ? 'months' : 'years',
+  );
   const [photo, setPhoto] = useState(initial?.photo ?? '');
   const [weight, setWeight] = useState(initial?.weightKg?.toString() ?? '');
   const [query, setQuery] = useState('');
@@ -103,6 +109,17 @@ export default function Onboarding({
       ...(weight ? { weightKg: Number(weight) } : {}),
     });
   };
+  const speciesIcons = {
+    dog: DogIcon,
+    cat: CatIcon,
+    rabbit: RabbitIcon,
+    chicken: BirdIcon,
+    fish: FishIcon,
+    hamster: PawPrintIcon,
+    bird: BirdIcon,
+    'guinea-pig': PawPrintIcon,
+  };
+  const variety = species === 'fish' || species === 'bird';
   const chooseSpecies = (s: Species) => {
     if (s !== species) {
       setBreed('');
@@ -214,7 +231,7 @@ export default function Onboarding({
                     </>
                   ) : step === 2 ? (
                     <>
-                      A breed of
+                      {variety ? 'A world of' : 'A breed of'}
                       <br />
                       <em>their own.</em>
                     </>
@@ -236,13 +253,13 @@ export default function Onboarding({
               </div>
               {step === 1 ? (
                 <div className="species-grid">
-                  {(['dog', 'cat', 'rabbit'] as Species[]).map((s) => {
-                    const Icon = s === 'dog' ? DogIcon : s === 'cat' ? CatIcon : RabbitIcon;
+                  {speciesList.map((s) => {
+                    const Icon = speciesIcons[s];
                     return (
                       <motion.button
                         key={s}
                         className={`species-card ${s} ${species === s ? 'selected' : ''}`}
-                        aria-label={s[0].toUpperCase() + s.slice(1)}
+                        aria-label={speciesNames[s]}
                         aria-pressed={species === s}
                         whileTap={{ scale: 0.97 }}
                         onClick={() => chooseSpecies(s)}
@@ -250,8 +267,20 @@ export default function Onboarding({
                         <Animal species={s} />
                         <div>
                           <Icon size={21} weight={species === s ? 'fill' : 'regular'} />
-                          <span>{s[0].toUpperCase() + s.slice(1)}</span>
-                          {species === s && <CheckIcon size={20} />}
+                          <span>{speciesNames[s]}</span>
+                          <AnimatePresence>
+                            {species === s && (
+                              <motion.span
+                                className="species-check"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+                              >
+                                <CheckIcon size={18} weight="bold" />
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </motion.button>
                     );
@@ -265,7 +294,11 @@ export default function Onboarding({
                     </div>
                     <div>
                       <h3>A photo can help</h3>
-                      <p>On-device recognition. You confirm the suggestion.</p>
+                      <p>
+                        {['dog', 'cat', 'rabbit', 'fish'].includes(species)
+                          ? 'On-device suggestions. You confirm the match.'
+                          : 'Add a photo. Choose the variety or “I don’t know”.'}
+                      </p>
                     </div>
                     <IconButton
                       label="Take a breed photo"
@@ -280,7 +313,7 @@ export default function Onboarding({
                       <UploadSimpleIcon size={22} />
                     </IconButton>
                   </div>
-                  {photo && (
+                  {photo && ['dog', 'cat', 'rabbit', 'fish'].includes(species) && (
                     <div className="identify-preview">
                       <img src={photo} alt="Your companion for breed recognition" />
                       <button
@@ -301,6 +334,7 @@ export default function Onboarding({
                       {guesses.map((g) => (
                         <button
                           key={g.breed}
+                          aria-pressed={breed === g.breed}
                           className={breed === g.breed ? 'selected' : ''}
                           onClick={() => setBreed(g.breed)}
                         >
@@ -316,7 +350,7 @@ export default function Onboarding({
                   <label className="search-field">
                     <MagnifyingGlassIcon size={20} />
                     <input
-                      placeholder="Search breeds"
+                      placeholder={variety ? 'Search species or varieties' : 'Search breeds'}
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                     />
@@ -324,6 +358,7 @@ export default function Onboarding({
                   <div className="breed-options">
                     <button
                       className={`breed-option ${breed === 'Unknown' ? 'selected' : ''}`}
+                      aria-pressed={breed === 'Unknown'}
                       onClick={() => setBreed('Unknown')}
                     >
                       <span>
@@ -339,6 +374,7 @@ export default function Onboarding({
                       .map((b) => (
                         <button
                           key={b}
+                          aria-pressed={breed === b}
                           className={`breed-option ${breed === b ? 'selected' : ''}`}
                           onClick={() => setBreed(b)}
                         >
@@ -352,7 +388,11 @@ export default function Onboarding({
                       !breedOptions[species].some(
                         (b) => b.toLowerCase() === query.toLowerCase(),
                       ) && (
-                        <button className="breed-option" onClick={() => setBreed(query.trim())}>
+                        <button
+                          className="breed-option"
+                          aria-pressed={breed === query.trim()}
+                          onClick={() => setBreed(query.trim())}
+                        >
                           Use “{query.trim()}”
                           <span className="radio-dot">
                             {breed === query.trim() && <CheckIcon size={14} />}
@@ -365,7 +405,7 @@ export default function Onboarding({
                 <div className="personal-stage">
                   <div className="photo-upload">
                     <div className="pet-photo-frame">
-                      <Animal species={species} photo={photo} />
+                      <Animal species={species} breed={breed} photo={photo} />
                     </div>
                     <div>
                       <h3>A face to make you smile.</h3>

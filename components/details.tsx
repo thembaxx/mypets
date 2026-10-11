@@ -15,6 +15,7 @@ import {
   HeartIcon,
   XIcon,
 } from '@phosphor-icons/react';
+import { speciesNames } from '@/lib/species';
 import { Animal, IconButton, SourceLink, haptic, playTone } from './shared';
 import {
   ageLabel,
@@ -43,7 +44,7 @@ export function FactDetail({
   return (
     <div className="fact-detail">
       <div className={`fact-detail-art ${pet.species}`}>
-        <Animal species={pet.species} />
+        <Animal species={pet.species} breed={pet.breed} />
         <span className="art-label">GET TO KNOW {pet.name.toUpperCase()}</span>
       </div>
       <span className="eyebrow">{fact.category.toUpperCase()} · A 1-MINUTE DISCOVERY</span>
@@ -58,7 +59,8 @@ export function FactDetail({
         <HeartIcon size={22} />
         <p>
           Made for {pet.name}, a {ageLabel(pet.ageMonths)}{' '}
-          {pet.breed === 'Unknown' ? pet.species : pet.breed}. Every companion is an individual.
+          {pet.breed === 'Unknown' ? speciesNames[pet.species].toLowerCase() : pet.breed}. Every
+          companion is an individual.
         </p>
       </div>
       {pet.species === 'dog' && (
@@ -127,7 +129,7 @@ export function DietDetail({ pet }: { pet: Pet }) {
         <PlantIcon size={48} weight="duotone" />
       </div>
       <span className="eyebrow">
-        {lifeStage(pet).toUpperCase()} {pet.species.toUpperCase()} ·{' '}
+        {lifeStage(pet).toUpperCase()} {pet.species.replace('-', ' ').toUpperCase()} ·{' '}
         {ageLabel(pet.ageMonths).toUpperCase()}
       </span>
       <h3>{guide.diet}</h3>
@@ -137,12 +139,18 @@ export function DietDetail({ pet }: { pet: Pet }) {
         <div>
           <strong>{guide.meals}</strong>
           <span>
-            {pet.species === 'rabbit' ? 'daily freshness checks' : 'suggested meals a day'}
+            {['rabbit', 'chicken', 'bird', 'guinea-pig'].includes(pet.species)
+              ? 'daily freshness checks'
+              : pet.species === 'fish'
+                ? 'editable feeding slots'
+                : 'suggested meals a day'}
           </span>
         </div>
         <div>
           <strong>Fresh</strong>
-          <span>water, always available</span>
+          <span>
+            {pet.species === 'fish' ? 'water quality, checked daily' : 'water, always available'}
+          </span>
         </div>
       </div>
       <h4>A portion that fits them</h4>
@@ -155,11 +163,21 @@ export function DietDetail({ pet }: { pet: Pet }) {
       )}
       <h4>{pet.species === 'rabbit' ? 'Keep it gentle' : 'The little extras'}</h4>
       <p>
-        {pet.species === 'rabbit'
-          ? 'Avoid muesli-style mixes and sudden diet changes. Introduce suitable fresh greens gradually. Seek prompt veterinary advice if eating or droppings change.'
-          : 'Use part of the daily food allowance for training rewards. Introduce a new food gradually and check with your vet if your pet has a health condition or a prescribed diet.'}
+        {pet.species === 'fish'
+          ? 'Keep feeding and water-quality checks together. Remove uneaten food, and confirm the plan with an aquatic specialist before changing the routine.'
+          : pet.species === 'chicken'
+            ? 'Growing chicks need an age-specific plan. Confirm feeding and brooder care with a poultry vet; do not use laying-hen feed for chicks.'
+            : pet.species === 'bird'
+              ? 'Make changes gradually with an avian vet. Unweaned birds need specialist feeding care; this routine is for birds eating independently.'
+              : pet.species === 'guinea-pig'
+                ? 'Monitor appetite and droppings daily. Seek prompt veterinary advice if eating changes. Keep fresh hay available at all times.'
+                : pet.species === 'rabbit'
+                  ? 'Avoid muesli-style mixes and sudden diet changes. Introduce suitable fresh greens gradually. Seek prompt veterinary advice if eating or droppings change.'
+                  : 'Use part of the daily food allowance for training rewards. Introduce a new food gradually and check with your vet if your pet has a health condition or a prescribed diet.'}
       </p>
-      <SourceLink href={guide.source}>Nutrition guidance · PDSA veterinary team</SourceLink>
+      <SourceLink href={guide.source}>
+        Nutrition guidance · {guide.source.includes('rspca') ? 'RSPCA' : 'PDSA veterinary team'}
+      </SourceLink>
     </div>
   );
 }
@@ -372,7 +390,7 @@ export function LessonDetail({
   return (
     <div className="lesson-detail">
       <div className={`lesson-detail-art ${lesson.color}`}>
-        <Animal species={pet.species} />
+        <Animal species={pet.species} breed={pet.breed} />
         <span className="art-label">A LITTLE TIME TOGETHER</span>
       </div>
       <span className="eyebrow">

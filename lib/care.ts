@@ -1,4 +1,6 @@
-export type Species = 'dog' | 'cat' | 'rabbit';
+import { extraGuide, extraEvents, extraFacts, extraLessons } from './extra-care';
+import type { Species } from './species';
+export type { Species } from './species';
 export interface Pet {
   id: string;
   name: string;
@@ -86,6 +88,17 @@ export const breedOptions: Record<Species, string[]> = {
     'Bengal',
     'Mixed breed',
   ],
+  chicken: ['Silkie', 'Bantam', 'Sussex', 'Rhode Island Red', 'Mixed breed'],
+  fish: ['Goldfish', 'Fancy Goldfish', 'Freshwater Angelfish'],
+  hamster: [
+    'Syrian Hamster',
+    'Roborovski Hamster',
+    'Winter White Dwarf',
+    'Campbell’s Dwarf',
+    'Chinese Hamster',
+  ],
+  bird: ['Budgerigar', 'English Budgerigar', 'Cockatiel', 'Lovebird'],
+  'guinea-pig': ['American', 'Abyssinian', 'Peruvian', 'Teddy', 'Mixed breed'],
   rabbit: [
     'Holland Lop',
     'Mini Lop',
@@ -100,6 +113,13 @@ export const demoPets: Pet[] = [
   { id: 'milo', name: 'Milo', species: 'dog', breed: 'Golden Retriever', ageMonths: 28 },
   { id: 'cleo', name: 'Cleo', species: 'cat', breed: 'Domestic Shorthair', ageMonths: 18 },
   { id: 'pip', name: 'Pip', species: 'rabbit', breed: 'Holland Lop', ageMonths: 12 },
+  { id: 'sunny', name: 'Sunny', species: 'chicken', breed: 'Silkie', ageMonths: 2 },
+  { id: 'bubbles', name: 'Bubbles', species: 'fish', breed: 'Goldfish', ageMonths: 14 },
+  { id: 'hazel', name: 'Hazel', species: 'hamster', breed: 'Syrian Hamster', ageMonths: 8 },
+  { id: 'kiwi', name: 'Kiwi', species: 'bird', breed: 'Budgerigar', ageMonths: 16 },
+  { id: 'angel', name: 'Angel', species: 'fish', breed: 'Freshwater Angelfish', ageMonths: 18 },
+  { id: 'peanut', name: 'Peanut', species: 'guinea-pig', breed: 'American', ageMonths: 20 },
+  { id: 'olive', name: 'Olive', species: 'bird', breed: 'English Budgerigar', ageMonths: 24 },
 ];
 export function ageLabel(months: number) {
   if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} old`;
@@ -107,6 +127,16 @@ export function ageLabel(months: number) {
   return `${years} ${years === 1 ? 'year' : 'years'} old`;
 }
 export function lifeStage(pet: Pet): 'young' | 'adult' | 'senior' {
+  const stages: Partial<Record<Species, [number, number]>> = {
+    chicken: [5, 72],
+    hamster: [3, 18],
+    bird: [12, /Cockatiel/i.test(pet.breed) ? 180 : 84],
+    'guinea-pig': [6, 60],
+    fish: [12, /angelfish/i.test(pet.breed) ? 84 : 120],
+  };
+  const bounds = stages[pet.species];
+  if (bounds)
+    return pet.ageMonths < bounds[0] ? 'young' : pet.ageMonths >= bounds[1] ? 'senior' : 'adult';
   const seniorAt =
     pet.species === 'dog'
       ? /Great Dane|German Shepherd|Golden|Labrador/i.test(pet.breed)
@@ -122,6 +152,7 @@ export function lifeStage(pet: Pet): 'young' | 'adult' | 'senior' {
       : 'adult';
 }
 export function careGuide(pet: Pet) {
+  if (!['dog', 'cat', 'rabbit'].includes(pet.species)) return extraGuide(pet);
   const stage = lifeStage(pet);
   if (pet.species === 'rabbit')
     return {
@@ -194,6 +225,7 @@ export function careGuide(pet: Pet) {
   };
 }
 export function defaultEvents(pet: Pet): CareEvent[] {
+  if (!['dog', 'cat', 'rabbit'].includes(pet.species)) return extraEvents(pet);
   const guide = careGuide(pet);
   const base = (
     id: string,
@@ -277,6 +309,7 @@ export function defaultEvents(pet: Pet): CareEvent[] {
   ];
 }
 export function factsFor(pet: Pet): Fact[] {
+  if (!['dog', 'cat', 'rabbit'].includes(pet.species)) return extraFacts(pet);
   const fact = (
     id: string,
     title: string,
@@ -397,6 +430,7 @@ export function factsFor(pet: Pet): Fact[] {
   ];
 }
 export function lessonsFor(pet: Pet): Lesson[] {
+  if (!['dog', 'cat', 'rabbit'].includes(pet.species)) return extraLessons(pet);
   const lesson = (
     id: string,
     title: string,

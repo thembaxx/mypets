@@ -8,7 +8,7 @@
 @import '@fontsource/fraunces/500.css';
 
 @theme { --font-sans: 'DM Sans', sans-serif; --font-serif: 'Fraunces', Georgia, serif; }
-:root { --bg:#f7f7f2; --surface:#ffffff; --ink:#29372e; --muted:#7a8176; --line:#e6e8df; --accent:#435c42; --sage:#e5ecd9; --peach:#f5e5d7; --lavender:#eae7f2; --butter:#f4ecd1; --glass:rgba(255,255,255,.78); color-scheme:light; }
+:root { --bg:#f7f7f2; --surface:#ffffff; --ink:#29372e; --muted:#505c50; --line:#e6e8df; --accent:#435c42; --on-accent:#ffffff; --control:#778372; --tint-ink:#505c50; --glass-line:#d9e0d1; --sage:#e5ecd9; --peach:#f5e5d7; --lavender:#eae7f2; --butter:#f4ecd1; --glass:rgba(255,255,255,.78); color-scheme:light; }
 * { box-sizing:border-box; }
 html { background:var(--bg); min-height:100%; scrollbar-gutter:stable; scroll-behavior:smooth; }
 body { margin:0; background:var(--bg); color:var(--ink); font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; overscroll-behavior-y:none; }
@@ -166,10 +166,10 @@ h4 { font-size:17px; font-weight:600; }
 .sheet-layer { padding:12px 0 0; }.sheet { width:100%;max-height:94dvh;border-radius:29px 29px 0 0; }.sheet-heading { padding:4px 21px 13px; }.sheet-heading h2 { font-size:14px; }.sheet-body { padding:22px 22px calc(26px + env(safe-area-inset-bottom)); }.sheet-body h3 { font-size:31px; }.sheet-body p { font-size:12px; }.sheet-body .lead-paragraph { font-size:14px; }.fact-detail-art,.lesson-detail-art { height:210px; }.fact-detail-art .animal-art,.lesson-detail-art .animal-art { width:187px;height:187px; }.practice-timer span { font-size:8px; }.practice-timer strong { font-size:22px; }.practice-timer>div { gap:8px; }.practice-step p { font-size:15px; }.practice-timer { padding:13px 14px; }.detail-callout p { font-size:10px; }.toast { bottom:calc(112px + env(safe-area-inset-bottom));font-size:10px;max-width:calc(100vw - 36px); }.system-banner { font-size:10px; }.storage-warning { flex-wrap:wrap; }
 }
 @media (max-width:370px) { .app-shell { padding-left:16px;padding-right:16px; }h1 { font-size:40px; }.discovery-copy h2 { font-size:27px; }.discovery-copy { padding-left:20px; }.discovery-art .animal-interaction { width:199px;height:199px;right:-9px;top:51px; }.discovery-copy .eyebrow { font-size:7px; }.discovery-copy p { max-width:145px; }.day-card { padding-left:15px;padding-right:15px; }.care-ring { width:59px;height:59px; }.progress-block { gap:9px; }.progress-block h3 { font-size:18px; }.next-care { padding-left:10px; }.mini-event-symbol { display:none; }.card-footer-link { margin-left:-15px;margin-right:-15px;width:calc(100% + 30px); }.lesson-card-copy h3 { font-size:18px; }.carousel-pet { width:235px;height:299px; }.carousel-pet .animal-art { width:213px;height:245px; }.welcome-art { height:283px; }.welcome-pet { width:206px;height:266px; }.welcome-pet .animal-interaction { width:215px;height:215px;left:-12px;top:17px; }.welcome-copy h1 { font-size:37px; }.onboard-title h1 { font-size:33px; }.onboard-header .brand { font-size:20px; }.species-card .animal-art { height:108px; }.species-card>div:last-child>svg:first-child { display:none; }.practice-timer span { display:none; }.day-agenda .event-info span { font-size:8px; }.training-hero-art { right:-40px;width:184px;height:184px; }.training-hero h2 { font-size:26px; }.training-hero p { max-width:146px; } }
-@media (prefers-color-scheme:dark) { :root { --bg:#191d19;--surface:#232923;--ink:#e1e6d9;--muted:#a0aa96;--line:#333b2f;--accent:#80966b;--sage:#354332;--peach:#453b30;--lavender:#383340;--butter:#433e2d;--glass:rgba(40,48,37,.84);color-scheme:dark; }h1 em,h2 em { color:#a5b995; }.brand-symbol { background:#3a4b32;color:#c6d7b4; }.pet-chip { background:#293426; }.discovery-card { background:#394730; }.discovery-copy .eyebrow { color:#bbc8ac; }.discovery-copy h2 em { color:#b3c99d; }.discovery-copy p { color:#a8b59a; }.discovery-link span { border-color:#788f61; }.art-halo { background:#d6e2c2;opacity:.08; }.animal-art img { mix-blend-mode:screen;filter:brightness(.83); }.animal-art.user-photo img { mix-blend-mode:normal;filter:none; }.discovery-card .animal-art img,.carousel-pet .animal-art img,.welcome-pet .animal-art img,.training-hero-art .animal-art img { mix-blend-mode:multiply;filter:none; }.discovery-art .animal-art { background:#b9c9a9;border-radius:48%;overflow:hidden; }.discovery-art .animal-interaction { width:230px;height:230px;top:36px;right:8px; }.discovery-note { color:#a7b394; }.ring-track { stroke:#343f2d; }.ring-progress { stroke:#9bb77f; }.next-care strong { color:var(--ink); }.mini-feature { background:#33382b; }.training-feature { background:#33303b; }.feature-icon { background:#414a32;color:#b8c99d; }.training-feature .feature-icon { background:#494154;color:#c4afd9; }.bottom-dock { border-color:#ffffff15; }.dock-active { background:#405036;box-shadow:inset 0 0 0 1px #6d7e5430; }.dock-item { color:#98a38a; }.dock-item.active { color:#d7e5c8; }.calendar-footer { background:#1e251c; }.training-hero { background:#433d31; }.training-hero h2 em { color:#c9b58f; }.training-hero p { color:#b2a88f; }.training-hero-art .animal-art { background:#bcac8d;border-radius:50%;overflow:hidden; }.floating-label { background:#2e352cdc;color:#ced7c2; }.lesson-card-art { color:#d2ae8b; }.sage .lesson-card-art { color:#b2ca90; }.lavender .lesson-card-art { color:#c5afdd; }.butter .lesson-card-art { color:#d9c585; }.lesson-play { background:#2e342bab;color:#d8e0ce; }.welcome-pet { border-color:#30362b;background:linear-gradient(160deg,#d0d7bd,#c1c2a4); }.welcome-caption { color:#a2ae94; }.species-card .animal-art { background:#ac9e85; }.species-card.cat .animal-art { background:#bab0c6; }.species-card.rabbit .animal-art { background:#a9b998; }.species-card .animal-art img { mix-blend-mode:multiply;filter:none; }.breed-option.selected { background:#35442d; }.identify-card .icon-button { background:#263322; }.photo-upload .animal-art { background:#b4c2a0; }.photo-upload .animal-art img { mix-blend-mode:multiply;filter:none; }.sheet-backdrop { background:#050b0860; }.sheet-grabber { background:#5a6550; }.source-link { color:#b1c199;border-color:#697b54; }.detail-callout { background:#303b2a; }.sheet-body .lead-paragraph { color:#b5c4a6; }.fact-detail-art,.lesson-detail-art { background:#afc09b; }.fact-detail-art.cat { background:#c3ac96; }.fact-detail-art.rabbit { background:#b8aac8; }.lesson-detail-art.peach { background:#c3ac96; }.lesson-detail-art.sage { background:#afc09b; }.lesson-detail-art.lavender { background:#b8aac8; }.lesson-detail-art.butter { background:#bfb387; }.fact-detail-art .animal-art img,.lesson-detail-art .animal-art img { mix-blend-mode:multiply;filter:none; }.form-error { background:#483128;color:#edb599; }.primary-button { color:#122313; }.primary-button:hover { background:#9bae87; }.toast { background:#475b39ef; }.carousel-pet { background:linear-gradient(150deg,#d9b68b,#be8e58); }.carousel-pet.cat { background:linear-gradient(150deg,#bba8d1,#927ab0); }.carousel-pet.rabbit { background:linear-gradient(150deg,#b8c698,#8ea365); }.carousel-ghost { background:#35442c; }.ghost-right { background:#3c3146; } }
+:root[data-theme="dark"] { --bg:#171c19;--surface:#232b25;--ink:#eef3e9;--muted:#bcc7b7;--line:#404c3e;--accent:#b6d39d;--on-accent:#192818;--control:#8b9d81;--tint-ink:#d7e1d0;--sage:#344332;--peach:#43382d;--lavender:#393341;--butter:#413d29;--glass:rgba(35,43,37,.94);--glass-line:#5c6857;color-scheme:dark; }:root[data-theme="dark"] h1 em,:root[data-theme="dark"] h2 em { color:#a5b995; }:root[data-theme="dark"] .brand-symbol { background:#3a4b32;color:#c6d7b4; }:root[data-theme="dark"] .pet-chip { background:#293426; }:root[data-theme="dark"] .discovery-card { background:#394730; }:root[data-theme="dark"] .discovery-copy .eyebrow { color:#bbc8ac; }:root[data-theme="dark"] .discovery-copy h2 em { color:#b3c99d; }:root[data-theme="dark"] .discovery-copy p { color:#a8b59a; }:root[data-theme="dark"] .discovery-link span { border-color:#788f61; }:root[data-theme="dark"] .art-halo { background:#d6e2c2;opacity:.08; }:root[data-theme="dark"] .animal-art img { mix-blend-mode:screen;filter:brightness(.83); }:root[data-theme="dark"] .animal-art.user-photo img { mix-blend-mode:normal;filter:none; }:root[data-theme="dark"] .discovery-card .animal-art img,:root[data-theme="dark"] .carousel-pet .animal-art img,:root[data-theme="dark"] .welcome-pet .animal-art img,:root[data-theme="dark"] .training-hero-art .animal-art img { mix-blend-mode:multiply;filter:none; }:root[data-theme="dark"] .discovery-art .animal-art { background:#b9c9a9;border-radius:48%;overflow:hidden; }:root[data-theme="dark"] .discovery-art .animal-interaction { width:230px;height:230px;top:36px;right:8px; }:root[data-theme="dark"] .discovery-note { color:#a7b394; }:root[data-theme="dark"] .ring-track { stroke:#343f2d; }:root[data-theme="dark"] .ring-progress { stroke:#9bb77f; }:root[data-theme="dark"] .next-care strong { color:var(--ink); }:root[data-theme="dark"] .mini-feature { background:#33382b; }:root[data-theme="dark"] .training-feature { background:#33303b; }:root[data-theme="dark"] .feature-icon { background:#414a32;color:#b8c99d; }:root[data-theme="dark"] .training-feature .feature-icon { background:#494154;color:#c4afd9; }:root[data-theme="dark"] .bottom-dock { border-color:#ffffff15; }:root[data-theme="dark"] .dock-active { background:#405036;box-shadow:inset 0 0 0 1px #6d7e5430; }:root[data-theme="dark"] .dock-item { color:#98a38a; }:root[data-theme="dark"] .dock-item.active { color:#d7e5c8; }:root[data-theme="dark"] .calendar-footer { background:#1e251c; }:root[data-theme="dark"] .training-hero { background:#433d31; }:root[data-theme="dark"] .training-hero h2 em { color:#c9b58f; }:root[data-theme="dark"] .training-hero p { color:#b2a88f; }:root[data-theme="dark"] .training-hero-art .animal-art { background:#bcac8d;border-radius:50%;overflow:hidden; }:root[data-theme="dark"] .floating-label { background:#2e352cdc;color:#ced7c2; }:root[data-theme="dark"] .lesson-card-art { color:#d2ae8b; }:root[data-theme="dark"] .sage .lesson-card-art { color:#b2ca90; }:root[data-theme="dark"] .lavender .lesson-card-art { color:#c5afdd; }:root[data-theme="dark"] .butter .lesson-card-art { color:#d9c585; }:root[data-theme="dark"] .lesson-play { background:#2e342bab;color:#d8e0ce; }:root[data-theme="dark"] .welcome-pet { border-color:#30362b;background:linear-gradient(160deg,#d0d7bd,#c1c2a4); }:root[data-theme="dark"] .welcome-caption { color:#a2ae94; }:root[data-theme="dark"] .species-card .animal-art { background:#ac9e85; }:root[data-theme="dark"] .species-card.cat .animal-art { background:#bab0c6; }:root[data-theme="dark"] .species-card.rabbit .animal-art { background:#a9b998; }:root[data-theme="dark"] .species-card .animal-art img { mix-blend-mode:multiply;filter:none; }:root[data-theme="dark"] .breed-option.selected { background:#35442d; }:root[data-theme="dark"] .identify-card .icon-button { background:#263322; }:root[data-theme="dark"] .photo-upload .animal-art { background:#b4c2a0; }:root[data-theme="dark"] .photo-upload .animal-art img { mix-blend-mode:multiply;filter:none; }:root[data-theme="dark"] .sheet-backdrop { background:#050b0860; }:root[data-theme="dark"] .sheet-grabber { background:#5a6550; }:root[data-theme="dark"] .source-link { color:#b1c199;border-color:#697b54; }:root[data-theme="dark"] .detail-callout { background:#303b2a; }:root[data-theme="dark"] .sheet-body .lead-paragraph { color:#b5c4a6; }:root[data-theme="dark"] .fact-detail-art,:root[data-theme="dark"] .lesson-detail-art { background:#afc09b; }:root[data-theme="dark"] .fact-detail-art.cat { background:#c3ac96; }:root[data-theme="dark"] .fact-detail-art.rabbit { background:#b8aac8; }:root[data-theme="dark"] .lesson-detail-art.peach { background:#c3ac96; }:root[data-theme="dark"] .lesson-detail-art.sage { background:#afc09b; }:root[data-theme="dark"] .lesson-detail-art.lavender { background:#b8aac8; }:root[data-theme="dark"] .lesson-detail-art.butter { background:#bfb387; }:root[data-theme="dark"] .fact-detail-art .animal-art img,:root[data-theme="dark"] .lesson-detail-art .animal-art img { mix-blend-mode:multiply;filter:none; }:root[data-theme="dark"] .form-error { background:#483128;color:#edb599; }:root[data-theme="dark"] .primary-button { color:#122313; }:root[data-theme="dark"] .primary-button:hover { background:#9bae87; }:root[data-theme="dark"] .toast { background:#475b39ef; }:root[data-theme="dark"] .carousel-pet { background:linear-gradient(150deg,#d9b68b,#be8e58); }:root[data-theme="dark"] .carousel-pet.cat { background:linear-gradient(150deg,#bba8d1,#927ab0); }:root[data-theme="dark"] .carousel-pet.rabbit { background:linear-gradient(150deg,#b8c698,#8ea365); }:root[data-theme="dark"] .carousel-ghost { background:#35442c; }:root[data-theme="dark"] .ghost-right { background:#3c3146; }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important; }.loading-mark { animation:none;border-color:#8c9f72; } }
 @media (prefers-reduced-transparency:reduce) { .bottom-dock,.icon-button,.toast { backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--surface); }.sheet-backdrop { backdrop-filter:none;-webkit-backdrop-filter:none;background:#25302690; } }
-@media (prefers-contrast:more) { :root { --muted:#58654f;--line:#9da891; }.eyebrow,.quiet-label,.fine-print { color:var(--ink); }.dock-item { color:var(--ink); } }
+
 /* Composite the unchanged supplied artwork as one layer, including during motion. */
 .animal-art,.animal-interaction { mix-blend-mode:multiply; }
 .animal-art img { max-width:none;mix-blend-mode:normal; }
@@ -188,13 +188,8 @@ h4 { font-size:17px; font-weight:600; }
  .progress-block h3 { font-size:16px;line-height:1.2; }
  .care-ring { width:60px;height:60px; }
 }
-@media(prefers-color-scheme:dark) {
- .animal-art,.animal-interaction { mix-blend-mode:screen; }
- .animal-art img { mix-blend-mode:normal; }
- .discovery-art .animal-art,.carousel-pet .animal-art,.welcome-pet .animal-art,.training-hero-art .animal-art,.fact-detail-art .animal-art,.lesson-detail-art .animal-art,.species-card .animal-art,.photo-upload .animal-art { mix-blend-mode:multiply; }
- .discovery-art .animal-interaction,.welcome-pet .animal-interaction,.training-hero-art .animal-interaction { mix-blend-mode:normal; }
- .animal-art.user-photo,.animal-interaction:has(.user-photo) { mix-blend-mode:normal; }
-}
+:root[data-theme="dark"] .animal-art,:root[data-theme="dark"] .animal-interaction { mix-blend-mode:screen; }:root[data-theme="dark"] .animal-art img { mix-blend-mode:normal; }:root[data-theme="dark"] .discovery-art .animal-art,:root[data-theme="dark"] .carousel-pet .animal-art,:root[data-theme="dark"] .welcome-pet .animal-art,:root[data-theme="dark"] .training-hero-art .animal-art,:root[data-theme="dark"] .fact-detail-art .animal-art,:root[data-theme="dark"] .lesson-detail-art .animal-art,:root[data-theme="dark"] .species-card .animal-art,:root[data-theme="dark"] .photo-upload .animal-art { mix-blend-mode:multiply; }:root[data-theme="dark"] .discovery-art .animal-interaction,:root[data-theme="dark"] .welcome-pet .animal-interaction,:root[data-theme="dark"] .training-hero-art .animal-interaction { mix-blend-mode:normal; }:root[data-theme="dark"] .animal-art.user-photo,:root[data-theme="dark"] .animal-interaction:has(.user-photo) { mix-blend-mode:normal; }
+
 @media(max-width:760px) {
  .discovery-art .animal-interaction { width:180px;height:180px;right:0;top:66px; }
  .toast { white-space:normal;text-align:left; }
@@ -212,3 +207,132 @@ h4 { font-size:17px; font-weight:600; }
  .floating-label { width:115px;right:-4px;bottom:-10px;justify-content:center;text-align:center;font-size:7px; }
  .training-hero-art .animal-art.user-photo { width:110px;height:110px;margin:10px; }
 }
+
+/* Adaptive materials keep information readable above both base and elevated surfaces. */
+h1 em,h2 em,.discovery-copy h2 em,.training-hero h2 em { color:var(--accent); }
+.primary-button,.header-actions .header-pets.active,.filter-tabs .selected,.practice-step-dots .active,.month-day.is-today strong { color:var(--on-accent); }
+.primary-button:hover { background:var(--accent);filter:brightness(.94); }
+.discovery-copy .eyebrow,.discovery-copy p,.discovery-note,.training-hero p,.page-footnote,.lesson-number,.art-label,.welcome-caption { color:var(--muted); }
+.discovery-link span,.radio-dot,.completion-button { border-color:var(--control); }
+.source-link { color:var(--accent);border-color:var(--control);font-size:12px; }
+.event-symbol,.event-symbol.walk,.event-symbol.play,.event-symbol.sleep,.event-symbol.reminder,.feature-icon,.training-feature .feature-icon,.mini-feature>svg,.card-topline>svg,.training-progress>span,.lesson-card-art,.sage .lesson-card-art,.lavender .lesson-card-art,.butter .lesson-card-art,.lesson-play,.lesson-card-copy>div svg,.schedule-note>svg,.detail-callout svg,.video-placeholder>span { color:var(--accent); }
+.completion-button.checked { background:var(--accent);border-color:var(--accent);color:var(--on-accent); }
+.completion-button.checked>span { display:flex; }
+.event-row.complete .event-symbol,.week-event.is-done { opacity:1; }
+.care-ring strong span { color:var(--muted); }
+.ring-track { stroke:var(--line); }.ring-progress { stroke:var(--accent); }
+.month-day.outside { opacity:1;color:var(--muted); }
+.week-strip .is-today:not(.selected) strong { color:var(--accent); }
+.bottom-dock { border-color:var(--glass-line);padding:8px;gap:6px;border-radius:30px;box-shadow:0 8px 30px #15261918,inset 0 1px 0 #ffffff30; }
+.dock-item { width:60px;height:60px;color:var(--muted);gap:0;isolation:isolate; }
+.dock-item.active { color:var(--accent); }.dock-active { background:var(--sage);box-shadow:inset 0 0 0 1px var(--line); }
+.dock-label { display:none; }
+.dock-icon { position:relative;z-index:1; }
+.icon-button { min-width:44px;min-height:44px; }
+.header-actions .icon-button,.header-actions .preferences-button { width:44px;height:44px; }
+.icon-button,.secondary-button,.breed-option,.species-card,.text-toggle,input,select,textarea { transition:background-color .2s,border-color .2s,box-shadow .2s; }
+.icon-button:hover,.secondary-button:hover { background:var(--sage);border-color:var(--control); }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline-color:var(--accent); }
+.primary-button>svg,.discovery-link svg,.mini-feature>svg,.source-link>svg,.plain-button>svg { transition:transform .22s; }
+.primary-button:hover>svg,.plain-button:hover>svg { transform:translateX(3px); }
+.discovery-link:hover svg,.source-link:hover>svg { transform:translate(2px,-2px); }
+input:focus,select:focus,textarea:focus { border-color:var(--control);box-shadow:0 0 0 3px var(--sage); }
+.week-strip button { position:relative;isolation:isolate; }.week-strip .selected { background:transparent; }
+.week-strip button>span:not(.date-highlight),.week-strip button>strong,.week-strip button>i { z-index:1; }
+.week-strip .date-highlight { position:absolute;inset:0;border-radius:inherit;background:var(--sage); }
+.appearance-settings { padding:24px 0 8px; }.appearance-settings>strong { font-size:15px;font-weight:600; }.appearance-settings>p { margin:4px 0 16px;font-size:13px; }
+.appearance-segment { display:flex;gap:4px;padding:5px;background:var(--bg);border:1px solid var(--line);border-radius:18px; }
+.appearance-segment button { display:flex;position:relative;isolation:isolate;align-items:center;justify-content:center;flex-direction:column;gap:7px;flex:1;min-height:76px;border-radius:13px;font-size:13px;color:var(--muted); }
+.appearance-segment button[aria-pressed="true"] { color:var(--ink); }.appearance-segment button>svg,.appearance-segment button>span:last-child { z-index:1; }
+.appearance-highlight { position:absolute;inset:0;border-radius:inherit;background:var(--surface);box-shadow:0 2px 8px #0000000c; }
+.eyebrow,.quiet-label,.page-intro .eyebrow,.section-heading .eyebrow,.discovery-copy .eyebrow,.card-topline .eyebrow,.next-care .quiet-label,.mini-feature .eyebrow,.lesson-card-copy .eyebrow,.training-hero .eyebrow,.onboard-title .eyebrow { font-size:11px;letter-spacing:1px; }
+.discovery-copy p,.training-hero p,.event-info span,.day-agenda .event-info span,.next-care small,.mini-feature p,.calendar-footer p,.schedule-note p,.training-footnote,.lesson-card-copy p,.carousel-pet-caption p,.demo-banner,.pet-collection>p,.sheet-body p,.settings-row span { font-size:13px; }
+.event-info strong,.day-agenda .event-info strong,.next-care strong { font-size:14px; }
+.card-footer-link,.routine-more,.event-time span,.month-event-count,.week-event>span,.week-event small,.lesson-card-copy>div,.training-progress small,.page-footnote,.discovery-note,.art-label,.floating-label,.step-count,.source-link,.guess-list>p { font-size:11px; }
+.sheet-body .lead-paragraph { color:var(--ink);font-size:16px; }.fine-print,.sheet-body .fine-print { font-size:12px; }
+.settings-row strong { font-size:14px; }.settings-row span { margin-top:6px; }.text-toggle { font-size:12px;min-height:44px; }
+.breed-option,.identify-card p,.personal-stage .form-label,.form-label { font-size:13px; }.option-note,.photo-upload p { font-size:12px; }.form-label input,.form-label select,.search-field input { font-size:16px; }
+.species-grid { grid-template-columns:repeat(4,minmax(0,1fr));gap:14px; }
+.species-card { position:relative; }.species-card.selected { border-color:var(--control);box-shadow:0 0 0 2px var(--accent); }
+.species-card>div:last-child { font-size:13px;padding:14px 12px; }.species-card>div:last-child>span:not(.species-check) { flex:1; }
+.species-check { display:flex;width:24px;height:24px;aspect-ratio:1;border-radius:50%;align-items:center;justify-content:center;background:var(--accent);color:var(--on-accent); }
+.species-card .animal-art { height:150px; }
+.species-card.chicken .animal-art,.discovery-card.chicken,.discovery-card.hamster,.fact-detail-art.chicken,.fact-detail-art.hamster { background:var(--butter); }
+.species-card.fish .animal-art,.discovery-card.fish,.fact-detail-art.fish { background:var(--lavender); }
+.species-card.bird .animal-art,.discovery-card.bird,.discovery-card.guinea-pig,.fact-detail-art.bird,.fact-detail-art.guinea-pig { background:var(--sage); }
+.carousel-pet.chicken,.carousel-pet.hamster { background:linear-gradient(150deg,#f9eac0,#e8c372); }
+.carousel-pet.fish { background:linear-gradient(150deg,#deebf0,#a8cad4); }
+.carousel-pet.bird,.carousel-pet.guinea-pig { background:linear-gradient(150deg,#e3edcd,#b8ce98); }
+.carousel-dots { flex-wrap:wrap;min-height:30px;gap:14px; }.carousel-dots button { transition:width .3s,background .3s; }.carousel-dots button.active { background:var(--accent); }
+/* Crop only in CSS: all supplied JPEG bytes are preserved. */
+.animal-art.asset-chicken img,.animal-art.asset-fish img,.animal-art.asset-hamster img,.animal-art.asset-bird img,.animal-art.asset-angelfish img,.animal-art.asset-guinea-pig img,.animal-art.asset-budgie img { width:var(--art-zoom,260%);height:auto;left:50%;top:50%;transform:translate(-50%,-50%); }
+.asset-chicken { --art-zoom:225%; }.asset-fish { --art-zoom:280%; }.asset-bird { --art-zoom:275%; }.asset-hamster { --art-zoom:305%; }.asset-guinea-pig { --art-zoom:420%; }.asset-angelfish,.asset-budgie { --art-zoom:460%; }
+.animal-art.asset-angelfish img { clip-path:inset(39% 40% 44% 40%); }.animal-art.asset-budgie img { clip-path:inset(38% 40% 42% 40%); }
+.animal-art.user-photo img { width:100%;height:100%;left:0;top:0;transform:none;clip-path:none; }
+:root[data-theme="dark"] .toast { background:var(--surface);color:var(--ink);border:1px solid var(--control); }
+:root[data-theme="dark"] .dock-item.active { color:var(--accent); }
+:root[data-theme="dark"] .carousel-ghost .animal-art { mix-blend-mode:multiply; }
+:root[data-theme="dark"] .carousel-ghost { background:#a8bb91; }
+:root[data-theme="dark"] .art-label { color:#29372e; }
+:root[data-theme="dark"] .species-check { color:var(--on-accent); }
+:root[data-theme="dark"] .filter-tabs .selected,:root[data-theme="dark"] .practice-step-dots .active { color:var(--on-accent); }
+:root[data-theme="dark"] .breed-option.selected { background:var(--sage); }
+@media (max-width:760px) {
+ .header-actions { gap:0; }.brand { font-size:21px; }
+ .discovery-card { min-height:350px; }.discovery-copy { width:58%;padding-left:22px; }.discovery-copy .eyebrow { font-size:10px;letter-spacing:.65px; }.discovery-copy h2 { font-size:28px; }.discovery-copy p { max-width:160px; }.discovery-link { font-size:12px;gap:9px; }.discovery-note { font-size:10px; }
+ .discovery-art .animal-interaction { width:174px;height:174px;right:0;top:74px; }
+ .day-card { display:block;padding:20px 21px 0; }.progress-block { padding:19px 0;gap:18px; }.care-ring { width:76px;height:76px; }.care-ring strong { font-size:30px; }.progress-block h3 { font-size:24px; }.progress-block p { display:block;font-size:12px; }
+ .next-care { border-left:0;border-top:1px solid var(--line);padding:15px 0 19px; }.next-care .quiet-label { font-size:11px; }.next-care>button { padding-top:12px;gap:12px; }.next-care>button>svg { display:block; }.next-care .mini-event-symbol { width:38px;height:38px;display:flex; }.next-care strong { font-size:14px; }.next-care small { font-size:12px; }
+ .card-footer-link { margin:0 -21px;width:calc(100% + 42px);padding:15px 21px; }
+ .demo-banner { display:block;font-size:12px; }.demo-banner>span { max-width:none; }.demo-banner button { font-size:12px;margin-top:8px; }
+ .today-bottom-grid { margin-top:30px; }.event-row.compact { gap:11px; }.event-time { font-size:13px; }.event-info strong,.day-agenda .event-info strong { font-size:14px; }.event-info span,.day-agenda .event-info span { font-size:12px; }
+ .training-hero { grid-template-columns:minmax(0,1fr) 94px;padding:26px 20px;min-height:338px; }.training-hero-art { width:94px; }.training-hero-art .animal-interaction { width:112px;height:112px; }.training-hero h2 { font-size:25px; }.training-hero p { font-size:13px; }.training-hero .primary-button { min-height:48px;font-size:13px;padding:12px;gap:12px; }.floating-label { font-size:10px;width:110px;right:-10px;bottom:-12px; }
+ .lesson-card-copy { padding:18px 14px; }.lesson-card-copy p { font-size:13px;min-height:40px; }.lesson-card-copy>div { font-size:11px; }.filter-tabs button { font-size:13px;min-height:44px; }.lesson-card-copy .eyebrow { font-size:10px; }
+ .species-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }.species-card .animal-art { height:145px; }.species-card>div:last-child { font-size:14px; }.onboard-content { padding-top:28px; }
+ .species-card>div:last-child>svg:first-child { display:block; }.identify-card p { font-size:12px;max-width:220px; }.breed-option { font-size:13px; }.option-note { font-size:12px; }.breed-options { max-height:350px; }.identify-icon { display:none; }
+ .week-strip button>span { font-size:11px; }.week-event strong { font-size:12px; }.week-event>span,.week-event small { font-size:11px; }.week-agenda { grid-template-columns:repeat(7,125px); }
+ .calendar-footer p,.calendar-footer .plain-button,.schedule-note p,.training-footnote,.pet-collection>p { font-size:12px; }
+ .carousel-pet-caption p { font-size:13px; }.pet-collection-actions .plain-button { font-size:13px;min-height:44px; }
+ .sheet-heading h2 { font-size:17px; }.sheet-body p { font-size:14px; }.sheet-body .lead-paragraph { font-size:16px; }.detail-callout p { font-size:12px; }
+ .toast { font-size:13px; }.system-banner { font-size:12px; }.page-intro .eyebrow { font-size:11px; }
+ .welcome-copy>p { font-size:14px; }.welcome-copy .eyebrow,.welcome-footer { font-size:11px; }.welcome-actions .plain-button { font-size:13px;min-height:44px; }
+}
+@media (max-width:370px) {
+ .discovery-copy h2 { font-size:25px; }.discovery-copy p { max-width:140px; }.discovery-copy .eyebrow { letter-spacing:.2px;font-size:9px; }
+ .training-hero { grid-template-columns:minmax(0,1fr) 70px; }.training-hero h2 { font-size:24px; }.training-hero-art { width:70px; }.training-hero-art .animal-interaction { width:95px;height:95px;left:-13px; }.floating-label { width:88px;right:-10px; }
+ .species-card .animal-art { height:124px; }.species-card>div:last-child { padding:12px 10px;font-size:12px; }
+}
+@media (prefers-contrast:more) {
+ :root { --control:#526348;--line:#8c9981;--muted:#354634;--glass:#ffffff; }
+ :root[data-theme="dark"] { --control:#c5d9b3;--line:#829477;--muted:#e0e9d8;--glass:#232b25; }
+ .bottom-dock,.icon-button { backdrop-filter:none;-webkit-backdrop-filter:none; }.eyebrow,.quiet-label,.fine-print { color:var(--ink); }
+}
+@media (prefers-reduced-motion:reduce) {
+ .primary-button:hover>svg,.plain-button:hover>svg,.discovery-link:hover svg,.source-link:hover>svg,.mini-feature:hover { transform:none; }
+}
+:root[data-theme="dark"] .species-card.chicken .animal-art,:root[data-theme="dark"] .species-card.hamster .animal-art,:root[data-theme="dark"] .fact-detail-art.chicken,:root[data-theme="dark"] .fact-detail-art.hamster { background:#c4b589; }
+:root[data-theme="dark"] .species-card.fish .animal-art,:root[data-theme="dark"] .fact-detail-art.fish { background:#a5b8c6; }
+:root[data-theme="dark"] .species-card.bird .animal-art,:root[data-theme="dark"] .species-card.guinea-pig .animal-art,:root[data-theme="dark"] .fact-detail-art.bird,:root[data-theme="dark"] .fact-detail-art.guinea-pig { background:#a9bb95; }
+.brand-dot { color:var(--accent); }
+:root[data-theme="dark"] .carousel-pet.chicken,:root[data-theme="dark"] .carousel-pet.hamster { background:linear-gradient(150deg,#d6c193,#b99c63); }
+:root[data-theme="dark"] .carousel-pet.fish { background:linear-gradient(150deg,#b6cdd2,#84a9b1); }
+:root[data-theme="dark"] .carousel-pet.bird,:root[data-theme="dark"] .carousel-pet.guinea-pig { background:linear-gradient(150deg,#c2d1ab,#97b076); }
+@media (max-width:760px) {
+ :root[data-theme="dark"] .discovery-art .animal-interaction { width:174px;height:174px;right:0;top:74px; }
+}
+/* Put the art panel behind the composited JPEG, keeping every original color visible. */
+.species-card { --art-panel:#f0eadf;background:var(--art-panel);isolation:isolate; }
+.species-card.cat,.species-card.fish { --art-panel:#eae6f1; }.species-card.rabbit,.species-card.bird,.species-card.guinea-pig { --art-panel:#e4ecd7; }.species-card.chicken,.species-card.hamster { --art-panel:#f2e7c7; }
+:root[data-theme="dark"] .species-card { --art-panel:#b6a88d; }
+:root[data-theme="dark"] .species-card.cat,:root[data-theme="dark"] .species-card.fish { --art-panel:#b9b0c6; }
+:root[data-theme="dark"] .species-card.rabbit,:root[data-theme="dark"] .species-card.bird,:root[data-theme="dark"] .species-card.guinea-pig { --art-panel:#a9bb95; }
+:root[data-theme="dark"] .species-card.chicken,:root[data-theme="dark"] .species-card.hamster { --art-panel:#c4b589; }
+:root[data-theme] .onboarding .species-grid .species-card .animal-art { background:transparent; }
+.species-card>div:last-child { background:var(--surface);position:relative;z-index:2; }
+:root[data-theme="dark"] .pet-photo-frame { background:#b4c2a0; }
+:root[data-theme="dark"] .photo-upload .pet-photo-frame .animal-art { background:transparent; }
+input::placeholder,textarea::placeholder { color:var(--muted);opacity:1; }
+.form-label input,.form-label select,.form-label textarea,.search-field { border-color:var(--control); }
+.selected .radio-dot { background:var(--accent);border-color:var(--accent);color:var(--on-accent); }
+.species-card .animal-art.cat img,.species-card .animal-art.rabbit img { width:200%;height:auto;left:50%;top:50%;transform:translate(-50%,-50%); }
+.species-card .asset-chicken { --art-zoom:210%; }

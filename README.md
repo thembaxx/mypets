@@ -1,6 +1,6 @@
 # My Pets
 
-A mobile-first daily companion for dogs, cats, and rabbits, built with Next.js App Router, TypeScript, Tailwind CSS, Motion, Phosphor icons, and Three.js. Oxfmt and Oxlint keep the source consistent.
+A mobile-first daily companion for dogs, cats, rabbits, chickens, fish, hamsters, birds, and guinea pigs, built with Next.js App Router, TypeScript, Tailwind CSS, Motion, Phosphor icons, and Three.js. Oxfmt and Oxlint keep the source consistent.
 
 ## Run
 
@@ -36,13 +36,17 @@ All inference in this app uses browser WebAssembly, so Node GPU libraries are no
 
 - Three contextual sections: Today, Schedule, and Training.
 - Onboarding with species, searchable/custom/unknown breed, camera or upload, name, age in months or years, and optional weight.
-- On-device image recognition using Transformers.js and MobileNet V2. Suggestions require confirmation. The model covers a subset of dog and cat appearances and limited rabbit labels; it cannot establish ancestry. Low-confidence or unsupported results preserve the unknown option. The initial download requires internet access; pet images are processed locally.
+- On-device image recognition using Transformers.js and MobileNet V2. Suggestions require confirmation. The model covers a subset of dog and cat appearances limited rabbit labels, and goldfish; it cannot establish ancestry. Low-confidence or unsupported results preserve the unknown option. The initial download requires internet access; pet images are processed locally.
 - Species, age, and selected breed affect the initial care schedule, nutrition information, facts, and learning collection. Individual care needs can differ. Food portions use food-label and veterinary guidance rather than an unverified calorie calculation.
 - Editable care events, day/week/month calendar, daily or one-time reminders, event completion, and `.ics` export with calendar alarms for events marked for notification.
-- Pet switching through a draggable carousel, with the exact supplied dog, cat, and rabbit files preserved in `public/animals/`. CSS composites and crops them; the files are unchanged. Animating illustrations are accompanied by actual interactive Three.js toys. They are illustrated characters, not 360-degree animal models.
+- Pet switching through a draggable carousel, with the exact supplied animal files preserved in `public/animals/`. CSS composites and crops them; the files are unchanged. Animating illustrations are accompanied by actual interactive Three.js toys. They are illustrated characters, not 360-degree animal models.
 - Guided species-specific learning, optional practice timers, and saved progress. Educational dog exercise video from PDSA, plus linked source articles.
 - Spring transitions, a compact floating dock, drag-to-dismiss sheets, keyboard focus containment, Escape and browser-back support, optional sound, and vibration where supported.
-- Installable PWA, offline shell, local fonts, system light/dark appearance, safe areas, reduced motion and transparency, camera, Web Share, data export, and calendar integration.
+- Installable PWA, offline shell, local fonts, persisted System / Light / Dark appearance with matching launch backgrounds, safe areas, reduced motion and transparency, camera, Web Share, data export, and calendar integration.
+
+The centered dock has three icons without visible text, with accessible names and filled active states. Spring selections, completion checks, calendar highlights, and pet carousel transitions provide feedback; reduced motion uses calmer transitions. Text and functional icons use adaptive contrast colors across base, elevated, and tinted surfaces. Theme choice applies before the first paint and updates browser chrome and the install manifest.
+
+The expanded sample collection includes all seven newly supplied animal images. Goldfish and angelfish use different illustrations and habitat guidance; the second budgie is a variety illustration. Existing demo collections gain the new samples without changing stored routines. Personal collections remain intact. New species have sourced nutrition, facts, habitat checks, and guided care or enrichment rather than dog obedience lessons. Suggested times are editable, and life-stage categories are approximate; care must follow the exact species and veterinary guidance.
 
 ## Data and device capabilities
 
@@ -62,7 +66,9 @@ Changing a pet's age, breed, or species regenerates its suggested routine and pr
 - `components/details.tsx`: contextual fact, food, learning, search, and event drawers.
 - `components/ambient-scene.tsx`: real WebGL scene and fallback.
 - `lib/care.ts`: care rules, sourced content, date filtering, and calendar export.
+- `lib/species.ts` and `lib/extra-care.ts`: species registry, original illustrations, additional care rules, and sources.
+- `lib/appearance.ts`: pre-paint theme and browser-chrome synchronization.
 - `lib/identify.ts`: local visual recognition and confirmation suggestions.
 - `public/sw.js` and `scripts/prepare-pwa.mjs`: versioned offline app shell.
 
-Care sources are linked within the app and include PDSA and the American Kennel Club. Interface inspiration comes from the supplied reference screens, Apple's materials and sheets guidance, and the MDN corner-shape reference.
+Care sources are linked within the app and include PDSA, RSPCA, and the American Kennel Club. Interface inspiration comes from the supplied reference screens, Apple's materials and sheets guidance, and the MDN corner-shape reference.

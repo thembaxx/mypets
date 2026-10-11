@@ -13,6 +13,9 @@ import {
   ShareNetworkIcon,
   WifiSlashIcon,
   XIcon,
+  SunIcon,
+  MoonIcon,
+  DeviceMobileIcon,
 } from '@phosphor-icons/react';
 import Onboarding from './onboarding';
 import { Brand, IconButton, Sheet, SoundToggle, haptic, playTone } from './shared';
@@ -28,7 +31,8 @@ import {
   type Fact,
   type Lesson,
 } from '@/lib/care';
-import { readData, STORAGE_KEY, type AppData } from '@/lib/storage';
+import { applyAppearance } from '@/lib/appearance';
+import { readData, STORAGE_KEY, type Appearance, type AppData } from '@/lib/storage';
 type Tab = 'today' | 'schedule' | 'training';
 type Detail =
   | { type: 'fact'; fact: Fact }
@@ -51,6 +55,7 @@ const initialData: AppData & { demoMode?: boolean } = {
   onboarded: false,
   sound: false,
   demoMode: true,
+  appearance: 'system',
 };
 export default function PetApp() {
   const [data, setData] = useState(initialData);
@@ -116,6 +121,15 @@ export default function PetApp() {
       setStorageError(true);
     }
   }, [data, ready]);
+  useEffect(() => {
+    if (!ready) return;
+    const appearance = data.appearance ?? 'system';
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const sync = () => applyAppearance(appearance);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, [data.appearance, ready]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(''), 4200);
@@ -311,7 +325,7 @@ export default function PetApp() {
           onSave={savePet}
           onExplore={() => {
             setData((p) => ({ ...p, onboarded: true, demoMode: true }));
-            notify('Meet Milo, Cleo, and Pip. Explore their little world.');
+            notify('Meet ten little companions. Explore their different worlds.');
           }}
           onClose={
             data.onboarded
@@ -466,6 +480,7 @@ export default function PetApp() {
                 className={`dock-item ${tab === id ? 'active' : ''}`}
                 onClick={() => navigate(id)}
                 aria-label={label}
+                title={label}
                 aria-current={tab === id ? 'page' : undefined}
                 whileTap={{ scale: 0.85 }}
               >
@@ -478,12 +493,11 @@ export default function PetApp() {
                 )}
                 <motion.span
                   className="dock-icon"
-                  animate={{ scale: tab === id ? 1.05 : 1, y: tab === id ? -1 : 0 }}
-                  transition={{ type: 'spring', stiffness: 380, damping: 18 }}
+                  animate={{ scale: tab === id ? [0.9, 1.12, 1] : 1, y: 0 }}
+                  transition={{ duration: 0.32, ease: 'easeOut' }}
                 >
                   <Icon size={27} weight={tab === id ? 'fill' : 'regular'} />
                 </motion.span>
-                <span className="dock-label">{label}</span>
               </motion.button>
             ))}
           </nav>
@@ -539,6 +553,42 @@ export default function PetApp() {
             <Brand />
             <h3>Little things, your way.</h3>
             <p>A calmer everyday companion.</p>
+            <div className="appearance-settings">
+              <strong>Appearance</strong>
+              <p>Follow your device, or choose your own.</p>
+              <div className="appearance-segment" role="group" aria-label="Appearance">
+                {(
+                  [
+                    { id: 'system', label: 'System', Icon: DeviceMobileIcon },
+                    { id: 'light', label: 'Light', Icon: SunIcon },
+                    { id: 'dark', label: 'Dark', Icon: MoonIcon },
+                  ] as const
+                ).map(({ id, label, Icon }) => (
+                  <motion.button
+                    key={id}
+                    aria-pressed={(data.appearance ?? 'system') === id}
+                    onClick={() => {
+                      setData((previous) => ({ ...previous, appearance: id as Appearance }));
+                      haptic();
+                    }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    {(data.appearance ?? 'system') === id && (
+                      <motion.span
+                        className="appearance-highlight"
+                        layoutId="appearance-selection"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <Icon
+                      size={21}
+                      weight={(data.appearance ?? 'system') === id ? 'fill' : 'regular'}
+                    />
+                    <span>{label}</span>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
             <div className="settings-row">
               <div>
                 <strong>Gentle sounds</strong>
@@ -574,7 +624,7 @@ export default function PetApp() {
             </div>
             <p className="fine-print">
               On iPhone or iPad, open Safari’s Share menu and choose Add to Home Screen. The app
-              follows your device’s appearance and reduced motion settings.
+              respects your appearance choice and reduced motion settings.
             </p>
             <div className="settings-row">
               <div>

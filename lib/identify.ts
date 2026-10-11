@@ -44,6 +44,17 @@ export async function identifyBreed(
         return rabbits[label] && rabbits[label] !== 'Unknown'
           ? [{ breed: rabbits[label], confidence: g.score }]
           : [];
+      if (species !== 'dog') {
+        const varieties: Partial<Record<Species, Record<string, string>>> = {
+          fish: { goldfish: 'Goldfish' },
+          hamster: { hamster: 'Unknown' },
+          bird: { 'sulphur-crested cockatoo': 'Unknown', macaw: 'Unknown' },
+          'guinea-pig': { 'guinea pig': 'Unknown' },
+          chicken: { hen: 'Unknown', cock: 'Unknown' },
+        };
+        const match = varieties[species]?.[label];
+        return match && match !== 'Unknown' ? [{ breed: match, confidence: g.score }] : [];
+      }
       const allowed =
         /retriever|terrier|shepherd|collie|poodle|spaniel|hound|beagle|husky|malamute|bulldog|Chihuahua|Shih-Tzu|dachshund|pug|boxer|Rottweiler|Dalmatian|Newfoundland|Bouvier|Doberman|Blenheim|papillon|Great Dane|Samoyed|Pekinese|Lhasa|Maltese|komondor|kuvasz|schipperke|whippet|basenji|kelpie|briard|vizsla|Leonberg|chow|dingo/i;
       if (!allowed.test(label)) return [];
