@@ -1,4 +1,4 @@
-import { extraGuide, extraEvents, extraFacts, extraLessons } from './extra-care';
+import { extraGuide, extraEvents, extraFacts, extraLessons, extraSources } from './extra-care';
 import type { Species } from './species';
 export type { Species } from './species';
 export interface Pet {
@@ -308,7 +308,7 @@ export function defaultEvents(pet: Pet): CareEvent[] {
     ),
   ];
 }
-export function factsFor(pet: Pet): Fact[] {
+function baseFactsFor(pet: Pet): Fact[] {
   if (!['dog', 'cat', 'rabbit'].includes(pet.species)) return extraFacts(pet);
   const fact = (
     id: string,
@@ -427,6 +427,49 @@ export function factsFor(pet: Pet): Fact[] {
       'Nutrition',
       sources.dogDiet,
     ),
+  ];
+}
+export function factsFor(pet: Pet): Fact[] {
+  const guide = careGuide(pet);
+  const activitySource =
+    pet.species === 'dog'
+      ? sources.dogExercise
+      : pet.species === 'cat'
+        ? sources.catCare
+        : pet.species === 'rabbit'
+          ? sources.rabbitCare
+          : pet.species === 'chicken'
+            ? extraSources.chicken
+            : pet.species === 'fish'
+              ? extraSources.fish
+              : pet.species === 'hamster'
+                ? extraSources.hamster
+                : pet.species === 'bird'
+                  ? extraSources.bird
+                  : extraSources.guinea;
+  const sourceName = ['dog', 'cat', 'rabbit'].includes(pet.species)
+    ? 'PDSA veterinary team'
+    : 'RSPCA animal welfare';
+  return [
+    ...baseFactsFor(pet),
+    {
+      id: 'personal-rhythm',
+      title: `A rhythm that fits ${pet.name}.`,
+      teaser: 'A starting point, with room for their own pace.',
+      body: `${pet.name} is ${ageLabel(pet.ageMonths)}. ${guide.exerciseNote} Watch how they respond and adapt their routine with your vet or species specialist as their needs change.`,
+      category: 'Everyday care',
+      source: activitySource,
+      sourceName,
+    },
+    {
+      id: 'measured-care',
+      title: 'Small portions, thoughtfully chosen.',
+      teaser: 'Their food label is a useful place to start.',
+      body: guide.portion,
+      category: 'Nutrition',
+      source: guide.source,
+      sourceName,
+    },
   ];
 }
 export function lessonsFor(pet: Pet): Lesson[] {
@@ -631,7 +674,7 @@ export function calendarExport(events: CareEvent[], pet: Pet, selected: Date) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//My Pets//Care calendar//EN',
+    'PRODID:-//Nuzzle//Care calendar//EN',
     'CALSCALE:GREGORIAN',
   ];
   for (const e of events) {

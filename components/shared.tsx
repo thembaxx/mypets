@@ -1,7 +1,8 @@
 'use client';
 import { useRef, useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'motion/react';
-import { XIcon, ArrowUpRightIcon, PawPrintIcon, SpeakerHighIcon } from '@phosphor-icons/react';
+import { XIcon, ArrowUpRightIcon, SpeakerHighIcon, SpeakerSlashIcon } from '@phosphor-icons/react';
+import { brand } from '@/lib/brand';
 import type { Species } from '@/lib/care';
 import { animalAsset, speciesNames } from '@/lib/species';
 export function haptic(success = false) {
@@ -246,18 +247,87 @@ export function SourceLink({
 export function Brand() {
   return (
     <span className="brand">
-      <span className="brand-symbol">
-        <PawPrintIcon weight="fill" size={22} />
-      </span>
-      my pets<span className="brand-dot">.</span>
+      <motion.span
+        className="brand-symbol"
+        whileHover={{ rotate: -8, scale: 1.08 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      >
+        <BrandMark />
+      </motion.span>
+      {brand.wordmark}
+      <span className="brand-dot">.</span>
     </span>
+  );
+}
+export function BrandMark({
+  direction = 'nuzzle',
+}: {
+  direction?: 'nuzzle' | 'pippa' | 'kindred';
+}) {
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden="true" className={`brand-mark mark-${direction}`}>
+      <rect
+        width="100"
+        height="100"
+        rx="27"
+        fill={direction === 'nuzzle' ? '#274b3e' : direction === 'pippa' ? '#f6c39d' : '#736483'}
+      />
+      {direction === 'nuzzle' ? (
+        <>
+          <path
+            d="M20 59C20 44 32 25 43 25C54 25 58 38 54 45C51 50 45 42 44 47C42 53 52 58 45 68C35 81 18 75 20 59Z"
+            fill="#fbf2df"
+          />
+          <path
+            d="M58 45C63 38 64 46 73 48C85 51 84 72 73 75C64 78 61 69 59 64C56 58 50 53 58 45Z"
+            fill="#fbf2df"
+          />
+          <circle cx="53" cy="71" r="5" fill="#efa779" />
+        </>
+      ) : direction === 'pippa' ? (
+        <path
+          d="M23 62C22 43 46 24 60 25C75 27 83 43 80 53C76 64 62 46 61 46C60 56 66 73 51 77C38 81 24 75 23 62Z"
+          fill="#793638"
+        />
+      ) : (
+        <>
+          <ellipse
+            cx="39"
+            cy="55"
+            rx="23"
+            ry="19"
+            fill="none"
+            stroke="#fbf2df"
+            strokeWidth="12"
+            transform="rotate(-35 39 55)"
+          />
+          <ellipse
+            cx="62"
+            cy="43"
+            rx="23"
+            ry="19"
+            fill="none"
+            stroke="#fbf2df"
+            strokeWidth="12"
+            transform="rotate(55 62 43)"
+          />
+        </>
+      )}
+    </svg>
   );
 }
 export function SoundToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
   return (
-    <button className={`text-toggle ${enabled ? 'on' : ''}`} onClick={onToggle}>
-      <SpeakerHighIcon size={18} weight={enabled ? 'fill' : 'regular'} />
-      Sound {enabled ? 'on' : 'off'}
-    </button>
+    <motion.button
+      className={`icon-button ${enabled ? 'on' : ''}`}
+      onClick={onToggle}
+      aria-label={`Sound ${enabled ? 'on' : 'off'}`}
+      aria-pressed={enabled}
+      title={`Turn sound ${enabled ? 'off' : 'on'}`}
+      whileTap={{ scale: 0.9 }}
+    >
+      {enabled ? <SpeakerHighIcon size={22} weight="fill" /> : <SpeakerSlashIcon size={22} />}
+    </motion.button>
   );
 }

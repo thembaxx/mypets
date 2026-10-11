@@ -1,10 +1,10 @@
-# My Pets
+# Nuzzle
 
 A mobile-first daily companion for dogs, cats, rabbits, chickens, fish, hamsters, birds, and guinea pigs, built with Next.js App Router, TypeScript, Tailwind CSS, Motion, Phosphor icons, and Three.js. Oxfmt and Oxlint keep the source consistent.
 
 ## Run
 
-Requires Node.js 22 or newer.
+Requires Node.js 22 or newer. CI runs the current Node.js 26 release.
 
 ```sh
 npm ci
@@ -30,7 +30,17 @@ The optional CUDA download from the Transformers Node dependency can be skipped 
 ONNXRUNTIME_NODE_INSTALL_CUDA=skip npm ci
 ```
 
-All inference in this app uses browser WebAssembly, so Node GPU libraries are not needed. The shared Sharp dependency is pinned to 0.35.5 to include current image-decoder security fixes. The remaining npm audit findings are from the unpatched `sprintf-js` chain in the optional ONNX Node installer, which is not used by the deployed browser app.
+All inference in this app uses browser WebAssembly, so Node GPU libraries are not needed. The shared Sharp dependency is pinned to 0.35.5 to include current image-decoder security fixes. All direct runtime and development dependencies are pinned to their latest stable versions checked on October 11, 2026. Both the complete and production npm audits report zero vulnerabilities.
+
+## Identity and a lived-in demo
+
+Nuzzle is the working name: a warm, species-neutral word for closeness. Two soft ivory forms lean together on a forest-green tile, with an apricot dot. The scalable SVG and raster PWA icons are original implementation artwork; the supplied animal illustrations are unchanged. Preferences opens an interactive identity studio comparing Nuzzle, Pippa, and Kindred, including a generated concept board. These are creative directions, without verified trademark or name availability. `lib/brand.ts` holds the identity; `npm run brand:icons` regenerates app icons from the SVG.
+
+The demo seeds thirty past days across all ten sample pets, with imperfect care logs, ten practices per pet, species-specific observations, completed check-ins, and an upcoming review. A monthly chart opens a date-by-date care and learning history. Add journal notes, expand observations, and revisit a practice from its record. Actual practices and notes save into that history. Daily discoveries rotate through expanded, sourced fact collections.
+
+The migration is idempotent and adds history only to demo collections. Creating the first personal pet clears the sample history; existing personal collections receive no invented records. Sample observations are visibly marked. The browser storage key remains `mypets-v1` so rebranding retains profiles, photos, routines, and preferences.
+
+Self-explanatory actions use square icon buttons with accessible names and tooltips. All text inputs, date/time controls, selects, and textareas use 16px text. Contextual cards and destination actions keep the descriptive content needed to understand the choice.
 
 ## Experience
 

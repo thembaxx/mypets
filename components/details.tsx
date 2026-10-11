@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowRightIcon,
   ArrowUpRightIcon,
@@ -327,13 +328,19 @@ export function EventEditor({
           {error}
         </p>
       )}
-      <button className="primary-button full-button" type="submit">
-        {event ? 'Save this moment' : 'Add this moment'}
-        <CheckIcon size={20} />
+      <button
+        className="icon-button primary-icon form-save"
+        type="submit"
+        aria-label={event ? 'Save this moment' : 'Add this moment'}
+        title={event ? 'Save this moment' : 'Add this moment'}
+      >
+        <CheckIcon size={24} />
       </button>
       {event && onDelete && (
         <button
-          className="delete-button"
+          className="icon-button delete-button"
+          aria-label="Remove this event"
+          title="Remove this event"
           type="button"
           onClick={() => {
             onDelete(event.id);
@@ -341,7 +348,6 @@ export function EventEditor({
           }}
         >
           <TrashIcon size={18} />
-          Remove this event
         </button>
       )}
     </form>
@@ -450,21 +456,41 @@ export function LessonDetail({
         <span className="eyebrow">
           STEP {step + 1} OF {lesson.steps.length}
         </span>
-        <p>{lesson.steps[step]}</p>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={step}
+            initial={{ opacity: 0, x: 14 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {lesson.steps[step]}
+          </motion.p>
+        </AnimatePresence>
       </div>
-      <button className="primary-button full-button" onClick={advance}>
-        {step === lesson.steps.length - 1
-          ? completed
-            ? 'Practised again'
-            : 'Mark as practised'
-          : 'Next little step'}
+      <button
+        className="icon-button primary-icon practice-next"
+        aria-label={
+          step === lesson.steps.length - 1
+            ? completed
+              ? 'Practised again'
+              : 'Mark as practised'
+            : 'Next little step'
+        }
+        title={step === lesson.steps.length - 1 ? 'Mark as practised' : 'Next little step'}
+        onClick={advance}
+      >
         {step === lesson.steps.length - 1 ? <CheckIcon size={20} /> : <ArrowRightIcon size={20} />}
       </button>
       <p className="fine-print">
         Stop if {pet.name} seems uncomfortable or tired. The timer is optional; a good moment
         matters more than minutes.
       </p>
-      <SourceLink href={lesson.source}>Based on PDSA care and reward-based guidance</SourceLink>
+      <SourceLink href={lesson.source}>
+        {lesson.source.includes('rspca.org')
+          ? 'Based on RSPCA care and welfare guidance'
+          : 'Based on PDSA care and reward-based guidance'}
+      </SourceLink>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -23,6 +23,7 @@ import {
   SlidersHorizontalIcon,
   DownloadSimpleIcon,
   CheckCircleIcon,
+  PencilSimpleIcon,
 } from '@phosphor-icons/react';
 import { discoveryTitles, speciesNames } from '@/lib/species';
 import { Animal, IconButton, haptic } from './shared';
@@ -130,6 +131,7 @@ export function Today({
   onAdd,
   isDemo,
   onPersonalize,
+  historyCard,
 }: {
   pet: Pet;
   events: CareEvent[];
@@ -143,6 +145,7 @@ export function Today({
   onAdd: () => void;
   isDemo: boolean;
   onPersonalize: () => void;
+  historyCard?: ReactNode;
 }) {
   const guide = careGuide(pet);
   const facts = factsFor(pet);
@@ -156,7 +159,8 @@ export function Today({
         toMinutes(e.time) >= new Date().getHours() * 60 + new Date().getMinutes(),
     ) ?? daily.find((e) => !completed.includes(`${today}:${e.id}`));
   const firstLesson = lessonsFor(pet)[0];
-  const fact = facts[0];
+  const factIndex = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000) % facts.length;
+  const fact = facts[factIndex];
   return (
     <div className="today-view">
       <div className="page-intro">
@@ -186,10 +190,9 @@ export function Today({
       {isDemo && (
         <div className="demo-banner">
           <span>You’re exploring with {pet.name}. Make this little world your own.</span>
-          <button onClick={onPersonalize}>
-            Add your pet
-            <ArrowRightIcon size={16} />
-          </button>
+          <IconButton label="Add your pet" onClick={onPersonalize}>
+            <PlusIcon size={22} />
+          </IconButton>
         </div>
       )}
       <div className="today-top-grid">
@@ -206,18 +209,25 @@ export function Today({
             </span>
             <button className="fact-headline" onClick={() => onFact(fact)}>
               <h2>
-                {discoveryTitles[pet.species][0]}
-                <br />
-                <em>{discoveryTitles[pet.species][1]}</em>
+                {factIndex === 0 ? (
+                  <>
+                    {discoveryTitles[pet.species][0]}
+                    <br />
+                    <em>{discoveryTitles[pet.species][1]}</em>
+                  </>
+                ) : (
+                  <em>{fact.title}</em>
+                )}
               </h2>
             </button>
             <p>{fact.teaser}</p>
-            <button className="discovery-link" onClick={() => onFact(fact)}>
-              Get to know {pet.name}
-              <span>
-                <ArrowUpRightIcon size={21} />
-              </span>
-            </button>
+            <IconButton
+              className="discovery-link"
+              label={`Get to know ${pet.name}`}
+              onClick={() => onFact(fact)}
+            >
+              <ArrowUpRightIcon size={23} />
+            </IconButton>
           </div>
           <div className="discovery-art">
             <span className="art-halo" />
@@ -353,6 +363,7 @@ export function Today({
           </button>
         </section>
       </div>
+      {historyCard}
       <div className="page-footnote">
         <span className="tiny-line" />A little care. A lot of love.
       </div>
@@ -416,10 +427,9 @@ export function Schedule({
             <em>A day well cared for.</em>
           </h1>
         </div>
-        <button className="secondary-button desktop-action" onClick={onAdd}>
-          <PlusIcon size={19} />
-          Add reminder
-        </button>
+        <IconButton label="Add reminder" className="desktop-action" onClick={onAdd}>
+          <PlusIcon size={23} />
+        </IconButton>
       </div>
       <section className="calendar-card">
         <div className="calendar-toolbar">
@@ -596,10 +606,9 @@ export function Schedule({
             <SlidersHorizontalIcon size={17} />A starting rhythm, made to adapt. Tap any event to
             edit it.
           </p>
-          <button className="plain-button" onClick={() => onExport(selected)}>
-            <DownloadSimpleIcon size={17} />
-            Add to your calendar
-          </button>
+          <IconButton label="Add to your calendar" onClick={() => onExport(selected)}>
+            <DownloadSimpleIcon size={23} />
+          </IconButton>
         </div>
       </section>
       <div className="schedule-note">
@@ -671,9 +680,13 @@ export function Training({
               ? 'Kind, reward-based practice. At their own pace.'
               : 'Gentle enrichment and everyday confidence.'}
           </p>
-          <button className="primary-button" onClick={() => onLesson(lessons[0])}>
-            Let’s try it <ArrowRightIcon size={20} />
-          </button>
+          <IconButton
+            className="primary-icon training-start"
+            label="Let’s try it"
+            onClick={() => onLesson(lessons[0])}
+          >
+            <PlayIcon size={24} weight="fill" />
+          </IconButton>
         </div>
         <div className="training-hero-art">
           <Animal species={pet.species} breed={pet.breed} interactive photo={pet.photo} />
@@ -886,15 +899,13 @@ export function PetCollection({
       <div className="pet-collection-actions">
         <button className="primary-button" onClick={() => onSelect(pet.id)}>
           Spend the day with {pet.name}
-          <ArrowRightIcon size={20} />
         </button>
-        <button className="plain-button" onClick={() => onEdit(pet)}>
-          Edit {pet.name}’s profile <ArrowUpRightIcon size={16} />
-        </button>
-        <button className="secondary-button" onClick={onAdd}>
-          <PlusIcon size={19} />
-          Add another companion
-        </button>
+        <IconButton label={`Edit ${pet.name}’s profile`} onClick={() => onEdit(pet)}>
+          <PencilSimpleIcon size={23} />
+        </IconButton>
+        <IconButton label="Add another companion" onClick={onAdd}>
+          <PlusIcon size={23} />
+        </IconButton>
       </div>
     </div>
   );

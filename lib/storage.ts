@@ -1,5 +1,6 @@
 import { defaultEvents, demoPets, type CareEvent, type Pet } from './care';
 import { speciesList } from './species';
+import { seedDemoHistory, type HistoryEntry } from './history';
 export type Appearance = 'system' | 'light' | 'dark';
 export interface AppData {
   version: 1;
@@ -12,6 +13,8 @@ export interface AppData {
   sound: boolean;
   demoMode?: boolean;
   appearance?: Appearance;
+  history?: HistoryEntry[];
+  demoSeedVersion?: 1;
 }
 export const STORAGE_KEY = 'mypets-v1';
 export function parseData(raw: string): AppData | null {
@@ -56,7 +59,7 @@ export function parseData(raw: string): AppData | null {
     const additions = data.demoMode
       ? demoPets.filter((pet) => !data.pets.some((saved: Pet) => saved.id === pet.id))
       : [];
-    return {
+    return seedDemoHistory({
       ...data,
       pets: [...data.pets, ...additions],
       events: [...data.events, ...additions.flatMap(defaultEvents)],
@@ -70,10 +73,25 @@ export function parseData(raw: string): AppData | null {
       trained: Array.isArray(data.trained)
         ? data.trained.filter((item: unknown) => typeof item === 'string')
         : [],
+      history: Array.isArray(data.history)
+        ? data.history.filter(
+            (entry: HistoryEntry) =>
+              entry &&
+              typeof entry.id === 'string' &&
+              typeof entry.petId === 'string' &&
+              /^\d{4}-\d{2}-\d{2}$/.test(entry.date) &&
+              ['practice', 'note'].includes(entry.kind) &&
+              typeof entry.title === 'string' &&
+              typeof entry.note === 'string' &&
+              (entry.minutes === undefined ||
+                (Number.isFinite(entry.minutes) && entry.minutes > 0)),
+          )
+        : [],
+      demoSeedVersion: data.demoSeedVersion === 1 ? 1 : undefined,
       onboarded: !!data.onboarded,
       sound: !!data.sound,
       demoMode: !!data.demoMode,
-    };
+    });
   } catch {
     return null;
   }

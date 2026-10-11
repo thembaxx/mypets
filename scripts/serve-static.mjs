@@ -58,4 +58,4 @@ http
     if (request.method === 'HEAD') response.end();
     else fs.createReadStream(filename).pipe(response);
   })
-  .listen(port, '0.0.0.0', () => console.log(`My Pets ready at http://localhost:${port}`));
+  .listen(port, '0.0.0.0', () => console.log(`Nuzzle ready at http://localhost:${port}`));

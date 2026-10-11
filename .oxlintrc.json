@@ -1,10 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "react",
-    "jsx-a11y"
-  ],
+  "plugins": ["typescript", "react", "jsx-a11y"],
   "categories": {
     "correctness": "error"
   },
@@ -15,9 +11,5 @@
     "react/set-state-in-effect": "off",
     "jsx-a11y/prefer-tag-over-role": "off"
   },
-  "ignorePatterns": [
-    "out/**",
-    ".next/**",
-    "next-env.d.ts"
-  ]
+  "ignorePatterns": ["out/**", ".next/**", "next-env.d.ts"]
 }

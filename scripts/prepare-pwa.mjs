@@ -26,6 +26,7 @@ const shell = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
+  '/brand/directions.webp',
   ...collect(path.join(root, 'animals')).map(
     (file) => '/' + path.relative(root, file).split(path.sep).join('/'),
   ),

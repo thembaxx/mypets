@@ -18,6 +18,9 @@ import {
   DeviceMobileIcon,
 } from '@phosphor-icons/react';
 import Onboarding from './onboarding';
+import { MonthCard, MonthReview, BrandStudio } from './history';
+import { createDemoData } from '@/lib/history';
+import { brand } from '@/lib/brand';
 import { Brand, IconButton, Sheet, SoundToggle, haptic, playTone } from './shared';
 import { Today, Schedule, Training, PetCollection } from './views';
 import { DietDetail, EventEditor, FactDetail, LessonDetail, SearchDetail } from './details';
@@ -40,7 +43,9 @@ type Detail =
   | { type: 'event'; event?: CareEvent }
   | { type: 'lesson'; lesson: Lesson }
   | { type: 'search' }
-  | { type: 'settings' };
+  | { type: 'settings' }
+  | { type: 'history' }
+  | { type: 'brand' };
 interface InstallPrompt extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -77,7 +82,7 @@ export default function PetApp() {
   }, []);
   useEffect(() => {
     const saved = readData();
-    if (saved && saved.pets.length) setData(saved);
+    setData(saved ?? createDemoData());
     const params = new URLSearchParams(location.search);
     const t = params.get('tab');
     if (t === 'today' || t === 'schedule' || t === 'training') setTab(t);
@@ -235,7 +240,17 @@ export default function PetApp() {
         ? []
         : previous.events.filter((e) => e.petId === saved.id && !e.id.startsWith(saved.id + '-'));
       const events = [...oldEvents, ...defaultEvents(saved), ...customEvents];
-      return { ...previous, pets, events, activePetId: saved.id, onboarded: true, demoMode: false };
+      return {
+        ...previous,
+        pets,
+        events,
+        activePetId: saved.id,
+        onboarded: true,
+        demoMode: false,
+        completed: replace ? [] : previous.completed,
+        trained: replace ? [] : previous.trained,
+        history: replace ? [] : previous.history,
+      };
     });
     setPage('main');
     setTab('today');
@@ -285,7 +300,7 @@ export default function PetApp() {
   };
   const share = async () => {
     const shareData = {
-      title: 'My Pets',
+      title: brand.name,
       text: `A little care. A lot of love. ${pet.name}’s everyday companion.`,
       url: location.origin,
     };
@@ -305,7 +320,7 @@ export default function PetApp() {
     );
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'my-pets-backup.json';
+    a.download = 'nuzzle-backup.json';
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
@@ -351,7 +366,11 @@ export default function PetApp() {
             ? 'Grow together'
             : detail?.type === 'search'
               ? 'Find a little something'
-              : 'Make it yours';
+              : detail?.type === 'history'
+                ? `${pet.name}’s little history`
+                : detail?.type === 'brand'
+                  ? 'The identity studio'
+                  : 'Make it yours';
   return (
     <MotionConfig reducedMotion="user">
       <div className={`app-shell ${detail ? 'has-sheet' : ''}`}>
@@ -365,7 +384,7 @@ export default function PetApp() {
               <button
                 className="brand-button"
                 onClick={() => navigate('today')}
-                aria-label="My Pets home"
+                aria-label="Nuzzle home"
               >
                 <Brand />
               </button>
@@ -445,6 +464,13 @@ export default function PetApp() {
                   onAdd={() => openDetail({ type: 'event' })}
                   isDemo={!!data.demoMode}
                   onPersonalize={addPet}
+                  historyCard={
+                    <MonthCard
+                      data={data}
+                      pet={pet}
+                      onOpen={() => openDetail({ type: 'history' })}
+                    />
+                  }
                 />
               ) : tab === 'schedule' ? (
                 <Schedule
@@ -533,6 +559,19 @@ export default function PetApp() {
               setData((prev) => ({
                 ...prev,
                 trained: Array.from(new Set([...prev.trained, `${pet.id}:${detail.lesson.id}`])),
+                history: [
+                  ...(prev.history ?? []),
+                  {
+                    id: crypto.randomUUID(),
+                    petId: pet.id,
+                    date: dateKey(new Date()),
+                    kind: 'practice' as const,
+                    title: detail.lesson.title,
+                    note: 'A little time spent growing together.',
+                    minutes: detail.lesson.duration,
+                    lessonId: detail.lesson.id,
+                  },
+                ],
               }));
               haptic(true);
               if (data.sound) playTone();
@@ -548,11 +587,47 @@ export default function PetApp() {
             onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
             onEvent={(event) => openDetail({ type: 'event', event })}
           />
+        ) : detail?.type === 'history' ? (
+          <MonthReview
+            data={data}
+            pet={pet}
+            onAddNote={(entry) => {
+              setData((previous) => ({
+                ...previous,
+                history: [...(previous.history ?? []), entry],
+              }));
+              notify('An observation, kept close.');
+            }}
+            onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
+          />
+        ) : detail?.type === 'brand' ? (
+          <BrandStudio />
         ) : detail?.type === 'settings' ? (
           <div className="settings-detail">
             <Brand />
             <h3>Little things, your way.</h3>
             <p>A calmer everyday companion.</p>
+            <div className="settings-row">
+              <div>
+                <strong>A little identity</strong>
+                <span>Nuzzle, Pippa, and Kindred. Explore the directions.</span>
+              </div>
+              <IconButton
+                label="Explore brand directions"
+                onClick={() => openDetail({ type: 'brand' })}
+              >
+                <PawPrintIcon size={22} />
+              </IconButton>
+            </div>
+            <div className="settings-row">
+              <div>
+                <strong>A month of little moments</strong>
+                <span>Care, practice, and observations for {pet.name}.</span>
+              </div>
+              <IconButton label="Open care history" onClick={() => openDetail({ type: 'history' })}>
+                <CalendarDotsIcon size={22} />
+              </IconButton>
+            </div>
             <div className="appearance-settings">
               <strong>Appearance</strong>
               <p>Follow your device, or choose your own.</p>
@@ -566,6 +641,8 @@ export default function PetApp() {
                 ).map(({ id, label, Icon }) => (
                   <motion.button
                     key={id}
+                    aria-label={label}
+                    title={label}
                     aria-pressed={(data.appearance ?? 'system') === id}
                     onClick={() => {
                       setData((previous) => ({ ...previous, appearance: id as Appearance }));
@@ -584,7 +661,7 @@ export default function PetApp() {
                       size={21}
                       weight={(data.appearance ?? 'system') === id ? 'fill' : 'regular'}
                     />
-                    <span>{label}</span>
+                    <span className="sr-only">{label}</span>
                   </motion.button>
                 ))}
               </div>
@@ -608,7 +685,7 @@ export default function PetApp() {
                 <span>Your little world, one tap away.</span>
               </div>
               <IconButton
-                label="Install My Pets"
+                label="Install Nuzzle"
                 onClick={() => {
                   if (install) {
                     void install.prompt();
@@ -645,7 +722,7 @@ export default function PetApp() {
                 <span>Send someone the app.</span>
               </div>
               <IconButton
-                label="Share My Pets"
+                label="Share Nuzzle"
                 onClick={() => {
                   void share();
                 }}

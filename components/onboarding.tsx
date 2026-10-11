@@ -200,10 +200,10 @@ export default function Onboarding({
                 </p>
                 <div className="welcome-actions">
                   <button className="primary-button" onClick={() => setStep(1)}>
-                    Meet my pet <ArrowRightIcon size={21} />
+                    Meet my pet
                   </button>
                   <button className="plain-button" onClick={onExplore}>
-                    Explore with Milo <ArrowRightIcon size={17} />
+                    Explore with Milo
                   </button>
                 </div>
                 <div className="welcome-footer">
@@ -502,7 +502,15 @@ export default function Onboarding({
                 </IconButton>
                 <span className="step-count">{step} of 3</span>
                 <button
-                  className="primary-button"
+                  className="icon-button primary-icon"
+                  aria-label={
+                    step === 3
+                      ? initial
+                        ? 'Save changes'
+                        : 'Meet ' + (name.trim() || 'my pet')
+                      : 'Continue'
+                  }
+                  title={step === 3 ? 'Save pet profile' : 'Continue'}
                   disabled={step === 2 && !breed}
                   onClick={() => {
                     setError('');
@@ -510,12 +518,7 @@ export default function Onboarding({
                     else finish();
                   }}
                 >
-                  {step === 3
-                    ? initial
-                      ? 'Save changes'
-                      : 'Meet ' + (name.trim() || 'my pet')
-                    : 'Continue'}
-                  <ArrowRightIcon size={21} />
+                  {step === 3 ? <CheckIcon size={24} /> : <ArrowRightIcon size={24} />}
                 </button>
               </footer>
             </>
