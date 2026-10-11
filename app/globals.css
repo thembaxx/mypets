@@ -5024,6 +5024,75 @@ textarea::placeholder {
 .species-card .asset-chicken {
   --art-zoom: 210%;
 }
+/* The latest supplied animals fill their frames; keep their original JPEGs intact. */
+:root[data-theme]
+  .animal-art:is(.asset-hedgehog, .asset-ferret, .asset-canary, .asset-salamander, .asset-iguana)
+  img {
+  filter: contrast(1.08) brightness(1.26);
+}
+.animal-art.asset-fish img,
+.animal-art.asset-snake img,
+.animal-art.asset-hedgehog img,
+.animal-art.asset-ferret img,
+.animal-art.asset-canary img,
+.animal-art.asset-salamander img,
+.animal-art.asset-iguana img,
+.animal-art.asset-gecko img {
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  transform: none;
+  object-fit: contain;
+}
+.species-card.hedgehog,
+.species-card.ferret,
+.species-card.snake {
+  --art-panel: #f2e7c7;
+}
+.species-card.salamander,
+.species-card.gecko {
+  --art-panel: #eae4ef;
+}
+.species-card.iguana {
+  --art-panel: #e4ecd7;
+}
+:root[data-theme='dark'] .species-card.hedgehog,
+:root[data-theme='dark'] .species-card.ferret,
+:root[data-theme='dark'] .species-card.snake {
+  --art-panel: #c4b589;
+}
+:root[data-theme='dark'] .species-card.salamander,
+:root[data-theme='dark'] .species-card.gecko {
+  --art-panel: #b9b0c6;
+}
+:root[data-theme='dark'] .species-card.iguana {
+  --art-panel: #a9bb95;
+}
+.carousel-pet.snake,
+.carousel-pet.hedgehog,
+.carousel-pet.ferret {
+  background: linear-gradient(150deg, #f2e2c8, #d7b285);
+}
+.carousel-pet.salamander,
+.carousel-pet.gecko {
+  background: linear-gradient(150deg, #eee3ef, #cab7d4);
+}
+.carousel-pet.iguana {
+  background: linear-gradient(150deg, #e3edcd, #b8ce98);
+}
+:root[data-theme='dark'] .carousel-pet.snake,
+:root[data-theme='dark'] .carousel-pet.hedgehog,
+:root[data-theme='dark'] .carousel-pet.ferret {
+  background: linear-gradient(150deg, #c1ac87, #99794d);
+}
+:root[data-theme='dark'] .carousel-pet.salamander,
+:root[data-theme='dark'] .carousel-pet.gecko {
+  background: linear-gradient(150deg, #bfaaca, #8c709b);
+}
+:root[data-theme='dark'] .carousel-pet.iguana {
+  background: linear-gradient(150deg, #b7c998, #8caa66);
+}
 @media (prefers-reduced-transparency: reduce) {
   .toast {
     color: var(--ink);

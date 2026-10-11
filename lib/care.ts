@@ -1,4 +1,4 @@
-import { extraGuide, extraEvents, extraFacts, extraLessons, extraSources } from './extra-care';
+import { extraGuide, extraEvents, extraFacts, extraLessons } from './extra-care';
 import type { Species } from './species';
 export type { Species } from './species';
 export interface Pet {
@@ -97,7 +97,13 @@ export const breedOptions: Record<Species, string[]> = {
     'Campbell’s Dwarf',
     'Chinese Hamster',
   ],
-  bird: ['Budgerigar', 'English Budgerigar', 'Cockatiel', 'Lovebird'],
+  bird: ['Budgerigar', 'English Budgerigar', 'Canary', 'Cockatiel', 'Lovebird'],
+  snake: ['Ball Python', 'Corn Snake'],
+  hedgehog: ['African Pygmy Hedgehog'],
+  ferret: ['Sable', 'Albino', 'Silver', 'Champagne'],
+  salamander: ['Fire Salamander', 'Tiger Salamander'],
+  iguana: ['Green Iguana'],
+  gecko: ['Leopard Gecko', 'Crested Gecko'],
   'guinea-pig': ['American', 'Abyssinian', 'Peruvian', 'Teddy', 'Mixed breed'],
   rabbit: [
     'Holland Lop',
@@ -120,6 +126,19 @@ export const demoPets: Pet[] = [
   { id: 'angel', name: 'Angel', species: 'fish', breed: 'Freshwater Angelfish', ageMonths: 18 },
   { id: 'peanut', name: 'Peanut', species: 'guinea-pig', breed: 'American', ageMonths: 20 },
   { id: 'olive', name: 'Olive', species: 'bird', breed: 'English Budgerigar', ageMonths: 24 },
+  { id: 'saffron', name: 'Saffron', species: 'bird', breed: 'Canary', ageMonths: 20 },
+  { id: 'atlas', name: 'Atlas', species: 'snake', breed: 'Ball Python', ageMonths: 48 },
+  {
+    id: 'juniper',
+    name: 'Juniper',
+    species: 'hedgehog',
+    breed: 'African Pygmy Hedgehog',
+    ageMonths: 16,
+  },
+  { id: 'bandit', name: 'Bandit', species: 'ferret', breed: 'Sable', ageMonths: 26 },
+  { id: 'ember', name: 'Ember', species: 'salamander', breed: 'Fire Salamander', ageMonths: 32 },
+  { id: 'fern', name: 'Fern', species: 'iguana', breed: 'Green Iguana', ageMonths: 42 },
+  { id: 'goldie', name: 'Goldie', species: 'gecko', breed: 'Leopard Gecko', ageMonths: 24 },
 ];
 export function ageLabel(months: number) {
   if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} old`;
@@ -133,6 +152,12 @@ export function lifeStage(pet: Pet): 'young' | 'adult' | 'senior' {
     bird: [12, /Cockatiel/i.test(pet.breed) ? 180 : 84],
     'guinea-pig': [6, 60],
     fish: [12, /angelfish/i.test(pet.breed) ? 84 : 120],
+    snake: [/ball python/i.test(pet.breed) ? 36 : 24, 180],
+    hedgehog: [6, 36],
+    ferret: [12, 60],
+    salamander: [24, 120],
+    iguana: [36, 120],
+    gecko: [18, 144],
   };
   const bounds = stages[pet.species];
   if (bounds)
@@ -438,18 +463,10 @@ export function factsFor(pet: Pet): Fact[] {
         ? sources.catCare
         : pet.species === 'rabbit'
           ? sources.rabbitCare
-          : pet.species === 'chicken'
-            ? extraSources.chicken
-            : pet.species === 'fish'
-              ? extraSources.fish
-              : pet.species === 'hamster'
-                ? extraSources.hamster
-                : pet.species === 'bird'
-                  ? extraSources.bird
-                  : extraSources.guinea;
+          : extraFacts(pet)[0].source;
   const sourceName = ['dog', 'cat', 'rabbit'].includes(pet.species)
     ? 'PDSA veterinary team'
-    : 'RSPCA animal welfare';
+    : extraFacts(pet)[0].sourceName;
   return [
     ...baseFactsFor(pet),
     {

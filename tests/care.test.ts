@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
+import { animalAsset } from '../lib/species';
 import {
   careGuide,
   defaultEvents,
@@ -33,7 +34,11 @@ test('additional pets get habitat and enrichment care without dog routines', () 
   for (const pet of demoPets.slice(3)) {
     assert.ok(defaultEvents(pet).length >= 4);
     assert.ok(defaultEvents(pet).every((event) => event.kind !== 'walk'));
-    assert.ok(factsFor(pet).every((fact) => fact.source.startsWith('https://www.rspca.org.uk/')));
+    assert.ok(
+      factsFor(pet).every((fact) =>
+        ['www.rspca.org.uk', 'www.msdvetmanual.com'].includes(new URL(fact.source).hostname),
+      ),
+    );
     assert.ok(lessonsFor(pet).every((lesson) => !['sit', 'leash', 'recall'].includes(lesson.id)));
   }
   const hamster = demoPets.find((pet) => pet.species === 'hamster')!;
@@ -52,6 +57,49 @@ test('additional pets get habitat and enrichment care without dog routines', () 
   const chicken = demoPets.find((pet) => pet.species === 'chicken')!;
   assert.match(careGuide(chicken).dietBody, /starter or grower/);
   assert.match(careGuide({ ...chicken, ageMonths: 18 }).dietBody, /laying status/);
+});
+test('new animals have distinct diets and feeding checks avoid invented daily meals', () => {
+  const petFor = (species: Pet['species']) => demoPets.find((pet) => pet.species === species)!;
+  for (const species of ['snake', 'salamander', 'gecko'] as const) {
+    assert.ok(
+      defaultEvents(petFor(species)).every(
+        (event) => event.kind !== 'meal' && event.kind !== 'walk',
+      ),
+    );
+    assert.ok(
+      defaultEvents(petFor(species)).some((event) => event.title === 'Review the feeding log'),
+    );
+  }
+  const gecko = petFor('gecko');
+  assert.match(careGuide(gecko).dietBody, /gut-loaded feeder insects/);
+  assert.match(
+    careGuide({ ...gecko, breed: 'Crested Gecko' }).dietBody,
+    /complete crested-gecko diet/,
+  );
+  assert.match(
+    careGuide({ ...gecko, breed: 'Unknown' }).dietBody,
+    /Identify the exact gecko species/,
+  );
+  assert.match(careGuide(petFor('iguana')).dietBody, /herbivores/);
+  assert.ok(
+    defaultEvents({ ...petFor('iguana'), breed: 'Unknown' }).every(
+      (event) => event.kind !== 'meal',
+    ),
+  );
+  assert.match(careGuide(petFor('ferret')).dietBody, /obligate carnivores/);
+  const hedgehog = petFor('hedgehog');
+  assert.ok(
+    defaultEvents(hedgehog)
+      .filter((event) => event.kind === 'play' || event.kind === 'meal')
+      .every((event) => event.time >= '19:00'),
+  );
+  assert.ok(careGuide({ ...hedgehog, ageMonths: 40 }).exercise < careGuide(hedgehog).exercise);
+  const canary = demoPets.find((pet) => pet.breed === 'Canary')!;
+  assert.match(careGuide(canary).dietBody, /balanced canary diet/);
+  assert.match(lessonsFor(canary)[0].steps.join(' '), /without forcing/);
+  assert.equal(animalAsset(canary.species, canary.breed), 'canary');
+  assert.equal(animalAsset('fish', 'Goldfish'), 'fish');
+  assert.equal(animalAsset('fish', 'Freshwater Angelfish'), 'angelfish');
 });
 test('breed affects the adult dog starting routine', () => {
   assert.ok(careGuide(dog).exercise > careGuide({ ...dog, breed: 'French Bulldog' }).exercise);

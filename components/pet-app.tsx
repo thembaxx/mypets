@@ -336,7 +336,7 @@ export default function PetApp() {
           onSave={savePet}
           onExplore={() => {
             setData((p) => ({ ...p, onboarded: true, demoMode: true }));
-            notify('Meet ten little companions. Explore their different worlds.');
+            notify(`Meet ${demoPets.length} little companions. Explore their different worlds.`);
           }}
           onClose={
             data.onboarded

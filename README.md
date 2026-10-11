@@ -1,6 +1,6 @@
 # Nuzzle
 
-A mobile-first daily companion for dogs, cats, rabbits, chickens, fish, hamsters, birds, and guinea pigs, built with Next.js App Router, TypeScript, Tailwind CSS, Motion, Phosphor icons, and Three.js. Oxfmt and Oxlint keep the source consistent.
+A mobile-first daily companion for dogs, cats, rabbits, chickens, fish, hamsters, birds, guinea pigs, snakes, hedgehogs, ferrets, salamanders, iguanas, and geckos, built with Next.js App Router, TypeScript, Tailwind CSS, Motion, Phosphor icons, and Three.js. Oxfmt and Oxlint keep the source consistent.
 
 ## Run
 
@@ -36,7 +36,7 @@ All inference in this app uses browser WebAssembly, so Node GPU libraries are no
 
 Nuzzle is the working name: a warm, species-neutral word for closeness. Two soft ivory forms lean together on a forest-green tile, with an apricot dot. The scalable SVG and raster PWA icons are original implementation artwork; the supplied animal illustrations are unchanged. Preferences opens an interactive identity studio comparing Nuzzle, Pippa, and Kindred, including a generated concept board. These are creative directions, without verified trademark or name availability. `lib/brand.ts` holds the identity; `npm run brand:icons` regenerates app icons from the SVG.
 
-The demo seeds thirty past days across all ten sample pets, with imperfect care logs, ten practices per pet, species-specific observations, completed check-ins, and an upcoming review. A monthly chart opens a date-by-date care and learning history. Add journal notes, expand observations, and revisit a practice from its record. Actual practices and notes save into that history. Daily discoveries rotate through expanded, sourced fact collections.
+The demo seeds thirty past days across all seventeen sample pets, with imperfect care logs, ten practices per pet, species-specific observations, completed check-ins, and an upcoming review. A monthly chart opens a date-by-date care and learning history. Add journal notes, expand observations, and revisit a practice from its record. Actual practices and notes save into that history. Daily discoveries rotate through expanded, sourced fact collections.
 
 The migration is idempotent and adds history only to demo collections. Creating the first personal pet clears the sample history; existing personal collections receive no invented records. Sample observations are visibly marked. The browser storage key remains `mypets-v1` so rebranding retains profiles, photos, routines, and preferences.
 
@@ -60,6 +60,8 @@ The launch screen pairs the Nuzzle wordmark with a background-removed adaptation
 
 The expanded sample collection includes all seven newly supplied animal images. Goldfish and angelfish use different illustrations and habitat guidance; the second budgie is a variety illustration. Existing demo collections gain the new samples without changing stored routines. Personal collections remain intact. New species have sourced nutrition, facts, habitat checks, and guided care or enrichment rather than dog obedience lessons. Suggested times are editable, and life-stage categories are approximate; care must follow the exact species and veterinary guidance.
 
+The next collection adds the supplied snake, hedgehog, ferret, canary, salamander, iguana, and gecko, and replaces the existing goldfish artwork. All eight JPEGs are copied unchanged. Full-frame sizing replaces the previous goldfish crop; the five JPEGs with baked-in checkerboards receive CSS contrast/brightness compositing. Canary guidance differs from the parrot plan. Reptile and amphibian calendars use feeding-log reviews rather than assumed daily meals, with different diets for green iguanas, leopard geckos, and crested geckos. Unknown species choices retain specialist identification guidance. Existing seeded demos gain a month of history only for newly added pets; existing records and personal collections remain intact.
+
 ## Data and device capabilities
 
 Pet profiles, compressed uploaded photos, routines, completed care, and training progress are saved in this browser's local storage. The app shows a storage warning if a write fails. Data does not sync between devices. Clearing browser data removes saved records; preferences include a JSON backup export.
@@ -79,8 +81,9 @@ Changing a pet's age, breed, or species regenerates its suggested routine and pr
 - `components/ambient-scene.tsx`: real WebGL scene and fallback.
 - `lib/care.ts`: care rules, sourced content, date filtering, and calendar export.
 - `lib/species.ts` and `lib/extra-care.ts`: species registry, original illustrations, additional care rules, and sources.
+- `lib/exotic-care.ts`: reptile, amphibian, hedgehog, and ferret care, facts, and guided observation.
 - `lib/appearance.ts`: pre-paint theme and browser-chrome synchronization.
 - `lib/identify.ts`: local visual recognition and confirmation suggestions.
 - `public/sw.js` and `scripts/prepare-pwa.mjs`: versioned offline app shell.
 
-Care sources are linked within the app and include PDSA, RSPCA, and the American Kennel Club. Interface inspiration comes from the supplied reference screens, Apple's materials and sheets guidance, and the MDN corner-shape reference.
+Care sources are linked within the app and include PDSA, RSPCA, MSD Veterinary Manual, and the American Kennel Club. Interface inspiration comes from the supplied reference screens, Apple's materials and sheets guidance, and the MDN corner-shape reference.

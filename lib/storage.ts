@@ -59,39 +59,43 @@ export function parseData(raw: string): AppData | null {
     const additions = data.demoMode
       ? demoPets.filter((pet) => !data.pets.some((saved: Pet) => saved.id === pet.id))
       : [];
-    return seedDemoHistory({
-      ...data,
-      pets: [...data.pets, ...additions],
-      events: [...data.events, ...additions.flatMap(defaultEvents)],
-      appearance: ['light', 'dark'].includes(data.appearance) ? data.appearance : 'system',
-      activePetId: data.pets.some((pet: Pet) => pet.id === data.activePetId)
-        ? data.activePetId
-        : data.pets[0].id,
-      completed: Array.isArray(data.completed)
-        ? data.completed.filter((item: unknown) => typeof item === 'string')
-        : [],
-      trained: Array.isArray(data.trained)
-        ? data.trained.filter((item: unknown) => typeof item === 'string')
-        : [],
-      history: Array.isArray(data.history)
-        ? data.history.filter(
-            (entry: HistoryEntry) =>
-              entry &&
-              typeof entry.id === 'string' &&
-              typeof entry.petId === 'string' &&
-              /^\d{4}-\d{2}-\d{2}$/.test(entry.date) &&
-              ['practice', 'note'].includes(entry.kind) &&
-              typeof entry.title === 'string' &&
-              typeof entry.note === 'string' &&
-              (entry.minutes === undefined ||
-                (Number.isFinite(entry.minutes) && entry.minutes > 0)),
-          )
-        : [],
-      demoSeedVersion: data.demoSeedVersion === 1 ? 1 : undefined,
-      onboarded: !!data.onboarded,
-      sound: !!data.sound,
-      demoMode: !!data.demoMode,
-    });
+    return seedDemoHistory(
+      {
+        ...data,
+        pets: [...data.pets, ...additions],
+        events: [...data.events, ...additions.flatMap(defaultEvents)],
+        appearance: ['light', 'dark'].includes(data.appearance) ? data.appearance : 'system',
+        activePetId: data.pets.some((pet: Pet) => pet.id === data.activePetId)
+          ? data.activePetId
+          : data.pets[0].id,
+        completed: Array.isArray(data.completed)
+          ? data.completed.filter((item: unknown) => typeof item === 'string')
+          : [],
+        trained: Array.isArray(data.trained)
+          ? data.trained.filter((item: unknown) => typeof item === 'string')
+          : [],
+        history: Array.isArray(data.history)
+          ? data.history.filter(
+              (entry: HistoryEntry) =>
+                entry &&
+                typeof entry.id === 'string' &&
+                typeof entry.petId === 'string' &&
+                /^\d{4}-\d{2}-\d{2}$/.test(entry.date) &&
+                ['practice', 'note'].includes(entry.kind) &&
+                typeof entry.title === 'string' &&
+                typeof entry.note === 'string' &&
+                (entry.minutes === undefined ||
+                  (Number.isFinite(entry.minutes) && entry.minutes > 0)),
+            )
+          : [],
+        demoSeedVersion: data.demoSeedVersion === 1 ? 1 : undefined,
+        onboarded: !!data.onboarded,
+        sound: !!data.sound,
+        demoMode: !!data.demoMode,
+      },
+      new Date(),
+      additions.map((pet) => pet.id),
+    );
   } catch {
     return null;
   }

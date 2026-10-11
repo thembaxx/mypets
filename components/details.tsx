@@ -140,11 +140,13 @@ export function DietDetail({ pet }: { pet: Pet }) {
         <div>
           <strong>{guide.meals}</strong>
           <span>
-            {['rabbit', 'chicken', 'bird', 'guinea-pig'].includes(pet.species)
-              ? 'daily freshness checks'
-              : pet.species === 'fish'
-                ? 'editable feeding slots'
-                : 'suggested meals a day'}
+            {['snake', 'salamander', 'iguana', 'gecko'].includes(pet.species)
+              ? 'daily care checks, not feeding frequency'
+              : ['rabbit', 'chicken', 'bird', 'guinea-pig', 'ferret'].includes(pet.species)
+                ? 'daily freshness checks'
+                : pet.species === 'fish'
+                  ? 'editable feeding slots'
+                  : 'suggested meals a day'}
           </span>
         </div>
         <div>
@@ -164,20 +166,27 @@ export function DietDetail({ pet }: { pet: Pet }) {
       )}
       <h4>{pet.species === 'rabbit' ? 'Keep it gentle' : 'The little extras'}</h4>
       <p>
-        {pet.species === 'fish'
-          ? 'Keep feeding and water-quality checks together. Remove uneaten food, and confirm the plan with an aquatic specialist before changing the routine.'
-          : pet.species === 'chicken'
-            ? 'Growing chicks need an age-specific plan. Confirm feeding and brooder care with a poultry vet; do not use laying-hen feed for chicks.'
-            : pet.species === 'bird'
-              ? 'Make changes gradually with an avian vet. Unweaned birds need specialist feeding care; this routine is for birds eating independently.'
-              : pet.species === 'guinea-pig'
-                ? 'Monitor appetite and droppings daily. Seek prompt veterinary advice if eating changes. Keep fresh hay available at all times.'
-                : pet.species === 'rabbit'
-                  ? 'Avoid muesli-style mixes and sudden diet changes. Introduce suitable fresh greens gradually. Seek prompt veterinary advice if eating or droppings change.'
-                  : 'Use part of the daily food allowance for training rewards. Introduce a new food gradually and check with your vet if your pet has a health condition or a prescribed diet.'}
+        {['snake', 'hedgehog', 'ferret', 'salamander', 'iguana', 'gecko'].includes(pet.species)
+          ? 'Follow the plan for their exact species and age. Log appetite, feeding dates, and body condition. Introduce changes with an exotic-pet vet, and set feeding reminders only when meals are due.'
+          : pet.species === 'fish'
+            ? 'Keep feeding and water-quality checks together. Remove uneaten food, and confirm the plan with an aquatic specialist before changing the routine.'
+            : pet.species === 'chicken'
+              ? 'Growing chicks need an age-specific plan. Confirm feeding and brooder care with a poultry vet; do not use laying-hen feed for chicks.'
+              : pet.species === 'bird'
+                ? 'Make changes gradually with an avian vet. Unweaned birds need specialist feeding care; this routine is for birds eating independently.'
+                : pet.species === 'guinea-pig'
+                  ? 'Monitor appetite and droppings daily. Seek prompt veterinary advice if eating changes. Keep fresh hay available at all times.'
+                  : pet.species === 'rabbit'
+                    ? 'Avoid muesli-style mixes and sudden diet changes. Introduce suitable fresh greens gradually. Seek prompt veterinary advice if eating or droppings change.'
+                    : 'Use part of the daily food allowance for training rewards. Introduce a new food gradually and check with your vet if your pet has a health condition or a prescribed diet.'}
       </p>
       <SourceLink href={guide.source}>
-        Nutrition guidance · {guide.source.includes('rspca') ? 'RSPCA' : 'PDSA veterinary team'}
+        Nutrition guidance ·{' '}
+        {guide.source.includes('rspca')
+          ? 'RSPCA'
+          : guide.source.includes('msdvetmanual')
+            ? 'MSD Veterinary Manual'
+            : 'PDSA veterinary team'}
       </SourceLink>
     </div>
   );

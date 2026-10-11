@@ -345,7 +345,9 @@ export function Today({
                 {pet.species === 'rabbit' ? 'Hay is the hero.' : 'A happier, healthier bowl.'}
               </h3>
               <p>
-                {guide.meals} daily food checks · {lifeStage(pet)} care
+                {guide.meals} daily{' '}
+                {['snake', 'salamander', 'iguana', 'gecko'].includes(pet.species) ? 'care' : 'food'}{' '}
+                {guide.meals === 1 ? 'check' : 'checks'} · {lifeStage(pet)} care
               </p>
             </div>
             <ArrowUpRightIcon size={21} />

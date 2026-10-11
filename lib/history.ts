@@ -61,15 +61,59 @@ const observations: Record<Pet['species'], string[]> = {
     'Checked the water and replenished fresh hay.',
     'Investigated a hay-filled paper bag with their companion.',
   ],
+  snake: [
+    'Checked the thermostat readings and refreshed water.',
+    'Observed a quiet exploration between the hides.',
+    'Reviewed the last feeding date; no meal was due today.',
+    'Logged humidity and left the shedding snake undisturbed.',
+  ],
+  hedgehog: [
+    'Woke naturally after dusk and explored the tunnel.',
+    'Checked the solid-surface wheel and measured evening food.',
+    'Left the daytime nest quiet and checked the warmth.',
+    'Sniffed around a familiar hide during a short evening visit.',
+  ],
+  ferret: [
+    'Explored the safe tunnels during supervised play.',
+    'Checked small gaps and removed a damaged toy.',
+    'Refreshed complete ferret food and drinking water.',
+    'Curled up in a quiet hide after an active play session.',
+  ],
+  salamander: [
+    'Checked suitable moisture and dechlorinated water.',
+    'Observed from outside the enclosure without handling.',
+    'Reviewed the feeding log and removed uneaten prey.',
+    'Recorded habitat conditions and checked the hides.',
+  ],
+  iguana: [
+    'Refreshed leafy greens and noted normal appetite.',
+    'Checked the basking readings and UVB maintenance date.',
+    'Observed voluntary climbing along a stable branch.',
+    'Refreshed drinking water and recorded humidity.',
+  ],
+  gecko: [
+    'Checked the warm, cool, and humid hides.',
+    'Observed evening exploration without lifting or chasing.',
+    'Reviewed the feeding log and supplementation plan.',
+    'Logged temperature readings and refreshed water.',
+  ],
 };
 
-export function seedDemoHistory(data: AppData, now = new Date()): AppData {
-  if (!data.demoMode || data.demoSeedVersion === 1) return data;
+export function seedDemoHistory(
+  data: AppData,
+  now = new Date(),
+  addedPetIds: string[] = [],
+): AppData {
+  if (!data.demoMode || (data.demoSeedVersion === 1 && !addedPetIds.length)) return data;
   const completed = new Set(data.completed);
   const trained = new Set(data.trained);
   const history: HistoryEntry[] = [...(data.history ?? [])];
   const events: CareEvent[] = [...data.events];
-  data.pets.forEach((pet, petIndex) => {
+  const seedPets =
+    data.demoSeedVersion === 1
+      ? data.pets.filter((pet) => addedPetIds.includes(pet.id))
+      : data.pets;
+  seedPets.forEach((pet, petIndex) => {
     const daily = data.events.filter((event) => event.petId === pet.id && event.repeat === 'daily');
     const lessons = lessonsFor(pet);
     for (let ago = 30; ago >= 1; ago--) {
@@ -95,7 +139,15 @@ export function seedDemoHistory(data: AppData, now = new Date()): AppData {
         });
       }
       if (ago % 4 === petIndex % 4) {
-        const notes = observations[pet.species];
+        const notes =
+          pet.species === 'bird' && /canary/i.test(pet.breed)
+            ? [
+                'Observed normal perching and quiet songbird activity.',
+                'Refreshed the canary food and water without an abrupt diet change.',
+                'Checked safe flight space and suitable perches.',
+                'Kept the evening lighting routine calm and consistent.',
+              ]
+            : observations[pet.species];
         history.push({
           id: `demo-note-${pet.id}-${date}`,
           petId: pet.id,

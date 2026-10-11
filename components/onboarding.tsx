@@ -16,6 +16,8 @@ import {
   BirdIcon,
   FishIcon,
   PawPrintIcon,
+  LeafIcon,
+  BugIcon,
 } from '@phosphor-icons/react';
 import { Animal, Brand, IconButton } from './shared';
 import { breedOptions, type Pet, type Species } from '@/lib/care';
@@ -118,8 +120,14 @@ export default function Onboarding({
     hamster: PawPrintIcon,
     bird: BirdIcon,
     'guinea-pig': PawPrintIcon,
+    snake: LeafIcon,
+    hedgehog: PawPrintIcon,
+    ferret: PawPrintIcon,
+    salamander: BugIcon,
+    iguana: LeafIcon,
+    gecko: LeafIcon,
   };
-  const variety = species === 'fish' || species === 'bird';
+  const variety = !['dog', 'cat', 'rabbit', 'chicken', 'guinea-pig'].includes(species);
   const chooseSpecies = (s: Species) => {
     if (s !== species) {
       setBreed('');

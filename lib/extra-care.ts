@@ -1,4 +1,5 @@
 import type { CareEvent, Fact, Lesson, Pet } from './care';
+import { exoticGuide, exoticEvents, exoticFacts, exoticLessons, isExotic } from './exotic-care';
 export const extraSources = {
   chicken: 'https://www.rspca.org.uk/adviceandwelfare/pets/chickens',
   fish: 'https://www.rspca.org.uk/adviceandwelfare/pets/fish',
@@ -11,6 +12,7 @@ export const extraSources = {
   guineaDiet: 'https://www.rspca.org.uk/adviceandwelfare/pets/rodents/guineapigs/diet',
 };
 export function extraGuide(pet: Pet) {
+  if (isExotic(pet.species)) return exoticGuide(pet);
   const gentle = pet.species === 'hamster' ? pet.ageMonths >= 18 : pet.ageMonths >= 72;
   const exercise = gentle ? 5 : 10;
   const shared = {
@@ -82,13 +84,17 @@ export function extraGuide(pet: Pet) {
         exerciseNote:
           'A short optional evening interaction when already awake. Keep tunnels, burrowing space, and a suitable wheel available; never wake them for the schedule.',
       };
-    case 'bird':
+    case 'bird': {
+      const canary = /canary/i.test(pet.breed);
       return {
         ...shared,
         activity: 'Safe flight & foraging',
-        diet: 'More variety than a seed bowl',
-        dietBody:
-          'For budgies and other small parrots, provide an appropriate balanced diet with pellets, suitable fresh vegetables, and a limited amount of seed. Change diets gradually with an avian vet; never abruptly remove familiar food.',
+        diet: canary ? 'A balanced menu for a little songbird' : 'More variety than a seed bowl',
+        dietBody: canary
+          ? 'Choose a balanced canary diet agreed with an avian vet, using appropriate formulated food or a carefully balanced seed-based plan with suitable fresh greens. Keep fresh water available. A budgie or parrot menu is not automatically right for a canary. Change food gradually and never withhold familiar food.'
+          : /budgerigar|cockatiel|lovebird/i.test(pet.breed)
+            ? 'For budgies and other small parrots, provide an appropriate balanced diet with pellets, suitable fresh vegetables, and a limited amount of seed. Change diets gradually with an avian vet; never abruptly remove familiar food.'
+            : 'Confirm the exact bird species with an avian specialist before choosing its diet. Seed-eating songbirds and parrots have different needs. Keep fresh water available and do not abruptly remove familiar food.',
         portion:
           'These freshness checks are not feeding limits. Confirm the exact bird species and age with an avian vet, especially for unweaned birds. Remove spoiled fresh foods and refresh water.',
         rest: 'A quiet night, a brighter morning',
@@ -98,6 +104,7 @@ export function extraGuide(pet: Pet) {
         exerciseNote:
           'Prepare a bird-safe room: shut windows and doors, cover hazards, switch off fans, and keep other pets away. Provide daily flight opportunities at their pace; this session is not a daily limit.',
       };
+    }
     case 'guinea-pig':
       return {
         ...shared,
@@ -120,6 +127,7 @@ export function extraGuide(pet: Pet) {
   }
 }
 export function extraEvents(pet: Pet): CareEvent[] {
+  if (isExotic(pet.species)) return exoticEvents(pet);
   const guide = extraGuide(pet);
   const event = (
     id: string,
@@ -204,6 +212,7 @@ export function extraEvents(pet: Pet): CareEvent[] {
   ];
 }
 export function extraFacts(pet: Pet): Fact[] {
+  if (isExotic(pet.species)) return exoticFacts(pet);
   const guide = extraGuide(pet);
   const content: Record<string, [string, string, string, string]> = {
     chicken: [
@@ -237,7 +246,15 @@ export function extraFacts(pet: Pet): Fact[] {
       extraSources.guinea,
     ],
   };
-  const [title, teaser, body, source] = content[pet.species];
+  const [title, teaser, body, source] =
+    pet.species === 'bird' && /canary/i.test(pet.breed)
+      ? [
+          'A songbird’s own little world.',
+          'Flight, quiet rest, and room to choose.',
+          'Canaries are songbirds rather than parrots. Provide safe flight space, suitable perches, and a consistent quiet night. Enjoy observing and listening without forcing step-up training or handling. Their diet and social setup should match the individual bird and avian advice.',
+          extraSources.bird,
+        ]
+      : content[pet.species];
   return [
     {
       id: 'world',
@@ -269,16 +286,18 @@ export function extraFacts(pet: Pet): Fact[] {
   ];
 }
 export function extraLessons(pet: Pet): Lesson[] {
+  if (isExotic(pet.species)) return exoticLessons(pet);
   const guide = extraGuide(pet);
   const source = extraFacts(pet)[0].source;
   const fish = pet.species === 'fish';
+  const canary = pet.species === 'bird' && /canary/i.test(pet.breed);
   return [
     {
-      id: fish ? 'observe' : 'trust',
-      title: fish ? 'Learn their normal' : 'A little more trust',
-      subtitle: fish ? 'Observe without disturbing.' : 'Let them choose the moment.',
+      id: fish || canary ? 'observe' : 'trust',
+      title: fish || canary ? 'Learn their normal' : 'A little more trust',
+      subtitle: fish || canary ? 'Observe without disturbing.' : 'Let them choose the moment.',
       duration: 3,
-      category: fish ? 'Observation' : 'Connection',
+      category: fish || canary ? 'Observation' : 'Connection',
       color: 'peach',
       source,
       steps: fish
@@ -288,12 +307,19 @@ export function extraLessons(pet: Pet): Lesson[] {
             'Notice changes and record them in a reminder.',
             'Check water quality and consult an aquatic specialist if something changes.',
           ]
-        : [
-            'Choose a calm, familiar space and wait until they are naturally awake.',
-            'Stay still and let your companion choose whether to approach. Avoid chasing or forcing contact.',
-            'For an unweaned animal, follow a vet’s age-specific care plan before offering treats.',
-            'Keep the moment short. Stop at any sign of stress and let them retreat.',
-          ],
+        : canary
+          ? [
+              'Sit quietly near the enclosure without tapping or approaching abruptly.',
+              'Notice their usual flight, perching, appetite, and vocal activity.',
+              'Offer safe flight space without forcing them onto your hand.',
+              'Record changes and discuss concerns with an avian vet.',
+            ]
+          : [
+              'Choose a calm, familiar space and wait until they are naturally awake.',
+              'Stay still and let your companion choose whether to approach. Avoid chasing or forcing contact.',
+              'For an unweaned animal, follow a vet’s age-specific care plan before offering treats.',
+              'Keep the moment short. Stop at any sign of stress and let them retreat.',
+            ],
     },
     {
       id: 'space',
