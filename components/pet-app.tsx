@@ -554,7 +554,12 @@ export default function PetApp() {
           </nav>
         )}
       </div>
-      <Sheet open={!!detail} title={detailTitle} onClose={closeDetail}>
+      <Sheet
+        open={!!detail}
+        title={detailTitle}
+        onClose={closeDetail}
+        variant={detail?.type === 'assistant' ? 'assistant' : 'default'}
+      >
         {detail?.type === 'fact' ? (
           <FactDetail
             key={detail.fact.id}

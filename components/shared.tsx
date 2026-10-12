@@ -131,16 +131,33 @@ export function Sheet({
   children,
   onClose,
   wide = false,
+  variant = 'default',
 }: {
   open: boolean;
   title: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  variant?: 'default' | 'assistant';
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
   const closeRef = useRef(onClose);
+  const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null);
+  useEffect(() => {
+    if (!open || variant !== 'assistant' || !window.visualViewport) return;
+    const visual = window.visualViewport;
+    const updateViewport = () => {
+      if (visual.scale === 1) setViewport({ height: visual.height, top: visual.offsetTop });
+    };
+    updateViewport();
+    visual.addEventListener('resize', updateViewport);
+    visual.addEventListener('scroll', updateViewport);
+    return () => {
+      visual.removeEventListener('resize', updateViewport);
+      visual.removeEventListener('scroll', updateViewport);
+    };
+  }, [open, variant]);
   useEffect(() => {
     closeRef.current = onClose;
   }, [onClose]);
@@ -159,9 +176,11 @@ export function Sheet({
         closeRef.current();
       }
       if (e.key === 'Tab') {
-        const focusables = ref.current?.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), input:not(:disabled), select, textarea, a[href], [tabindex="0"]',
-        );
+        const focusables = Array.from(
+          ref.current?.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], summary, [tabindex="0"]',
+          ) ?? [],
+        ).filter((element) => element.getClientRects().length && !element.closest('[inert]'));
         if (!focusables?.length) return;
         const first = focusables[0],
           last = focusables[focusables.length - 1];
@@ -186,7 +205,12 @@ export function Sheet({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="sheet-layer"
+          className={`sheet-layer ${variant === 'assistant' ? 'assistant-sheet-layer' : ''}`}
+          style={
+            variant === 'assistant' && viewport
+              ? { height: viewport.height, top: viewport.top, bottom: 'auto' }
+              : undefined
+          }
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -194,7 +218,7 @@ export function Sheet({
           <button className="sheet-backdrop" onClick={onClose} aria-label={`Close ${title}`} />
           <motion.div
             ref={ref}
-            className={`sheet ${wide ? 'sheet-wide' : ''}`}
+            className={`sheet ${wide ? 'sheet-wide' : ''} ${variant === 'assistant' ? 'sheet-assistant' : ''}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="sheet-title"

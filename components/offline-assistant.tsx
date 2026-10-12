@@ -1,11 +1,17 @@
 'use client';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   ArrowLeftIcon,
   ArrowUpIcon,
   ArrowClockwiseIcon,
-  ChatCircleDotsIcon,
   CheckIcon,
   DownloadSimpleIcon,
   LockSimpleIcon,
@@ -19,6 +25,10 @@ import {
   XIcon,
   CalendarPlusIcon,
   PawPrintIcon,
+  DotsThreeIcon,
+  CaretDownIcon,
+  BookOpenIcon,
+  InfoIcon,
 } from '@phosphor-icons/react';
 import { Animal, IconButton, SourceLink, haptic, playTone } from './shared';
 import { EventEditor } from './details';
@@ -83,7 +93,7 @@ function ModelControls({
         </span>
         <div>
           <span className="eyebrow">BUILT WITH LLAMA</span>
-          <h3>A companion on your device.</h3>
+          <h3>Offline, by your side.</h3>
         </div>
         {state.complete && (
           <span className="model-ready-mark" aria-label="Downloaded">
@@ -95,22 +105,49 @@ function ModelControls({
         Download Llama 3.2 to explain saved facts and lessons in your own words. Care notes, profile
         guidance, and reminders work without the download.
       </p>
-      <div className="model-facts">
-        <span>{formatBytes(MODEL_BYTES)} download</span>
-        <span>About 1.2 GB working memory</span>
-        <span>Runs on this device</span>
+      <dl className="model-facts">
+        <div>
+          <dt>Download</dt>
+          <dd>{formatBytes(MODEL_BYTES)}</dd>
+        </div>
+        <div>
+          <dt>Memory</dt>
+          <dd>~1.2 GB</dd>
+        </div>
+        <div>
+          <dt>Answers</dt>
+          <dd>On device</dd>
+        </div>
+      </dl>
+      <div className="model-device-status">
+        {state.complete && state.supported ? <CheckIcon size={20} /> : <InfoIcon size={20} />}
+        <div>
+          <strong>
+            {busy
+              ? 'Preparing Llama'
+              : state.phase === 'checking'
+                ? 'Checking your device'
+                : !state.supported
+                  ? 'Care notes are ready'
+                  : state.complete
+                    ? 'Saved for offline use'
+                    : state.phase === 'partial'
+                      ? 'Your download is paused'
+                      : 'Ready when you are'}
+          </strong>
+          <p className="model-status" role="status">
+            {busy
+              ? state.message
+              : !state.supported && state.phase !== 'checking'
+                ? state.message
+                : state.complete
+                  ? 'Downloaded files are available offline.'
+                  : state.phase === 'partial'
+                    ? 'A partial download is saved. Resume when you’re online.'
+                    : state.message}
+          </p>
+        </div>
       </div>
-      <p className="model-status" role="status">
-        {busy
-          ? state.message
-          : !state.supported && state.phase !== 'checking'
-            ? state.message
-            : state.complete
-              ? 'Downloaded files are available offline.'
-              : state.phase === 'partial'
-                ? 'A partial download is saved. Resume when you’re online.'
-                : state.message}
-      </p>
       {busy && (
         <div
           className="model-progress"
@@ -249,21 +286,28 @@ function ModelControls({
           </motion.div>
         )}
       </AnimatePresence>
-      {!!state.bytes && (
-        <p className="model-storage">
-          Model files: {formatBytes(state.bytes)}
-          {state.storageQuota
-            ? ` · Browser storage: ${formatBytes(state.storageUsed)} of ${formatBytes(state.storageQuota)}`
-            : ''}
-        </p>
-      )}
-      <p className="fine-print">
-        {state.persistent
-          ? 'Persistent storage is enabled.'
-          : 'The browser may reclaim downloaded files when storage is low.'}{' '}
-        Closing the app can pause a download. Finished files can be reused. A text model cannot
-        identify a breed from a photo.
-      </p>
+      <details className="model-details">
+        <summary>
+          Storage & download details <CaretDownIcon size={17} />
+        </summary>
+        <div>
+          {!!state.bytes && (
+            <p className="model-storage">
+              Model files: {formatBytes(state.bytes)}
+              {state.storageQuota
+                ? ` · Browser storage: ${formatBytes(state.storageUsed)} of ${formatBytes(state.storageQuota)}`
+                : ''}
+            </p>
+          )}
+          <p className="fine-print">
+            {state.persistent
+              ? 'Persistent storage is enabled.'
+              : 'The browser may reclaim downloaded files when storage is low.'}{' '}
+            Closing the app can pause a download. Finished files can be reused. A text model cannot
+            identify a breed from a photo.
+          </p>
+        </div>
+      </details>
       <div className="model-privacy">
         <LockSimpleIcon size={17} />
         <span>
@@ -311,14 +355,23 @@ export default function OfflineAssistant({
   const [storageError, setStorageError] = useState(false);
   const [review, setReview] = useState<{ messageId: string; event: CareEvent } | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [conversationTools, setConversationTools] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const active = useRef(true);
   const operation = useRef<AbortController | null>(null);
   const persistence = useRef<Promise<void>>(Promise.resolve());
   const busyRef = useRef(false);
   const autoSent = useRef(false);
   const transcript = useRef<HTMLDivElement>(null);
+  const composer = useRef<HTMLTextAreaElement>(null);
   const reduced = useReducedMotion();
   const modelOn = enabled && state.complete && state.supported;
+  useLayoutEffect(() => {
+    const field = composer.current;
+    if (!field || tools || review) return;
+    field.style.height = 'auto';
+    field.style.height = `${Math.min(field.scrollHeight, 120)}px`;
+  }, [input, tools, review, hydrated]);
   useEffect(() => {
     active.current = true;
     try {
@@ -354,10 +407,11 @@ export default function OfflineAssistant({
     const container = transcript.current;
     const newest = container?.querySelector<HTMLElement>('.assistant-message:last-of-type');
     container?.scrollTo({
-      top:
-        newest &&
-        newest.classList.contains('assistant') &&
-        newest.offsetHeight > container.clientHeight
+      top: !messages.length
+        ? 0
+        : newest &&
+            newest.classList.contains('assistant') &&
+            newest.offsetHeight > container.clientHeight
           ? newest.offsetTop - container.offsetTop
           : container.scrollHeight,
       behavior: reduced ? 'instant' : 'smooth',
@@ -396,6 +450,7 @@ export default function OfflineAssistant({
       setBusy(true);
       setWriting(false);
       setInput('');
+      setShowSuggestions(false);
       setNotice('');
       haptic();
       const controller = new AbortController();
@@ -511,11 +566,29 @@ export default function OfflineAssistant({
           <Animal species={pet.species} breed={pet.breed} photo={pet.photo} />
         </span>
         <div>
-          <strong>{pet.name}’s little companion</strong>
+          <strong>{pet.name}’s companion</strong>
           <small>
-            {ageLabel(pet.ageMonths)} · {modelOn ? 'Llama on this device' : 'Saved care notes'}
+            {ageLabel(pet.ageMonths)} <span aria-hidden="true">·</span>{' '}
+            <span className="assistant-mode">{modelOn ? 'Local Llama' : 'Care notes'}</span>
           </small>
         </div>
+        {!!messages.length && !tools && (
+          <motion.button
+            type="button"
+            className={`icon-button assistant-options ${conversationTools ? 'on' : ''}`}
+            aria-label="Conversation options"
+            title="Conversation options"
+            aria-expanded={conversationTools}
+            aria-controls="assistant-conversation-options"
+            whileTap={reduced ? undefined : { scale: 0.92 }}
+            onClick={() => {
+              setConversationTools(!conversationTools);
+              haptic();
+            }}
+          >
+            <DotsThreeIcon size={25} weight="bold" />
+          </motion.button>
+        )}
         <IconButton
           label="Model downloads and privacy"
           onClick={() => {
@@ -530,36 +603,39 @@ export default function OfflineAssistant({
         {tools && (
           <motion.div
             className="assistant-model-panel"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, x: reduced ? 0 : 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: reduced ? 0 : 8 }}
+            transition={{ duration: reduced ? 0 : 0.18 }}
           >
             <ModelControls enabled={enabled} onEnabled={preference} />
           </motion.div>
         )}
       </AnimatePresence>
       <div className="assistant-conversation">
-        <div className="assistant-toolbar">
-          <span>
-            <LockSimpleIcon size={15} /> A conversation kept on this device.
-          </span>
-          <div>
-            <IconButton
-              label="Download this conversation"
-              onClick={() => exportConversation(pet.name, messages)}
-              disabled={!messages.length}
-            >
-              <DownloadSimpleIcon size={20} />
-            </IconButton>
-            <IconButton
-              label="Clear this conversation"
-              onClick={() => setClearing(true)}
-              disabled={!messages.length || busy}
-            >
-              <TrashIcon size={20} />
-            </IconButton>
+        {conversationTools && (
+          <div className="assistant-toolbar" id="assistant-conversation-options">
+            <span>
+              <LockSimpleIcon size={15} /> Your saved conversation
+            </span>
+            <div>
+              <IconButton
+                label="Download this conversation"
+                onClick={() => exportConversation(pet.name, messages)}
+                disabled={!messages.length}
+              >
+                <DownloadSimpleIcon size={20} />
+              </IconButton>
+              <IconButton
+                label="Clear this conversation"
+                onClick={() => setClearing(true)}
+                disabled={!messages.length || busy}
+              >
+                <TrashIcon size={20} />
+              </IconButton>
+            </div>
           </div>
-        </div>
+        )}
         <AnimatePresence>
           {clearing && (
             <motion.div
@@ -574,6 +650,8 @@ export default function OfflineAssistant({
                 onClick={() => {
                   commit([]);
                   setClearing(false);
+                  setConversationTools(false);
+                  setShowSuggestions(false);
                 }}
               >
                 <CheckIcon size={22} />
@@ -597,18 +675,74 @@ export default function OfflineAssistant({
           aria-live="polite"
           aria-relevant="additions"
         >
-          {!messages.length && (
-            <div className="assistant-welcome">
-              <ChatCircleDotsIcon size={38} />
-              <h3>A little curious?</h3>
-              <p>
-                Ask about {pet.name}’s care, learn a lesson together, or look back at your recorded
-                month.
-              </p>
-              <span>
-                Care guidance uses the app’s sources. An assistant cannot diagnose an illness.
-              </span>
-            </div>
+          {!hydrated && (
+            <p className="assistant-opening" role="status">
+              Opening your saved conversation…
+            </p>
+          )}
+          {hydrated && !messages.length && (
+            <motion.div
+              className="assistant-welcome"
+              initial={{ opacity: 0, y: reduced ? 0 : 12 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="assistant-welcome-art">
+                <Animal
+                  species={pet.species}
+                  breed={pet.breed}
+                  photo={pet.photo}
+                  interactive
+                  sound={data.sound}
+                />
+              </div>
+              <span className="eyebrow">A LITTLE HELP, CLOSE BY</span>
+              <h3>Get to know {pet.name}.</h3>
+              <p>Care questions, small lessons, and a look back at your month.</p>
+            </motion.div>
+          )}
+          {hydrated && (!messages.length || showSuggestions) && (
+            <motion.div
+              className="assistant-suggestions"
+              aria-label="Suggested questions"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {assistantSuggestions(pet).map((question, index) => (
+                <motion.button
+                  type="button"
+                  key={question}
+                  aria-label={question}
+                  onClick={() => {
+                    void ask(question);
+                  }}
+                  disabled={!hydrated || busy}
+                  whileHover={reduced ? undefined : { y: -2 }}
+                  whileTap={reduced ? undefined : { scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+                >
+                  <strong>
+                    {
+                      [
+                        'Age & routine',
+                        'Your month together',
+                        'Practice a little',
+                        'Plan a reminder',
+                      ][index]
+                    }
+                  </strong>
+                  <span>
+                    {
+                      [
+                        `${pet.name}’s changing needs`,
+                        'Reflect on saved moments',
+                        'Make a lesson feel easier',
+                        'Make time for their care',
+                      ][index]
+                    }
+                  </span>
+                </motion.button>
+              ))}
+            </motion.div>
           )}
           <AnimatePresence initial={false}>
             {messages.map((message) => (
@@ -620,6 +754,7 @@ export default function OfflineAssistant({
                 transition={{ type: 'spring', stiffness: 330, damping: 28 }}
               >
                 <span className="assistant-message-label">
+                  {message.role === 'assistant' && <SparkleIcon size={14} weight="fill" />}
                   {message.role === 'user'
                     ? 'You'
                     : message.mode === 'llama'
@@ -636,9 +771,12 @@ export default function OfflineAssistant({
                 {!!message.sources?.length && (
                   <details className="assistant-sources">
                     <summary>
+                      <BookOpenIcon size={16} />
                       {message.sources.some((source) => source.href)
-                        ? 'Care sources and saved context'
+                        ? 'Sources & context'
                         : 'Saved context'}
+                      <span className="assistant-source-count">{message.sources.length}</span>
+                      <CaretDownIcon size={16} className="assistant-disclosure-caret" />
                     </summary>
                     {message.sources.map((source) => (
                       <div className="assistant-source" key={source.id}>
@@ -686,15 +824,21 @@ export default function OfflineAssistant({
                   </div>
                 )}
                 {message.lessonId && (
-                  <IconButton
-                    label="Open this training lesson"
-                    onClick={() => {
-                      const lesson = lessonsFor(pet).find((item) => item.id === message.lessonId);
-                      if (lesson) onLesson(lesson);
-                    }}
-                  >
-                    <PawPrintIcon size={23} />
-                  </IconButton>
+                  <div className="assistant-lesson-link">
+                    <div>
+                      <strong>Keep learning together</strong>
+                      <small>Open the guided lesson.</small>
+                    </div>
+                    <IconButton
+                      label="Open this training lesson"
+                      onClick={() => {
+                        const lesson = lessonsFor(pet).find((item) => item.id === message.lessonId);
+                        if (lesson) onLesson(lesson);
+                      }}
+                    >
+                      <PawPrintIcon size={23} />
+                    </IconButton>
+                  </div>
                 )}
               </motion.article>
             ))}
@@ -725,66 +869,77 @@ export default function OfflineAssistant({
             {notice}
           </p>
         )}
-        <div className="assistant-suggestions" aria-label="Suggested questions">
-          {assistantSuggestions(pet).map((question) => (
+        <div className="assistant-compose-area">
+          {!!messages.length && !busy && (
             <button
               type="button"
-              key={question}
+              className="assistant-more-ideas"
+              aria-expanded={showSuggestions}
               onClick={() => {
-                void ask(question);
+                const next = !showSuggestions;
+                setShowSuggestions(next);
+                if (next)
+                  transcript.current?.scrollTo({
+                    top: 0,
+                    behavior: reduced ? 'instant' : 'smooth',
+                  });
+                haptic();
               }}
-              disabled={!hydrated || busy}
             >
-              {question}
-            </button>
-          ))}
-        </div>
-        <form
-          className="assistant-composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void ask(input);
-          }}
-        >
-          <label className="sr-only" htmlFor="assistant-question">
-            Ask about {pet.name}
-          </label>
-          <textarea
-            id="assistant-question"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            maxLength={800}
-            rows={2}
-            placeholder={`Ask about ${pet.name}…`}
-            disabled={!hydrated}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-                event.preventDefault();
-                void ask(input);
-              }
-            }}
-          />
-          {busy ? (
-            <IconButton label="Stop this reply" onClick={() => operation.current?.abort()}>
-              <StopCircleIcon size={26} weight="fill" />
-            </IconButton>
-          ) : (
-            <button
-              type="submit"
-              className="icon-button primary-icon"
-              aria-label="Send question"
-              title="Send question"
-              disabled={!hydrated || !input.trim()}
-            >
-              <ArrowUpIcon size={24} />
+              {showSuggestions ? 'Back to our conversation' : 'Explore another question'}
             </button>
           )}
-        </form>
-        <p className="assistant-footnote">
-          {modelOn
-            ? 'Local model explanations can be imperfect. Check the linked care notes.'
-            : 'No model download needed for saved care notes.'}
-        </p>
+          <form
+            className="assistant-composer"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void ask(input);
+            }}
+          >
+            <label className="sr-only" htmlFor="assistant-question">
+              Ask about {pet.name}
+            </label>
+            <textarea
+              ref={composer}
+              id="assistant-question"
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              maxLength={800}
+              rows={1}
+              placeholder={`Ask about ${pet.name}…`}
+              disabled={!hydrated}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  void ask(input);
+                }
+              }}
+            />
+            {busy ? (
+              <IconButton label="Stop this reply" onClick={() => operation.current?.abort()}>
+                <StopCircleIcon size={26} weight="fill" />
+              </IconButton>
+            ) : (
+              <motion.button
+                type="submit"
+                className="icon-button primary-icon"
+                aria-label="Send question"
+                title="Send question"
+                disabled={!hydrated || !input.trim()}
+                whileTap={reduced ? undefined : { scale: 0.9 }}
+                whileHover={reduced ? undefined : { y: -1 }}
+              >
+                <ArrowUpIcon size={24} />
+              </motion.button>
+            )}
+          </form>
+          <p className="assistant-footnote">
+            <LockSimpleIcon size={12} />
+            {modelOn
+              ? 'On this device. Check explanations against the care notes.'
+              : 'Saved on this device. Care guidance, not a diagnosis.'}
+          </p>
+        </div>
       </div>
     </div>
   );
