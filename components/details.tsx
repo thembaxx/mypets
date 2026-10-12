@@ -360,42 +360,46 @@ export function EventEditor({
           placeholder="Anything to remember?"
         />
       </label>
-      <label className="check-label">
-        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
-        <BellIcon size={20} />
-        <span>Add a reminder alert</span>
-      </label>
-      <p className="fine-print">
-        Export to your device calendar for alerts when the app is closed. Browser alerts also work
-        while open if permission is granted.
-      </p>
+      <div className="event-alert-options">
+        <label className="check-label">
+          <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
+          <BellIcon size={20} />
+          <span>Add a reminder alert</span>
+        </label>
+        <p className="fine-print">
+          Export to your device calendar for alerts when the app is closed. Browser alerts also work
+          while open if permission is granted.
+        </p>
+      </div>
       {error && (
         <p className="form-error" role="alert">
           {error}
         </p>
       )}
-      <button
-        className="icon-button primary-icon form-save"
-        type="submit"
-        aria-label={event ? 'Save this moment' : 'Add this moment'}
-        title={event ? 'Save this moment' : 'Add this moment'}
-      >
-        <CheckIcon size={24} />
-      </button>
-      {event && onDelete && (
+      <div className="event-form-actions">
+        {event && onDelete && (
+          <button
+            className="icon-button delete-button"
+            aria-label="Remove this event"
+            title="Remove this event"
+            type="button"
+            onClick={() => {
+              onDelete(event.id);
+              onClose();
+            }}
+          >
+            <TrashIcon size={18} />
+          </button>
+        )}
         <button
-          className="icon-button delete-button"
-          aria-label="Remove this event"
-          title="Remove this event"
-          type="button"
-          onClick={() => {
-            onDelete(event.id);
-            onClose();
-          }}
+          className="icon-button primary-icon form-save"
+          type="submit"
+          aria-label={event ? 'Save this moment' : 'Add this moment'}
+          title={event ? 'Save this moment' : 'Add this moment'}
         >
-          <TrashIcon size={18} />
+          <CheckIcon size={24} />
         </button>
-      )}
+      </div>
     </form>
   );
 }

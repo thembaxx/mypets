@@ -558,7 +558,13 @@ export default function PetApp() {
         open={!!detail}
         title={detailTitle}
         onClose={closeDetail}
-        variant={detail?.type === 'assistant' ? 'assistant' : 'default'}
+        variant={
+          detail?.type === 'assistant'
+            ? 'assistant'
+            : detail?.type === 'event'
+              ? 'event'
+              : 'default'
+        }
       >
         {detail?.type === 'fact' ? (
           <FactDetail

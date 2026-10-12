@@ -138,7 +138,7 @@ export function Sheet({
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
-  variant?: 'default' | 'assistant';
+  variant?: 'default' | 'assistant' | 'event';
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
@@ -218,7 +218,7 @@ export function Sheet({
           <button className="sheet-backdrop" onClick={onClose} aria-label={`Close ${title}`} />
           <motion.div
             ref={ref}
-            className={`sheet ${wide ? 'sheet-wide' : ''} ${variant === 'assistant' ? 'sheet-assistant' : ''}`}
+            className={`sheet ${wide ? 'sheet-wide' : ''} ${variant !== 'default' ? `sheet-${variant}` : ''}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="sheet-title"
