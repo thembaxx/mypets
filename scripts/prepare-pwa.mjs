@@ -20,6 +20,9 @@ for (const file of ['ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm']
   );
 }
 fs.copyFileSync('third-party/onnxruntime-LICENSE.txt', path.join(runtimeRoot, 'LICENSE.txt'));
+fs.copyFileSync('third-party/llama-3.2-LICENSE.txt', path.join(runtimeRoot, 'llama-LICENSE.txt'));
+fs.copyFileSync('third-party/llama-3.2-NOTICE.txt', path.join(runtimeRoot, 'llama-NOTICE.txt'));
+fs.copyFileSync('third-party/webllm-LICENSE.txt', path.join(runtimeRoot, 'webllm-LICENSE.txt'));
 // Turbopack emits optional backend assets even when wasmPaths overrides them.
 // Those copies are unused by this CPU feature and exceed some static-host limits.
 for (const file of collect(path.join(root, '_next/static'))) {
@@ -32,6 +35,12 @@ for (const file of collect(root)) {
 const assets = collect(path.join(root, '_next/static'))
   .filter((file) => /\.(js|css|woff2?)$/.test(file))
   .map((file) => '/' + path.relative(root, file).split(path.sep).join('/'));
+// Model weights and the WASM library are optional downloads. Only the worker,
+// client scripts, and small runtime manifest belong in the core offline shell.
+fs.writeFileSync(
+  path.join(runtimeRoot, 'assistant-assets.json'),
+  JSON.stringify({ scripts: assets.filter((url) => url.endsWith('.js')) }),
+);
 const hash = crypto
   .createHash('sha256')
   .update(fs.readFileSync(path.join(root, 'index.html')))
@@ -48,6 +57,10 @@ const shell = [
   '/icons/apple-touch-icon.png',
   '/brand/directions.webp',
   '/brand/launch.webp',
+  '/runtime/assistant-assets.json',
+  '/runtime/llama-LICENSE.txt',
+  '/runtime/llama-NOTICE.txt',
+  '/runtime/webllm-LICENSE.txt',
   ...collect(path.join(root, 'animals')).map(
     (file) => '/' + path.relative(root, file).split(path.sep).join('/'),
   ),

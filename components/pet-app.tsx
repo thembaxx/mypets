@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import {
   HouseIcon,
@@ -16,7 +17,10 @@ import {
   SunIcon,
   MoonIcon,
   DeviceMobileIcon,
+  ChatCircleDotsIcon,
+  SparkleIcon,
 } from '@phosphor-icons/react';
+import { AssistantEntry } from './assistant-entry';
 import Onboarding from './onboarding';
 import LaunchSplash from './launch-splash';
 import { MonthCard, MonthReview, BrandStudio } from './history';
@@ -29,6 +33,7 @@ import {
   calendarExport,
   dateKey,
   defaultEvents,
+  eventOccursOnDate,
   demoPets,
   type Pet,
   type CareEvent,
@@ -47,6 +52,7 @@ type Detail =
   | { type: 'settings' }
   | { type: 'history' }
   | { type: 'brand' };
+type AssistantDetail = { type: 'assistant'; prompt?: string; panel?: 'chat' | 'model' };
 interface InstallPrompt extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -63,6 +69,14 @@ const initialData: AppData & { demoMode?: boolean } = {
   demoMode: true,
   appearance: 'system',
 };
+const OfflineAssistant = dynamic(() => import('./offline-assistant'), {
+  ssr: false,
+  loading: () => (
+    <p className="assistant-notice" role="status">
+      Opening your companion…
+    </p>
+  ),
+});
 export default function PetApp() {
   const [data, setData] = useState(initialData);
   const [ready, setReady] = useState(false);
@@ -70,7 +84,7 @@ export default function PetApp() {
   const finishLaunch = useCallback(() => setLaunching(false), []);
   const [tab, setTab] = useState<Tab>('today');
   const [page, setPage] = useState<'main' | 'pets' | 'onboard'>('main');
-  const [detail, setDetail] = useState<Detail | null>(null);
+  const [detail, setDetail] = useState<Detail | AssistantDetail | null>(null);
   const [editPet, setEditPet] = useState<Pet | undefined>();
   const [toast, setToast] = useState('');
   const [offline, setOffline] = useState(false);
@@ -150,7 +164,7 @@ export default function PetApp() {
       const key = dateKey(now);
       const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       for (const event of data.events.filter(
-        (e) => e.notify && e.time === time && (e.repeat === 'daily' || e.date === key),
+        (e) => e.notify && e.time === time && eventOccursOnDate(e, key),
       )) {
         const nkey = `${key}:${event.id}`;
         if (notificationKeys.current.has(nkey) || data.completed.includes(nkey)) continue;
@@ -178,7 +192,11 @@ export default function PetApp() {
     const timer = setInterval(check, 15000);
     return () => clearInterval(timer);
   }, [data, ready, notify]);
-  const pushState = (nextPage = page, nextDetail: Detail | null = detail, nextTab = tab) => {
+  const pushState = (
+    nextPage = page,
+    nextDetail: Detail | AssistantDetail | null = detail,
+    nextTab = tab,
+  ) => {
     if (!historyReady.current) return;
     const params = new URLSearchParams({ tab: nextTab });
     if (nextPage !== 'main') params.set('view', nextPage);
@@ -189,7 +207,7 @@ export default function PetApp() {
       `?${params}`,
     );
   };
-  const openDetail = (d: Detail) => {
+  const openDetail = (d: Detail | AssistantDetail) => {
     if (detail) {
       setDetail(d);
       window.history.replaceState({ tab, page, detail: d }, '', `?tab=${tab}&detail=${d.type}`);
@@ -366,7 +384,9 @@ export default function PetApp() {
                 ? `${pet.name}’s little history`
                 : detail?.type === 'brand'
                   ? 'The identity studio'
-                  : 'Make it yours';
+                  : detail?.type === 'assistant'
+                    ? `Ask about ${pet.name}`
+                    : 'Make it yours';
   return (
     <MotionConfig reducedMotion="user">
       <div className={`app-shell ${detail ? 'has-sheet' : ''}`}>
@@ -390,6 +410,12 @@ export default function PetApp() {
             </span>
           </div>
           <div className="header-actions">
+            <IconButton
+              label="Ask your pet companion"
+              onClick={() => openDetail({ type: 'assistant' })}
+            >
+              <ChatCircleDotsIcon size={23} />
+            </IconButton>
             <IconButton label="Search" onClick={() => openDetail({ type: 'search' })}>
               <MagnifyingGlassIcon size={23} />
             </IconButton>
@@ -461,11 +487,14 @@ export default function PetApp() {
                   isDemo={!!data.demoMode}
                   onPersonalize={addPet}
                   historyCard={
-                    <MonthCard
-                      data={data}
-                      pet={pet}
-                      onOpen={() => openDetail({ type: 'history' })}
-                    />
+                    <>
+                      <AssistantEntry pet={pet} onOpen={() => openDetail({ type: 'assistant' })} />
+                      <MonthCard
+                        data={data}
+                        pet={pet}
+                        onOpen={() => openDetail({ type: 'history' })}
+                      />
+                    </>
                   }
                 />
               ) : tab === 'schedule' ? (
@@ -551,6 +580,9 @@ export default function PetApp() {
             lesson={detail.lesson}
             completed={data.trained.includes(`${pet.id}:${detail.lesson.id}`)}
             sound={data.sound}
+            onAsk={() =>
+              openDetail({ type: 'assistant', prompt: `Help me practise ${detail.lesson.title}.` })
+            }
             onComplete={() => {
               setData((prev) => ({
                 ...prev,
@@ -587,6 +619,9 @@ export default function PetApp() {
           <MonthReview
             data={data}
             pet={pet}
+            onSummarize={() =>
+              openDetail({ type: 'assistant', prompt: 'Summarize our last month.' })
+            }
             onAddNote={(entry) => {
               setData((previous) => ({
                 ...previous,
@@ -598,11 +633,33 @@ export default function PetApp() {
           />
         ) : detail?.type === 'brand' ? (
           <BrandStudio />
+        ) : detail?.type === 'assistant' ? (
+          <OfflineAssistant
+            key={`${pet.id}:${detail.prompt ?? ''}:${detail.panel ?? 'chat'}`}
+            data={data}
+            pet={pet}
+            initialPrompt={detail.prompt}
+            initialPanel={detail.panel}
+            onSaveReminder={saveEvent}
+            onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
+          />
         ) : detail?.type === 'settings' ? (
           <div className="settings-detail">
             <Brand />
             <h3>Little things, your way.</h3>
             <p>A calmer everyday companion.</p>
+            <div className="settings-row">
+              <div>
+                <strong>Offline companion</strong>
+                <span>Model downloads, device storage, and private conversations.</span>
+              </div>
+              <IconButton
+                label="Manage offline companion"
+                onClick={() => openDetail({ type: 'assistant', panel: 'model' })}
+              >
+                <SparkleIcon size={22} />
+              </IconButton>
+            </div>
             <div className="settings-row">
               <div>
                 <strong>A little identity</strong>

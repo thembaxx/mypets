@@ -1,4 +1,4 @@
-import { defaultEvents, demoPets, type CareEvent, type Pet } from './care';
+import { defaultEvents, demoPets, validDateKey, type CareEvent, type Pet } from './care';
 import { speciesList } from './species';
 import { seedDemoHistory, type HistoryEntry } from './history';
 export type Appearance = 'system' | 'light' | 'dark';
@@ -48,7 +48,13 @@ export function parseData(raw: string): AppData | null {
           typeof event.title === 'string' &&
           typeof event.note === 'string' &&
           ['meal', 'walk', 'sleep', 'play', 'reminder'].includes(event.kind) &&
-          ['daily', 'once'].includes(event.repeat) &&
+          ['daily', 'weekly', 'once'].includes(event.repeat) &&
+          (event.repeat !== 'once' ||
+            (typeof event.date === 'string' && validDateKey(event.date))) &&
+          (event.repeat !== 'weekly' ||
+            (Array.isArray(event.weekdays) &&
+              event.weekdays.length > 0 &&
+              event.weekdays.every((day) => Number.isInteger(day) && day >= 0 && day <= 6))) &&
           /^([01]\d|2[0-3]):[0-5]\d$/.test(event.time) &&
           Number.isFinite(event.duration) &&
           event.duration > 0,
