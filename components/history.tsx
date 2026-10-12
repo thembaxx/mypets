@@ -8,6 +8,7 @@ import {
   PlusIcon,
   ChartBarIcon,
   PawPrintIcon,
+  ChatCircleDotsIcon,
 } from '@phosphor-icons/react';
 import { careCount, recentDays, type HistoryEntry } from '@/lib/history';
 import { dateKey, lessonsFor, type Pet, type Lesson } from '@/lib/care';
@@ -68,11 +69,13 @@ export function MonthReview({
   pet,
   onAddNote,
   onLesson,
+  onSummarize,
 }: {
   data: AppData;
   pet: Pet;
   onAddNote: (entry: HistoryEntry) => void;
   onLesson: (lesson: Lesson) => void;
+  onSummarize?: () => void;
 }) {
   const days = recentDays();
   const [selected, setSelected] = useState(days[days.length - 2]);
@@ -104,6 +107,11 @@ export function MonthReview({
         {displayDate(days[0])} — {displayDate(days[days.length - 1])}
       </span>
       <h3>Little moments, remembered.</h3>
+      {onSummarize && (
+        <IconButton label="Summarize this month" onClick={onSummarize}>
+          <ChatCircleDotsIcon size={23} />
+        </IconButton>
+      )}
       <p>A look at {pet.name}’s care, learning, and the things you noticed along the way.</p>
       {data.demoMode && (
         <p className="history-demo">

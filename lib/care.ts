@@ -20,7 +20,8 @@ export interface CareEvent {
   kind: EventKind;
   note: string;
   date?: string;
-  repeat: 'daily' | 'once';
+  repeat: 'daily' | 'weekly' | 'once';
+  weekdays?: number[];
   notify?: boolean;
 }
 export interface Fact {
@@ -665,8 +666,36 @@ export function dateKey(date: Date): string {
 }
 export function eventsForDate(events: CareEvent[], petId: string, date: string) {
   return events
-    .filter((e) => e.petId === petId && (e.repeat === 'daily' || e.date === date))
+    .filter((e) => e.petId === petId && eventOccursOnDate(e, date))
     .sort((a, b) => a.time.localeCompare(b.time));
+}
+export function validDateKey(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value + 'T12:00:00');
+  return Number.isFinite(date.getTime()) && dateKey(date) === value;
+}
+export function eventOccursOnDate(event: CareEvent, date: string): boolean {
+  if (!validDateKey(date)) return false;
+  if (event.repeat === 'daily') return true;
+  if (event.repeat === 'weekly')
+    return !!event.weekdays?.includes(new Date(date + 'T12:00:00').getDay());
+  return event.date === date;
+}
+export const weekdayNames = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+export function recurrenceLabel(event: CareEvent): string {
+  return event.repeat === 'daily'
+    ? 'Every day'
+    : event.repeat === 'weekly'
+      ? (event.weekdays ?? []).map((day) => weekdayNames[day]).join(', ')
+      : (event.date ?? 'Choose a date');
 }
 export function toMinutes(time: string) {
   const [h, m] = time.split(':').map(Number);
@@ -695,7 +724,14 @@ export function calendarExport(events: CareEvent[], pet: Pet, selected: Date) {
     'CALSCALE:GREGORIAN',
   ];
   for (const e of events) {
-    const start = new Date(e.date ? `${e.date}T${e.time}` : `${dateKey(selected)}T${e.time}`);
+    const start = new Date(
+      e.repeat === 'once' && e.date ? `${e.date}T${e.time}` : `${dateKey(selected)}T${e.time}`,
+    );
+    if (e.repeat === 'weekly') {
+      if (!e.weekdays?.length) continue;
+      for (let count = 0; count < 7 && !e.weekdays.includes(start.getDay()); count++)
+        start.setDate(start.getDate() + 1);
+    }
     const end = new Date(start.getTime() + e.duration * 60000);
     lines.push(
       'BEGIN:VEVENT',
@@ -706,6 +742,14 @@ export function calendarExport(events: CareEvent[], pet: Pet, selected: Date) {
       `SUMMARY:${escape(pet.name + ' · ' + e.title)}`,
       `DESCRIPTION:${escape(e.note)}`,
       ...(e.repeat === 'daily' ? ['RRULE:FREQ=DAILY'] : []),
+      ...(e.repeat === 'weekly'
+        ? [
+            `RRULE:FREQ=WEEKLY;BYDAY=${[...new Set(e.weekdays)]
+              .sort((a, b) => a - b)
+              .map((day) => ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][day])
+              .join(',')}`,
+          ]
+        : []),
       ...(e.notify
         ? [
             'BEGIN:VALARM',

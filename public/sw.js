@@ -42,18 +42,41 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
+  if (new URL(event.request.url).pathname === '/runtime/llama-3.2-1b-q4f32-v0.2.86.wasm') {
+    // Keep optional model storage separate from the app shell and image recognition.
+    event.respondWith(
+      caches.open('nuzzle-assistant-runtime-v1').then(async (cache) => {
+        const saved = await cache.match(event.request);
+        if (saved) return saved;
+        const response = await fetch(event.request);
+        if (response.ok) await cache.put(event.request, response.clone());
+        return response;
+      }),
+    );
+    return;
+  }
   event.respondWith(
-    caches.match(event.request).then(
-      (cached) =>
+    caches.match(event.request).then(async (cached) => {
+      const response =
         cached ||
-        fetch(event.request).then((response) => {
+        (await fetch(event.request).then((response) => {
           if (response.ok) {
             const copy = response.clone();
             caches.open(CACHE).then((c) => c.put(event.request, copy));
           }
           return response;
-        }),
-    ),
+        }));
+      // A cached Response carries its precache URL, which omits the fragment
+      // containing Turbopack's worker bootstrap parameters. A synthetic response
+      // preserves the original worker URL, including those parameters, offline.
+      return ['worker', 'sharedworker'].includes(event.request.destination)
+        ? new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          })
+        : response;
+    }),
   );
 });
 self.addEventListener('notificationclick', (event) => {

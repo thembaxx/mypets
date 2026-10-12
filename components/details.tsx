@@ -15,6 +15,7 @@ import {
   PawPrintIcon,
   HeartIcon,
   XIcon,
+  ChatCircleDotsIcon,
 } from '@phosphor-icons/react';
 import { speciesNames } from '@/lib/species';
 import { Animal, IconButton, SourceLink, haptic, playTone } from './shared';
@@ -26,6 +27,9 @@ import {
   lessonsFor,
   lifeStage,
   sources,
+  validDateKey,
+  weekdayNames,
+  recurrenceLabel,
   type Pet,
   type CareEvent,
   type EventKind,
@@ -209,7 +213,8 @@ export function EventEditor({
   const [duration, setDuration] = useState(event?.duration ?? 15);
   const [kind, setKind] = useState<EventKind>(event?.kind ?? 'reminder');
   const [date, setDate] = useState(event?.date ?? dateKey(new Date()));
-  const [repeat, setRepeat] = useState<'daily' | 'once'>(event?.repeat ?? 'once');
+  const [repeat, setRepeat] = useState<CareEvent['repeat']>(event?.repeat ?? 'once');
+  const [weekdays, setWeekdays] = useState<number[]>(event?.weekdays ?? [new Date().getDay()]);
   const [note, setNote] = useState(event?.note ?? '');
   const [notify, setNotify] = useState(event?.notify ?? false);
   const [error, setError] = useState('');
@@ -227,8 +232,12 @@ export function EventEditor({
       setError('Choose a valid time and a duration from 1 to 1440 minutes.');
       return;
     }
-    if (repeat === 'once' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    if (repeat === 'once' && !validDateKey(date)) {
       setError('Choose a date.');
+      return;
+    }
+    if (repeat === 'weekly' && !weekdays.length) {
+      setError('Choose at least one day.');
       return;
     }
     if (notify && typeof Notification !== 'undefined' && Notification.permission === 'default') {
@@ -245,6 +254,7 @@ export function EventEditor({
       note,
       date: repeat === 'once' ? date : undefined,
       repeat,
+      weekdays: repeat === 'weekly' ? [...weekdays].sort((a, b) => a - b) : undefined,
       notify,
     });
     onClose();
@@ -302,11 +312,38 @@ export function EventEditor({
       </div>
       <label className="form-label">
         Repeat
-        <select value={repeat} onChange={(e) => setRepeat(e.target.value as 'daily' | 'once')}>
+        <select value={repeat} onChange={(e) => setRepeat(e.target.value as CareEvent['repeat'])}>
           <option value="once">Just this once</option>
           <option value="daily">Every day</option>
+          <option value="weekly">Every week</option>
         </select>
       </label>
+      {repeat === 'weekly' && (
+        <fieldset className="weekday-picker">
+          <legend>On these days</legend>
+          <div>
+            {weekdayNames.map((day, index) => (
+              <motion.button
+                key={day}
+                type="button"
+                aria-label={day}
+                aria-pressed={weekdays.includes(index)}
+                className={weekdays.includes(index) ? 'selected' : ''}
+                whileTap={{ scale: 0.92 }}
+                onClick={() =>
+                  setWeekdays((previous) =>
+                    previous.includes(index)
+                      ? previous.filter((value) => value !== index)
+                      : [...previous, index],
+                  )
+                }
+              >
+                {day.slice(0, 2)}
+              </motion.button>
+            ))}
+          </div>
+        </fieldset>
+      )}
       {repeat === 'once' && (
         <label className="form-label">
           Date
@@ -368,12 +405,14 @@ export function LessonDetail({
   completed,
   onComplete,
   sound,
+  onAsk,
 }: {
   pet: Pet;
   lesson: Lesson;
   completed: boolean;
   onComplete: () => void;
   sound: boolean;
+  onAsk?: () => void;
 }) {
   const [step, setStep] = useState(0);
   const [running, setRunning] = useState(false);
@@ -404,6 +443,11 @@ export function LessonDetail({
   };
   return (
     <div className="lesson-detail">
+      {onAsk && (
+        <IconButton label="Ask about this lesson" onClick={onAsk}>
+          <ChatCircleDotsIcon size={23} />
+        </IconButton>
+      )}
       <div className={`lesson-detail-art ${lesson.color}`}>
         <Animal species={pet.species} breed={pet.breed} />
         <span className="art-label">A LITTLE TIME TOGETHER</span>
@@ -588,7 +632,7 @@ export function SearchDetail({
             <button key={e.id} onClick={() => onEvent(e)}>
               <span>
                 <small>
-                  {e.time} · {e.repeat === 'daily' ? 'Daily' : e.date}
+                  {e.time} · {recurrenceLabel(e)}
                 </small>
                 <strong>{e.title}</strong>
               </span>
