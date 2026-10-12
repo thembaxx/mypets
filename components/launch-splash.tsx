@@ -1,17 +1,43 @@
 'use client';
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { useReducedMotion } from 'motion/react';
+import { ArrowRightIcon } from '@phosphor-icons/react';
 import { brand } from '@/lib/brand';
 
 export function SplashScreen({
   exiting = false,
   imageRef,
   onArtworkReady,
+  playVideo = false,
+  onPlaybackError,
+  onSkip,
+  ready = false,
 }: {
   exiting?: boolean;
   imageRef?: RefObject<HTMLImageElement | null>;
   onArtworkReady?: () => void;
+  playVideo?: boolean;
+  onPlaybackError?: () => void;
+  onSkip?: () => void;
+  ready?: boolean;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    setPlaying(false);
+    const video = videoRef.current;
+    if (!playVideo || !video) return;
+    let cancelled = false;
+    // Muted inline playback also works on iOS. A rejected autoplay falls back to the poster.
+    video.muted = true;
+    void video.play()?.catch(() => {
+      if (!cancelled) onPlaybackError?.();
+    });
+    return () => {
+      cancelled = true;
+      video.pause();
+    };
+  }, [playVideo, onPlaybackError]);
   return (
     <div
       className={`launch-splash${exiting ? ' is-leaving' : ''}`}
@@ -20,19 +46,43 @@ export function SplashScreen({
       aria-busy="true"
     >
       <div className="launch-content">
-        <div className="launch-art" aria-hidden="true">
+        <div
+          className={`launch-art${playing && playVideo ? ' video-playing' : ''}`}
+          aria-hidden="true"
+        >
           <img
             ref={imageRef}
             src="/brand/launch.webp"
             alt=""
-            width={1254}
-            height={1254}
+            width={544}
+            height={544}
             fetchPriority="high"
             loading="eager"
             decoding="async"
             onLoad={onArtworkReady}
             onError={onArtworkReady}
           />
+          {playVideo && (
+            <video
+              ref={videoRef}
+              src="/brand/launch.mp4"
+              poster="/brand/launch.webp"
+              width={544}
+              height={544}
+              autoPlay
+              muted
+              playsInline
+              loop
+              preload="auto"
+              tabIndex={-1}
+              disablePictureInPicture
+              onPlaying={() => {
+                setPlaying(true);
+                onArtworkReady?.();
+              }}
+              onError={onPlaybackError}
+            />
+          )}
         </div>
         <div className="launch-identity">
           <h1 aria-label={brand.name}>
@@ -42,6 +92,18 @@ export function SplashScreen({
           <p>{brand.tagline}</p>
         </div>
       </div>
+      {onSkip && (
+        <button
+          type="button"
+          className="icon-button launch-skip"
+          aria-label={`Open ${brand.name}`}
+          title={`Open ${brand.name}`}
+          disabled={!ready || exiting}
+          onClick={onSkip}
+        >
+          <ArrowRightIcon size={23} />
+        </button>
+      )}
     </div>
   );
 }
@@ -58,12 +120,19 @@ export default function LaunchSplash({
   const [artworkReady, setArtworkReady] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [playVideo, setPlayVideo] = useState(false);
+  const playbackFailed = useCallback(() => {
+    setPlayVideo(false);
+    setIntroComplete(true);
+  }, []);
 
   useEffect(() => {
     // Cached images may finish before React attaches the load handler.
     if (imageRef.current?.complete) setArtworkReady(true);
-    const intro = window.setTimeout(() => setIntroComplete(true), reduced ? 120 : 700);
-    // A slow or failed image must never hold the app behind the launch screen.
+    // Keep the first server paint still until the motion preference is known.
+    setPlayVideo(reduced === false);
+    const intro = window.setTimeout(() => setIntroComplete(true), reduced ? 120 : 2600);
+    // A slow or failed video must never hold the app behind the launch screen.
     const fallback = window.setTimeout(() => setArtworkReady(true), 1800);
     return () => {
       window.clearTimeout(intro);
@@ -86,6 +155,12 @@ export default function LaunchSplash({
       exiting={exiting}
       imageRef={imageRef}
       onArtworkReady={() => setArtworkReady(true)}
+      playVideo={playVideo}
+      onPlaybackError={playbackFailed}
+      ready={ready}
+      onSkip={() => {
+        if (ready) setExiting(true);
+      }}
     />
   );
 }

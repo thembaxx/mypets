@@ -14,6 +14,7 @@ const types = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.mp4': 'video/mp4',
   '.woff2': 'font/woff2',
   '.woff': 'font/woff',
   '.wasm': 'application/wasm',
@@ -49,13 +50,43 @@ http
       fs.createReadStream(path.join(root, '404.html')).pipe(response);
       return;
     }
-    response.writeHead(200, {
+    const size = fs.statSync(filename).size;
+    const headers = {
       'Content-Type': types[path.extname(filename)] || 'application/octet-stream',
       'Cache-Control': pathname.startsWith('/_next/static/')
         ? 'public,max-age=31536000,immutable'
         : 'no-cache',
       'X-Content-Type-Options': 'nosniff',
-    });
+      'Content-Length': size,
+    };
+    if (path.extname(filename) === '.mp4') {
+      headers['Accept-Ranges'] = 'bytes';
+      const range = request.method === 'GET' && request.headers.range;
+      const match = range && /^bytes=(\d*)-(\d*)$/.exec(range);
+      if (match) {
+        const start = match[1] ? Number(match[1]) : Math.max(0, size - Number(match[2]));
+        const end = match[1] && match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+        if (
+          !Number.isSafeInteger(start) ||
+          !Number.isSafeInteger(end) ||
+          start >= size ||
+          end < start ||
+          (!match[1] && !Number(match[2]))
+        ) {
+          response.writeHead(416, { 'Content-Range': `bytes */${size}`, 'Content-Length': 0 });
+          response.end();
+          return;
+        }
+        response.writeHead(206, {
+          ...headers,
+          'Content-Range': `bytes ${start}-${end}/${size}`,
+          'Content-Length': end - start + 1,
+        });
+        fs.createReadStream(filename, { start, end }).pipe(response);
+        return;
+      }
+    }
+    response.writeHead(200, headers);
     if (request.method === 'HEAD') response.end();
     else fs.createReadStream(filename).pipe(response);
   })

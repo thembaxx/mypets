@@ -2506,6 +2506,7 @@ h4 {
   flex-shrink: 0;
 }
 .launch-splash {
+  position: relative;
   min-height: 100svh;
   min-height: 100dvh;
   display: grid;
@@ -2522,20 +2523,47 @@ h4 {
   opacity: 0;
 }
 .launch-content {
-  width: min(100%, 780px);
+  width: min(100%, 680px, calc((100svh - 250px) * 1.25));
   text-align: center;
 }
 .launch-art {
+  position: relative;
   width: 100%;
-  aspect-ratio: 1.8;
+  aspect-ratio: 1.25;
+  overflow: hidden;
+  border-radius: 36px;
+  corner-shape: squircle;
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent, black 3%, black 97%, transparent),
+    linear-gradient(180deg, transparent, black 10%, black 87%, transparent);
+  mask-image:
+    linear-gradient(90deg, transparent, black 3%, black 97%, transparent),
+    linear-gradient(180deg, transparent, black 10%, black 87%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
   animation: launch-arrive 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.launch-art img {
+.launch-art img,
+.launch-art video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+.launch-art video {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.launch-art.video-playing video {
+  opacity: 1;
+}
+.launch-skip {
+  position: absolute;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
 }
 .launch-identity {
   margin-top: clamp(24px, 4vh, 42px);
@@ -2566,7 +2594,7 @@ h4 {
 }
 @media (max-height: 500px) and (orientation: landscape) {
   .launch-content {
-    width: min(100%, 450px, calc((100svh - 170px) * 1.8));
+    width: min(100%, 450px, calc((100svh - 170px) * 1.25));
   }
   .launch-identity {
     margin-top: 8px;

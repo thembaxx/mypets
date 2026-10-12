@@ -44,6 +44,8 @@ fs.writeFileSync(
 const hash = crypto
   .createHash('sha256')
   .update(fs.readFileSync(path.join(root, 'index.html')))
+  .update(fs.readFileSync(path.join(root, 'brand/launch.mp4')))
+  .update(fs.readFileSync(path.join(root, 'brand/launch.webp')))
   .digest('hex')
   .slice(0, 12);
 const shell = [
@@ -57,6 +59,7 @@ const shell = [
   '/icons/apple-touch-icon.png',
   '/brand/directions.webp',
   '/brand/launch.webp',
+  '/brand/launch.mp4',
   '/runtime/assistant-assets.json',
   '/runtime/llama-LICENSE.txt',
   '/runtime/llama-NOTICE.txt',
