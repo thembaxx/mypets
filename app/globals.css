@@ -6291,3 +6291,38 @@ textarea,
     padding: 20px 16px;
   }
 }
+
+.public-overview {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: max(2rem, env(safe-area-inset-top)) 1.5rem 4rem;
+  font:
+    1rem/1.7 system-ui,
+    sans-serif;
+}
+.public-overview h1 {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  margin: 1.5rem 0 0;
+}
+.public-overview h2 {
+  margin-top: 2rem;
+  font-size: 1.4rem;
+}
+.public-overview .overview-tagline {
+  font-size: 1.3rem;
+}
+.public-overview ul {
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+.public-overview li {
+  margin: 0.6rem 0;
+}
+.public-overview a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.public-overview footer {
+  margin-top: 2rem;
+}

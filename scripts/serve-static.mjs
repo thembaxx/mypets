@@ -19,6 +19,8 @@ const types = {
   '.woff': 'font/woff',
   '.wasm': 'application/wasm',
   '.txt': 'text/plain;charset=utf-8',
+  '.md': 'text/plain;charset=utf-8',
+  '.xml': 'application/xml;charset=utf-8',
 };
 if (!fs.existsSync(path.join(root, 'index.html')))
   throw new Error('Run npm run build before starting the production server.');

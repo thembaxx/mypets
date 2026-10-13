@@ -659,6 +659,9 @@ export default function PetApp() {
             <Brand />
             <h3>Little things, your way.</h3>
             <p>A calmer everyday companion.</p>
+            <p>
+              <a href="/about/">About Nuzzle, sources & privacy</a>
+            </p>
             <div className="settings-row">
               <div>
                 <strong>Offline companion</strong>
