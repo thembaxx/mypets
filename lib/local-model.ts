@@ -6,7 +6,12 @@ import {
   MODEL_ID,
   MODEL_RUNTIME_CACHE,
 } from './model-config';
-import { cacheModelRuntime, inspectModelCache, type ModelCacheInfo } from './model-cache';
+import {
+  cacheModelRuntime,
+  inspectModelCache,
+  prepareModelCache,
+  type ModelCacheInfo,
+} from './model-cache';
 
 export type ModelPhase =
   | 'checking'
@@ -100,7 +105,9 @@ function errorMessage(error: unknown) {
     return 'There isn’t enough browser storage for this model. Free some space or remove the partial download.';
   if (/memory|allocation|buffer|device.?lost|gpu|adapter/i.test(text))
     return 'This device could not run the model. Close other apps and retry, or continue with saved care notes.';
-  if (/offline|fetch|network|load.*file/i.test(text))
+  if (/integrity|verif|corrupt/i.test(text))
+    return 'Some model files could not be verified. Reconnect and resume to replace them; completed files are kept.';
+  if (/offline|fetch|network|download|load.*file/i.test(text))
     return 'The download was interrupted or files are missing. Reconnect and resume; completed files are kept.';
   return 'The local model could not start. Retry or use saved care notes.';
 }
@@ -306,6 +313,7 @@ async function loadModel(allowDownload: boolean): Promise<void> {
         update({ persistent });
       } else if (!(await cacheInfo()).complete) throw new Error('Offline model files are missing.');
       await waitForAppCache(signal);
+      if (allowDownload) await prepareModelCache(caches, location.origin, signal);
       await cacheModelRuntime(signal, allowDownload);
       const { WebWorkerMLCEngine } = await import('@mlc-ai/web-llm');
       signal.throwIfAborted();
