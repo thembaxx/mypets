@@ -107,3 +107,7 @@ Changing a pet's age, breed, or species regenerates its suggested routine and pr
 - `public/sw.js` and `scripts/prepare-pwa.mjs`: versioned offline app shell.
 
 Care sources are linked within the app and include PDSA, RSPCA, MSD Veterinary Manual, and the American Kennel Club. Interface inspiration comes from the supplied reference screens, Apple's materials and sheets guidance, and the MDN corner-shape reference.
+
+## Brand and discovery
+
+See [BRAND.md](BRAND.md) for Nuzzle’s positioning and canonical-origin configuration. Search and social metadata, structured data, the public `/about/` page and AI documentation use the same brand source. `/llms.txt` and `/llm.txt` return the same public index; `/llms-full.txt` supplies fuller context. Private device records never enter discovery content.

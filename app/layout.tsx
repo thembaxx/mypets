@@ -2,11 +2,16 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { appearanceBootstrap } from '@/lib/appearance';
 import { brand } from '@/lib/brand';
+import { siteOrigin, pageMetadata, structuredData, jsonLd } from '@/lib/site';
 export const metadata: Metadata = {
-  title: `${brand.name} — ${brand.tagline}`,
-  description:
-    'A thoughtful daily companion for your pets. Discover, plan, and learn together with care tailored to their age and breed.',
-  appleWebApp: { capable: true, title: brand.name },
+  ...pageMetadata(brand.title, '/'),
+  metadataBase: siteOrigin ? new URL(siteOrigin) : undefined,
+  applicationName: brand.name,
+  category: 'pet care',
+  robots: { index: Boolean(siteOrigin), follow: true },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: { capable: true, title: brand.name, statusBarStyle: 'black-translucent' },
+  formatDetection: { telephone: false },
   icons: { icon: '/icons/icon.svg', apple: '/icons/apple-touch-icon.png' },
 };
 export const viewport: Viewport = {
@@ -18,6 +23,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="describedby" type="text/plain" href="/llms.txt" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(structuredData()) }}
+        />
+      </head>
       <body>
         <script dangerouslySetInnerHTML={{ __html: appearanceBootstrap }} />
         {children}
