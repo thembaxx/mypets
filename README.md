@@ -1,4 +1,28 @@
-# Nuzzle
+# Nuzzle · MyPets
+
+A daily pet-care companion with species-specific routines, care logs and a lived-in sample experience.
+
+**[Explore the live application](https://mypets-pi.vercel.app/)** · [Browse the source](https://github.com/thembaxx/mypets)
+
+## Engineering highlights
+
+Static export and offline precaching, local browser inference and optional model downloads. Sample pets are demonstration data.
+
+## Technology
+
+Declared in [package.json](package.json): Next.js `16.4.0` · React `19.3.0` · TypeScript `7.0.2` · Tailwind CSS `4.3.3` · Three.js `0.186.1` · Motion `14.1.0` · React Three Fiber `9.8.1` · Transformers.js `4.3.1` · WebLLM `0.2.86`.
+
+**Quality tooling:** `lint`, `format:check`, `typecheck`, `test` scripts are available. See the setup guide below for prerequisites; this documentation pass does not assert that those checks were run.
+
+## Application preview
+
+![Nuzzle · MyPets — Milo demo dashboard](docs/screenshots/desktop.jpg)
+
+Captured from the live application on 17 October 2026. [Capture details and limitations](docs/screenshots/README.md).
+
+---
+
+## Project guide
 
 A mobile-first daily companion for dogs, cats, rabbits, chickens, fish, hamsters, birds, guinea pigs, snakes, hedgehogs, ferrets, salamanders, iguanas, and geckos, built with Next.js App Router, TypeScript, Tailwind CSS, Motion, Phosphor icons, and Three.js. Oxfmt and Oxlint keep the source consistent.
 
