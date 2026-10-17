@@ -1,5 +1,10 @@
 # Nuzzle
 
+> **Portfolio project** · [Live application](https://mypets-pi.vercel.app) · [GitHub source](https://github.com/thembaxx/mypets)
+>
+> Built with a focus on intuitive interfaces, responsive design and practical product engineering. Explore the live experience or review the implementation below.
+
+
 A mobile-first daily companion for dogs, cats, rabbits, chickens, fish, hamsters, birds, guinea pigs, snakes, hedgehogs, ferrets, salamanders, iguanas, and geckos, built with Next.js App Router, TypeScript, Tailwind CSS, Motion, Phosphor icons, and Three.js. Oxfmt and Oxlint keep the source consistent.
 
 ## Run
