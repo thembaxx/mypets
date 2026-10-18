@@ -3,6 +3,7 @@ import './globals.css';
 import { appearanceBootstrap } from '@/lib/appearance';
 import { brand } from '@/lib/brand';
 import { siteOrigin, pageMetadata, structuredData, jsonLd } from '@/lib/site';
+import { Analytics } from '@vercel/analytics/next';
 export const metadata: Metadata = {
   ...pageMetadata(brand.title, '/'),
   metadataBase: siteOrigin ? new URL(siteOrigin) : undefined,
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <script dangerouslySetInnerHTML={{ __html: appearanceBootstrap }} />
         {children}
+        <Analytics />
       </body>
     </html>
   );
