@@ -1,0 +1,33 @@
+name: Format automation configuration
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/format-automation-once.yml]
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npx oxfmt --write .github/dependabot.yml .github/workflows/ci-failure-triage.yml
+      - name: Commit formatted automation files only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/dependabot.yml .github/workflows/ci-failure-triage.yml
+          if git diff --cached --quiet; then
+            echo 'Already formatted.'
+            exit 0
+          fi
+          git commit -m "style(ci): format automation YAML with project formatter"
+          git pull --rebase origin main
+          git push origin HEAD:main
