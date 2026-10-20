@@ -1,7 +1,7 @@
 name: CI failure triage
 on:
   workflow_run:
-    workflows: ["Check Nuzzle"]
+    workflows: ['Check Nuzzle']
     types: [completed]
 permissions:
   contents: read

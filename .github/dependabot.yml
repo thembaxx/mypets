@@ -8,7 +8,7 @@ updates:
     open-pull-requests-limit: 4
     groups:
       safe-minor-patch:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
@@ -18,4 +18,4 @@ updates:
     open-pull-requests-limit: 3
     groups:
       action-updates:
-        patterns: ["*"]
+        patterns: ['*']
