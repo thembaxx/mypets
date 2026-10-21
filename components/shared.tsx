@@ -1,5 +1,8 @@
 'use client';
 import { createContext, useContext, useRef, useState, useEffect, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
+import { approvedTripoModels, type AnimalAsset } from '@/lib/tripo-models';
+const TripoPet = dynamic(() => import('./tripo-pet'), { ssr: false });
 import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'motion/react';
 import {
   XIcon,
@@ -91,8 +94,10 @@ export function Animal({
   const reduced = useReducedMotion();
   const [reaction, setReaction] = useState(0);
   const [delighted, setDelighted] = useState(false);
+  const [view3d, setView3d] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const asset = animalAsset(species, breed);
+  const modelUrl = approvedTripoModels[asset as AnimalAsset];
   const animated = enabled && !reduced && !photo;
   const swimmer = ['fish', 'snake', 'salamander'].includes(species);
   const flier = ['bird', 'chicken'].includes(species);
@@ -154,6 +159,7 @@ export function Animal({
   if (!animated) return <div className="animal-interaction is-static">{graphic}</div>;
 
   return (
+    <>
     <motion.button
       type="button"
       className="animal-interaction"
@@ -190,6 +196,15 @@ export function Animal({
         )}
       </AnimatePresence>
     </motion.button>
+    {modelUrl && (
+      <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
+        Explore in 3D
+      </button>
+    )}
+    {view3d && modelUrl && (
+      <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
+    )}
+    </>
   );
 }
 export function Sheet({
