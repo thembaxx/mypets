@@ -160,50 +160,50 @@ export function Animal({
 
   return (
     <>
-    <motion.button
-      type="button"
-      className="animal-interaction"
-      aria-label={'Play with the ' + speciesNames[species].toLowerCase() + ' illustration'}
-      drag
-      dragConstraints={{ left: -12, right: 12, top: -9, bottom: 9 }}
-      dragElastic={0.1}
-      dragSnapToOrigin
-      whileHover={{ scale: 1.018, rotate: swimmer ? 1.5 : -1 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={() => {
-        setReaction((value) => value + 1);
-        setDelighted(true);
-        haptic(true);
-        if (sound) playTone();
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => setDelighted(false), 830);
-      }}
-    >
-      {graphic}
-      <AnimatePresence>
-        {delighted && (
-          <motion.span
-            key={reaction}
-            className="animal-delight"
-            aria-hidden="true"
-            initial={{ opacity: 0, scale: 0.45, y: 9, rotate: -12 }}
-            animate={{ opacity: 1, scale: 1, y: -10, rotate: 10 }}
-            exit={{ opacity: 0, scale: 0.8, y: -24 }}
-            transition={{ duration: 0.48 }}
-          >
-            <HeartIcon size={22} weight="fill" />
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </motion.button>
-    {modelUrl && (
-      <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
-        Explore in 3D
-      </button>
-    )}
-    {view3d && modelUrl && (
-      <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
-    )}
+      <motion.button
+        type="button"
+        className="animal-interaction"
+        aria-label={'Play with the ' + speciesNames[species].toLowerCase() + ' illustration'}
+        drag
+        dragConstraints={{ left: -12, right: 12, top: -9, bottom: 9 }}
+        dragElastic={0.1}
+        dragSnapToOrigin
+        whileHover={{ scale: 1.018, rotate: swimmer ? 1.5 : -1 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => {
+          setReaction((value) => value + 1);
+          setDelighted(true);
+          haptic(true);
+          if (sound) playTone();
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = setTimeout(() => setDelighted(false), 830);
+        }}
+      >
+        {graphic}
+        <AnimatePresence>
+          {delighted && (
+            <motion.span
+              key={reaction}
+              className="animal-delight"
+              aria-hidden="true"
+              initial={{ opacity: 0, scale: 0.45, y: 9, rotate: -12 }}
+              animate={{ opacity: 1, scale: 1, y: -10, rotate: 10 }}
+              exit={{ opacity: 0, scale: 0.8, y: -24 }}
+              transition={{ duration: 0.48 }}
+            >
+              <HeartIcon size={22} weight="fill" />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+      {modelUrl && (
+        <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
+          Explore in 3D
+        </button>
+      )}
+      {view3d && modelUrl && (
+        <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
+      )}
     </>
   );
 }

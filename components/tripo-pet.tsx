@@ -49,9 +49,13 @@ function PetOrbit() {
 }
 
 export default function TripoPet({
-  url, name, onClose,
+  url,
+  name,
+  onClose,
 }: {
-  url: string; name: string; onClose: () => void;
+  url: string;
+  name: string;
+  onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -68,18 +72,33 @@ export default function TripoPet({
   }, [onClose]);
   return createPortal(
     <div className="tripo-viewer" role="dialog" aria-modal="true" aria-label={name + ' in 3D'}>
-      <button type="button" className="tripo-backdrop" aria-label="Close 3D view" onClick={onClose} />
+      <button
+        type="button"
+        className="tripo-backdrop"
+        aria-label="Close 3D view"
+        onClick={onClose}
+      />
       <div className="tripo-dialog">
         <div className="tripo-heading">
           <div>
             <strong>{name}, from a different angle.</strong>
             <span>Drag to turn. Pinch to zoom.</span>
           </div>
-          <button type="button" ref={closeRef} className="icon-button" aria-label="Close 3D view" onClick={onClose}>
+          <button
+            type="button"
+            ref={closeRef}
+            className="icon-button"
+            aria-label="Close 3D view"
+            onClick={onClose}
+          >
             <XIcon size={21} />
           </button>
         </div>
-        <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 4.6], fov: 39 }} gl={{ alpha: true, antialias: true }}>
+        <Canvas
+          dpr={[1, 1.5]}
+          camera={{ position: [0, 0, 4.6], fov: 39 }}
+          gl={{ alpha: true, antialias: true }}
+        >
           <ambientLight intensity={2} />
           <directionalLight position={[2, 3, 4]} intensity={3} />
           <Suspense fallback={null}>

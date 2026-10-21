@@ -4,9 +4,23 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const names = new Set([
-  'dog', 'cat', 'rabbit', 'chicken', 'fish', 'hamster', 'bird', 'guinea-pig',
-  'snake', 'hedgehog', 'ferret', 'salamander', 'iguana', 'gecko', 'angelfish',
-  'budgie', 'canary',
+  'dog',
+  'cat',
+  'rabbit',
+  'chicken',
+  'fish',
+  'hamster',
+  'bird',
+  'guinea-pig',
+  'snake',
+  'hedgehog',
+  'ferret',
+  'salamander',
+  'iguana',
+  'gecko',
+  'angelfish',
+  'budgie',
+  'canary',
 ]);
 const asset = process.argv[2];
 if (!names.has(asset) || !process.argv.includes('--confirm-credits')) {
@@ -18,7 +32,11 @@ if (!names.has(asset) || !process.argv.includes('--confirm-credits')) {
   process.exitCode = 1;
 } else {
   const api = 'https://openapi.tripo3d.ai/v3';
-  const source = (process.env.TRIPO_SOURCE_BASE_URL || 'https://mypets-pi.vercel.app').replace(/\/$/, '') + '/animals/' + asset + '.webp';
+  const source =
+    (process.env.TRIPO_SOURCE_BASE_URL || 'https://mypets-pi.vercel.app').replace(/\/$/, '') +
+    '/animals/' +
+    asset +
+    '.webp';
   const authorization = 'Bearer ' + process.env.TRIPO_API_KEY;
   async function read(url, options) {
     const response = await fetch(url, options);
@@ -63,7 +81,11 @@ if (!names.has(asset) || !process.argv.includes('--confirm-credits')) {
     await writeFile(join(dir, asset + '.glb'), Buffer.from(await model.arrayBuffer()));
     if (finished.output.rendered_image_url) {
       const preview = await fetch(finished.output.rendered_image_url);
-      if (preview.ok) await writeFile(join(dir, asset + '-preview.png'), Buffer.from(await preview.arrayBuffer()));
+      if (preview.ok)
+        await writeFile(
+          join(dir, asset + '-preview.png'),
+          Buffer.from(await preview.arrayBuffer()),
+        );
     }
     console.log('Candidate saved in assets/tripo-candidates/' + asset + '.glb');
     console.log('Tripo credits consumed:', finished.credits_consumed ?? 'check your Tripo account');

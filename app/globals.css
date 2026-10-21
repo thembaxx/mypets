@@ -6397,7 +6397,18 @@ textarea,
   align-items: center;
   pointer-events: none;
 }
-.tripo-heading > .icon-button { pointer-events: auto; }
-.tripo-heading strong, .tripo-heading span { display: block; }
-.tripo-heading strong { font-size: 15px; }
-.tripo-heading span { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.tripo-heading > .icon-button {
+  pointer-events: auto;
+}
+.tripo-heading strong,
+.tripo-heading span {
+  display: block;
+}
+.tripo-heading strong {
+  font-size: 15px;
+}
+.tripo-heading span {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
