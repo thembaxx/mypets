@@ -89,3 +89,15 @@ test('sample collections expand once without replacing saved routines or real pe
   assert.equal(personal?.events.length, 1);
   assert.equal(personal?.appearance, 'system');
 });
+
+test('animal illustration animation preference survives reload and older saves stay animated', () => {
+  const base = createDemoData(new Date(2026, 9, 11, 12));
+  assert.equal(parseData(JSON.stringify(base))?.animalAnimations, true);
+  const paused = parseData(JSON.stringify({ ...base, animalAnimations: false }));
+  assert.equal(paused?.animalAnimations, false);
+  assert.equal(parseData(JSON.stringify(paused))?.animalAnimations, false);
+  assert.equal(
+    parseData(JSON.stringify({ ...base, animalAnimations: 'off' }))?.animalAnimations,
+    true,
+  );
+});

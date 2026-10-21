@@ -1,7 +1,16 @@
 'use client';
-import { useRef, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useRef, useState, useEffect, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
+import { approvedTripoModels, type AnimalAsset } from '@/lib/tripo-models';
+const TripoPet = dynamic(() => import('./tripo-pet'), { ssr: false });
 import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'motion/react';
-import { XIcon, ArrowUpRightIcon, SpeakerHighIcon, SpeakerSlashIcon } from '@phosphor-icons/react';
+import {
+  XIcon,
+  ArrowUpRightIcon,
+  SpeakerHighIcon,
+  SpeakerSlashIcon,
+  HeartIcon,
+} from '@phosphor-icons/react';
 import { brand } from '@/lib/brand';
 import type { Species } from '@/lib/care';
 import { animalAsset, speciesNames } from '@/lib/species';
@@ -63,6 +72,9 @@ export function IconButton({
     </motion.button>
   );
 }
+// Shared across the whole app so one setting pauses every animal illustration.
+export const AnimalAnimationContext = createContext(true);
+
 export function Animal({
   species,
   breed,
@@ -78,51 +90,121 @@ export function Animal({
   photo?: string;
   sound?: boolean;
 }) {
+  const enabled = useContext(AnimalAnimationContext);
   const reduced = useReducedMotion();
-  const [happy, setHappy] = useState(false);
+  const [reaction, setReaction] = useState(0);
+  const [delighted, setDelighted] = useState(false);
+  const [view3d, setView3d] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const asset = animalAsset(species, breed);
+  const modelUrl = approvedTripoModels[asset as AnimalAsset];
+  const animated = enabled && !reduced && !photo;
+  const swimmer = ['fish', 'snake', 'salamander'].includes(species);
+  const flier = ['bird', 'chicken'].includes(species);
+  const playful = ['dog', 'cat', 'ferret', 'rabbit', 'hamster', 'guinea-pig'].includes(species);
+
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+
   const graphic = (
     <motion.div
-      className={`animal-art ${species} asset-${asset} ${photo ? 'user-photo' : ''} ${className}`}
+      className={
+        'animal-art ' + species + ' asset-' + asset + (photo ? ' user-photo' : '') + ' ' + className
+      }
       animate={
-        reduced
-          ? {}
+        !animated
+          ? { x: 0, y: 0, rotate: 0, scale: 1 }
+          : delighted
+            ? {
+                x: swimmer ? [0, 5, -4, 0] : [0, -2, 2, 0],
+                y: flier ? [0, -12, -4, 0] : [0, -9, 1, 0],
+                rotate: [0, reaction % 2 ? -5 : 5, reaction % 2 ? 4 : -4, 0],
+                scale: [1, 1.025, 0.99, 1],
+              }
+            : {
+                x: swimmer ? [0, 3, 0, -3, 0] : [0, 0, 0, 0, 0],
+                y: [0, flier ? -5 : playful ? -3 : -2, 0, 1, 0],
+                rotate: [0, swimmer ? 2 : -1, 0, swimmer ? -2 : 1, 0],
+                scale: 1,
+              }
+      }
+      transition={
+        !animated
+          ? { duration: 0 }
           : {
-              y: happy ? [0, -14, 0] : [0, -7, 0],
-              rotate: happy ? [0, -6, 6, 0] : [0, -1.5, 1.5, 0],
+              duration: delighted ? 0.78 : swimmer ? 5.2 : flier ? 4.5 : 6.4,
+              ease: 'easeInOut',
+              repeat: delighted ? 0 : Infinity,
             }
       }
-      transition={{ duration: happy ? 0.65 : 6, repeat: happy ? 0 : Infinity, ease: 'easeInOut' }}
     >
       <img
-        src={photo || `/animals/${asset}.webp`}
+        src={photo || '/animals/' + asset + '.webp'}
         alt={
-          photo ? 'Your pet' : `The supplied ${speciesNames[species].toLowerCase()} illustration`
+          photo
+            ? 'Your pet'
+            : 'The supplied ' + speciesNames[species].toLowerCase() + ' illustration'
         }
         draggable={false}
       />
     </motion.div>
   );
+
+  // Keep the same footprint even when the illustration is entirely still.
   if (!interactive) return graphic;
+  if (!animated) return <div className="animal-interaction is-static">{graphic}</div>;
+
   return (
-    <motion.button
-      type="button"
-      className="animal-interaction"
-      aria-label={`Interact with the ${speciesNames[species].toLowerCase()}`}
-      drag
-      dragConstraints={{ left: -14, right: 14, top: -10, bottom: 10 }}
-      dragElastic={0.12}
-      whileHover={reduced ? undefined : { scale: 1.025, rotateY: 6 }}
-      whileTap={reduced ? undefined : { scale: 0.96 }}
-      onClick={() => {
-        setHappy(true);
-        haptic(true);
-        if (sound) playTone();
-        setTimeout(() => setHappy(false), 750);
-      }}
-    >
-      {graphic}
-    </motion.button>
+    <>
+      <motion.button
+        type="button"
+        className="animal-interaction"
+        aria-label={'Play with the ' + speciesNames[species].toLowerCase() + ' illustration'}
+        drag
+        dragConstraints={{ left: -12, right: 12, top: -9, bottom: 9 }}
+        dragElastic={0.1}
+        dragSnapToOrigin
+        whileHover={{ scale: 1.018, rotate: swimmer ? 1.5 : -1 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => {
+          setReaction((value) => value + 1);
+          setDelighted(true);
+          haptic(true);
+          if (sound) playTone();
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = setTimeout(() => setDelighted(false), 830);
+        }}
+      >
+        {graphic}
+        <AnimatePresence>
+          {delighted && (
+            <motion.span
+              key={reaction}
+              className="animal-delight"
+              aria-hidden="true"
+              initial={{ opacity: 0, scale: 0.45, y: 9, rotate: -12 }}
+              animate={{ opacity: 1, scale: 1, y: -10, rotate: 10 }}
+              exit={{ opacity: 0, scale: 0.8, y: -24 }}
+              transition={{ duration: 0.48 }}
+            >
+              <HeartIcon size={22} weight="fill" />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+      {modelUrl && (
+        <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
+          Explore in 3D
+        </button>
+      )}
+      {view3d && modelUrl && (
+        <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
+      )}
+    </>
   );
 }
 export function Sheet({

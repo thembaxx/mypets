@@ -13,6 +13,7 @@ export interface AppData {
   sound: boolean;
   demoMode?: boolean;
   appearance?: Appearance;
+  animalAnimations?: boolean;
   history?: HistoryEntry[];
   demoSeedVersion?: 1;
 }
@@ -71,6 +72,7 @@ export function parseData(raw: string): AppData | null {
         pets: [...data.pets, ...additions],
         events: [...data.events, ...additions.flatMap(defaultEvents)],
         appearance: ['light', 'dark'].includes(data.appearance) ? data.appearance : 'system',
+        animalAnimations: data.animalAnimations !== false,
         activePetId: data.pets.some((pet: Pet) => pet.id === data.activePetId)
           ? data.activePetId
           : data.pets[0].id,

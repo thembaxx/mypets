@@ -1,8 +1,9 @@
 'use client';
-import { Suspense, useRef, useState, useEffect } from 'react';
+import { Suspense, useContext, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { motion, useReducedMotion } from 'motion/react';
 import type { Group } from 'three';
+import { AnimalAnimationContext } from './shared';
 function Toys({ reduced }: { reduced: boolean }) {
   const group = useRef<Group>(null);
   const [active, setActive] = useState(false);
@@ -38,7 +39,8 @@ function Toys({ reduced }: { reduced: boolean }) {
   );
 }
 export default function AmbientScene() {
-  const reduced = !!useReducedMotion();
+  const enabled = useContext(AnimalAnimationContext);
+  const reduced = !!useReducedMotion() || !enabled;
   const [supported, setSupported] = useState(false);
   useEffect(() => {
     try {
@@ -50,6 +52,7 @@ export default function AmbientScene() {
       setSupported(false);
     }
   }, []);
+  if (!enabled) return null;
   if (!supported)
     return (
       <div className="scene-fallback" aria-hidden="true">

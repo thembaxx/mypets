@@ -26,7 +26,15 @@ import LaunchSplash from './launch-splash';
 import { MonthCard, MonthReview, BrandStudio } from './history';
 import { createDemoData } from '@/lib/history';
 import { brand } from '@/lib/brand';
-import { Brand, IconButton, Sheet, SoundToggle, haptic, playTone } from './shared';
+import {
+  AnimalAnimationContext,
+  Brand,
+  IconButton,
+  Sheet,
+  SoundToggle,
+  haptic,
+  playTone,
+} from './shared';
 import { Today, Schedule, Training, PetCollection } from './views';
 import { DietDetail, EventEditor, FactDetail, LessonDetail, SearchDetail } from './details';
 import {
@@ -68,6 +76,7 @@ const initialData: AppData & { demoMode?: boolean } = {
   sound: false,
   demoMode: true,
   appearance: 'system',
+  animalAnimations: true,
 };
 const OfflineAssistant = dynamic(() => import('./offline-assistant'), {
   ssr: false,
@@ -349,22 +358,24 @@ export default function PetApp() {
   if (!data.onboarded || page === 'onboard')
     return (
       <MotionConfig reducedMotion="user">
-        <Onboarding
-          initial={editPet}
-          onSave={savePet}
-          onExplore={() => {
-            setData((p) => ({ ...p, onboarded: true, demoMode: true }));
-            notify(`Meet ${demoPets.length} little companions. Explore their different worlds.`);
-          }}
-          onClose={
-            data.onboarded
-              ? () => {
-                  setPage(editPet ? 'pets' : 'main');
-                  window.history.back();
-                }
-              : undefined
-          }
-        />
+        <AnimalAnimationContext.Provider value={data.animalAnimations !== false}>
+          <Onboarding
+            initial={editPet}
+            onSave={savePet}
+            onExplore={() => {
+              setData((p) => ({ ...p, onboarded: true, demoMode: true }));
+              notify(`Meet ${demoPets.length} little companions. Explore their different worlds.`);
+            }}
+            onClose={
+              data.onboarded
+                ? () => {
+                    setPage(editPet ? 'pets' : 'main');
+                    window.history.back();
+                  }
+                : undefined
+            }
+          />
+        </AnimalAnimationContext.Provider>
       </MotionConfig>
     );
   const detailTitle =
@@ -389,449 +400,486 @@ export default function PetApp() {
                     : 'Make it yours';
   return (
     <MotionConfig reducedMotion="user">
-      <div className={`app-shell ${detail ? 'has-sheet' : ''}`}>
-        <header className="app-header">
-          <div className="header-left">
-            {page === 'pets' ? (
-              <IconButton label="Back to your day" onClick={leavePets}>
-                <ArrowLeftIcon size={23} />
-              </IconButton>
-            ) : (
-              <button
-                className="brand-button"
-                onClick={() => navigate('today')}
-                aria-label="Nuzzle home"
-              >
-                <Brand />
-              </button>
-            )}
-            <span className="header-context">
-              {page === 'pets' ? 'Your companions' : 'Their everyday companion'}
-            </span>
-          </div>
-          <div className="header-actions">
-            <IconButton
-              label="Ask your pet companion"
-              onClick={() => openDetail({ type: 'assistant' })}
-            >
-              <ChatCircleDotsIcon size={23} />
-            </IconButton>
-            <IconButton label="Search" onClick={() => openDetail({ type: 'search' })}>
-              <MagnifyingGlassIcon size={23} />
-            </IconButton>
-            <IconButton
-              label="Your pets"
-              className={page === 'pets' ? 'header-pets active' : 'header-pets'}
-              onClick={page === 'pets' ? leavePets : openPets}
-            >
-              <PawPrintIcon size={24} weight={page === 'pets' ? 'fill' : 'regular'} />
-            </IconButton>
-            <IconButton
-              label="App preferences"
-              className="preferences-button"
-              onClick={() => openDetail({ type: 'settings' })}
-            >
-              <DotsThreeIcon size={25} weight="bold" />
-            </IconButton>
-          </div>
-        </header>
-        {offline && (
-          <div className="system-banner">
-            <WifiSlashIcon size={17} />
-            You’re offline. Your saved little world is still here.
-          </div>
-        )}
-        {storageError && (
-          <div className="system-banner storage-warning">
-            This device’s storage is full. Your latest changes are temporary.
-            <button onClick={exportBackup}>Download a backup</button>
-          </div>
-        )}
-        <main className="app-main">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={page === 'pets' ? 'pets' : tab}
-              initial={{ opacity: 0, y: 12, filter: 'blur(2px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
-              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            >
+      <AnimalAnimationContext.Provider value={data.animalAnimations !== false}>
+        <div className={`app-shell ${detail ? 'has-sheet' : ''}`}>
+          <header className="app-header">
+            <div className="header-left">
               {page === 'pets' ? (
-                <PetCollection
-                  pets={data.pets}
-                  activeId={pet.id}
-                  onSelect={(id) => {
-                    setData((prev) => ({ ...prev, activePetId: id }));
-                    leavePets();
-                    haptic();
-                  }}
-                  onAdd={addPet}
-                  onEdit={(p) => {
-                    setEditPet(p);
-                    pushState('onboard', null);
-                    setPage('onboard');
-                  }}
-                />
-              ) : tab === 'today' ? (
-                <Today
-                  pet={pet}
-                  events={data.events}
-                  completed={data.completed}
-                  onToggle={toggle}
-                  onEvent={(event) => openDetail({ type: 'event', event })}
-                  onFact={(fact) => openDetail({ type: 'fact', fact })}
-                  onDiet={() => openDetail({ type: 'diet' })}
-                  onSchedule={() => navigate('schedule')}
-                  onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
-                  onAdd={() => openDetail({ type: 'event' })}
-                  isDemo={!!data.demoMode}
-                  onPersonalize={addPet}
-                  historyCard={
-                    <>
-                      <AssistantEntry pet={pet} onOpen={() => openDetail({ type: 'assistant' })} />
-                      <MonthCard
-                        data={data}
-                        pet={pet}
-                        onOpen={() => openDetail({ type: 'history' })}
-                      />
-                    </>
-                  }
-                />
-              ) : tab === 'schedule' ? (
-                <Schedule
-                  pet={pet}
-                  events={data.events}
-                  completed={data.completed}
-                  onToggle={toggle}
-                  onEvent={(event) => openDetail({ type: 'event', event })}
-                  onAdd={() => openDetail({ type: 'event' })}
-                  onExport={exportCalendar}
-                />
+                <IconButton label="Back to your day" onClick={leavePets}>
+                  <ArrowLeftIcon size={23} />
+                </IconButton>
               ) : (
-                <Training
-                  pet={pet}
-                  trained={data.trained}
-                  onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-        {page === 'main' && (
-          <nav className="bottom-dock" aria-label="Main navigation">
-            {(
-              [
-                { id: 'today', label: 'Today', Icon: HouseIcon },
-                { id: 'schedule', label: 'Schedule', Icon: CalendarDotsIcon },
-                { id: 'training', label: 'Training', Icon: PawPrintIcon },
-              ] as const
-            ).map(({ id, label, Icon }) => (
-              <motion.button
-                key={id}
-                className={`dock-item ${tab === id ? 'active' : ''}`}
-                onClick={() => navigate(id)}
-                aria-label={label}
-                title={label}
-                aria-current={tab === id ? 'page' : undefined}
-                whileTap={{ scale: 0.85 }}
-              >
-                {tab === id && (
-                  <motion.span
-                    className="dock-active"
-                    layoutId="dock-selection"
-                    transition={{ type: 'spring', damping: 23, stiffness: 330 }}
-                  />
-                )}
-                <motion.span
-                  className="dock-icon"
-                  animate={{ scale: tab === id ? [0.9, 1.12, 1] : 1, y: 0 }}
-                  transition={{ duration: 0.32, ease: 'easeOut' }}
+                <button
+                  className="brand-button"
+                  onClick={() => navigate('today')}
+                  aria-label="Nuzzle home"
                 >
-                  <Icon size={27} weight={tab === id ? 'fill' : 'regular'} />
-                </motion.span>
-              </motion.button>
-            ))}
-          </nav>
-        )}
-      </div>
-      <Sheet
-        open={!!detail}
-        title={detailTitle}
-        onClose={closeDetail}
-        variant={
-          detail?.type === 'assistant'
-            ? 'assistant'
-            : detail?.type === 'event'
-              ? 'event'
-              : 'default'
-        }
-      >
-        {detail?.type === 'fact' ? (
-          <FactDetail
-            key={detail.fact.id}
-            pet={pet}
-            fact={detail.fact}
-            onFact={(fact) => openDetail({ type: 'fact', fact })}
-          />
-        ) : detail?.type === 'diet' ? (
-          <DietDetail pet={pet} />
-        ) : detail?.type === 'event' ? (
-          <EventEditor
-            key={detail.event?.id ?? 'new-event'}
-            event={detail.event}
-            pet={pet}
-            onSave={saveEvent}
-            onDelete={deleteEvent}
-            onClose={closeDetail}
-          />
-        ) : detail?.type === 'lesson' ? (
-          <LessonDetail
-            key={`${pet.id}-${detail.lesson.id}`}
-            pet={pet}
-            lesson={detail.lesson}
-            completed={data.trained.includes(`${pet.id}:${detail.lesson.id}`)}
-            sound={data.sound}
-            onAsk={() =>
-              openDetail({ type: 'assistant', prompt: `Help me practise ${detail.lesson.title}.` })
-            }
-            onComplete={() => {
-              setData((prev) => ({
-                ...prev,
-                trained: Array.from(new Set([...prev.trained, `${pet.id}:${detail.lesson.id}`])),
-                history: [
-                  ...(prev.history ?? []),
-                  {
-                    id: crypto.randomUUID(),
-                    petId: pet.id,
-                    date: dateKey(new Date()),
-                    kind: 'practice' as const,
-                    title: detail.lesson.title,
-                    note: 'A little time spent growing together.',
-                    minutes: detail.lesson.duration,
-                    lessonId: detail.lesson.id,
-                  },
-                ],
-              }));
-              haptic(true);
-              if (data.sound) playTone();
-              notify('A little closer, one practice at a time.');
-              closeDetail();
-            }}
-          />
-        ) : detail?.type === 'search' ? (
-          <SearchDetail
-            pet={pet}
-            events={data.events}
-            onFact={(fact) => openDetail({ type: 'fact', fact })}
-            onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
-            onEvent={(event) => openDetail({ type: 'event', event })}
-          />
-        ) : detail?.type === 'history' ? (
-          <MonthReview
-            data={data}
-            pet={pet}
-            onSummarize={() =>
-              openDetail({ type: 'assistant', prompt: 'Summarize our last month.' })
-            }
-            onAddNote={(entry) => {
-              setData((previous) => ({
-                ...previous,
-                history: [...(previous.history ?? []), entry],
-              }));
-              notify('An observation, kept close.');
-            }}
-            onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
-          />
-        ) : detail?.type === 'brand' ? (
-          <BrandStudio />
-        ) : detail?.type === 'assistant' ? (
-          <OfflineAssistant
-            key={`${pet.id}:${detail.prompt ?? ''}:${detail.panel ?? 'chat'}`}
-            data={data}
-            pet={pet}
-            initialPrompt={detail.prompt}
-            initialPanel={detail.panel}
-            onSaveReminder={saveEvent}
-            onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
-          />
-        ) : detail?.type === 'settings' ? (
-          <div className="settings-detail">
-            <Brand />
-            <h3>Little things, your way.</h3>
-            <p>A calmer everyday companion.</p>
-            <p>
-              <a href="/about/">About Nuzzle, sources & privacy</a>
-            </p>
-            <div className="settings-row">
-              <div>
-                <strong>Offline companion</strong>
-                <span>Model downloads, device storage, and private conversations.</span>
-              </div>
+                  <Brand />
+                </button>
+              )}
+              <span className="header-context">
+                {page === 'pets' ? 'Your companions' : 'Their everyday companion'}
+              </span>
+            </div>
+            <div className="header-actions">
               <IconButton
-                label="Manage offline companion"
-                onClick={() => openDetail({ type: 'assistant', panel: 'model' })}
+                label="Ask your pet companion"
+                onClick={() => openDetail({ type: 'assistant' })}
               >
-                <SparkleIcon size={22} />
+                <ChatCircleDotsIcon size={23} />
               </IconButton>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>A little identity</strong>
-                <span>Nuzzle, Pippa, and Kindred. Explore the directions.</span>
-              </div>
+              <IconButton label="Search" onClick={() => openDetail({ type: 'search' })}>
+                <MagnifyingGlassIcon size={23} />
+              </IconButton>
               <IconButton
-                label="Explore brand directions"
-                onClick={() => openDetail({ type: 'brand' })}
+                label="Your pets"
+                className={page === 'pets' ? 'header-pets active' : 'header-pets'}
+                onClick={page === 'pets' ? leavePets : openPets}
               >
-                <PawPrintIcon size={22} />
+                <PawPrintIcon size={24} weight={page === 'pets' ? 'fill' : 'regular'} />
+              </IconButton>
+              <IconButton
+                label="App preferences"
+                className="preferences-button"
+                onClick={() => openDetail({ type: 'settings' })}
+              >
+                <DotsThreeIcon size={25} weight="bold" />
               </IconButton>
             </div>
-            <div className="settings-row">
-              <div>
-                <strong>A month of little moments</strong>
-                <span>Care, practice, and observations for {pet.name}.</span>
-              </div>
-              <IconButton label="Open care history" onClick={() => openDetail({ type: 'history' })}>
-                <CalendarDotsIcon size={22} />
-              </IconButton>
+          </header>
+          {offline && (
+            <div className="system-banner">
+              <WifiSlashIcon size={17} />
+              You’re offline. Your saved little world is still here.
             </div>
-            <div className="appearance-settings">
-              <strong>Appearance</strong>
-              <p>Follow your device, or choose your own.</p>
-              <div className="appearance-segment" role="group" aria-label="Appearance">
-                {(
-                  [
-                    { id: 'system', label: 'System', Icon: DeviceMobileIcon },
-                    { id: 'light', label: 'Light', Icon: SunIcon },
-                    { id: 'dark', label: 'Dark', Icon: MoonIcon },
-                  ] as const
-                ).map(({ id, label, Icon }) => (
-                  <motion.button
-                    key={id}
-                    aria-label={label}
-                    title={label}
-                    aria-pressed={(data.appearance ?? 'system') === id}
-                    onClick={() => {
-                      setData((previous) => ({ ...previous, appearance: id as Appearance }));
+          )}
+          {storageError && (
+            <div className="system-banner storage-warning">
+              This device’s storage is full. Your latest changes are temporary.
+              <button onClick={exportBackup}>Download a backup</button>
+            </div>
+          )}
+          <main className="app-main">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={page === 'pets' ? 'pets' : tab}
+                initial={{ opacity: 0, y: 12, filter: 'blur(2px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {page === 'pets' ? (
+                  <PetCollection
+                    pets={data.pets}
+                    activeId={pet.id}
+                    onSelect={(id) => {
+                      setData((prev) => ({ ...prev, activePetId: id }));
+                      leavePets();
                       haptic();
                     }}
-                    whileTap={{ scale: 0.96 }}
-                  >
-                    {(data.appearance ?? 'system') === id && (
-                      <motion.span
-                        className="appearance-highlight"
-                        layoutId="appearance-selection"
-                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <Icon
-                      size={21}
-                      weight={(data.appearance ?? 'system') === id ? 'fill' : 'regular'}
+                    onAdd={addPet}
+                    onEdit={(p) => {
+                      setEditPet(p);
+                      pushState('onboard', null);
+                      setPage('onboard');
+                    }}
+                  />
+                ) : tab === 'today' ? (
+                  <Today
+                    pet={pet}
+                    events={data.events}
+                    completed={data.completed}
+                    onToggle={toggle}
+                    onEvent={(event) => openDetail({ type: 'event', event })}
+                    onFact={(fact) => openDetail({ type: 'fact', fact })}
+                    onDiet={() => openDetail({ type: 'diet' })}
+                    onSchedule={() => navigate('schedule')}
+                    onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
+                    onAdd={() => openDetail({ type: 'event' })}
+                    isDemo={!!data.demoMode}
+                    onPersonalize={addPet}
+                    historyCard={
+                      <>
+                        <AssistantEntry
+                          pet={pet}
+                          onOpen={() => openDetail({ type: 'assistant' })}
+                        />
+                        <MonthCard
+                          data={data}
+                          pet={pet}
+                          onOpen={() => openDetail({ type: 'history' })}
+                        />
+                      </>
+                    }
+                  />
+                ) : tab === 'schedule' ? (
+                  <Schedule
+                    pet={pet}
+                    events={data.events}
+                    completed={data.completed}
+                    onToggle={toggle}
+                    onEvent={(event) => openDetail({ type: 'event', event })}
+                    onAdd={() => openDetail({ type: 'event' })}
+                    onExport={exportCalendar}
+                  />
+                ) : (
+                  <Training
+                    pet={pet}
+                    trained={data.trained}
+                    onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+          {page === 'main' && (
+            <nav className="bottom-dock" aria-label="Main navigation">
+              {(
+                [
+                  { id: 'today', label: 'Today', Icon: HouseIcon },
+                  { id: 'schedule', label: 'Schedule', Icon: CalendarDotsIcon },
+                  { id: 'training', label: 'Training', Icon: PawPrintIcon },
+                ] as const
+              ).map(({ id, label, Icon }) => (
+                <motion.button
+                  key={id}
+                  className={`dock-item ${tab === id ? 'active' : ''}`}
+                  onClick={() => navigate(id)}
+                  aria-label={label}
+                  title={label}
+                  aria-current={tab === id ? 'page' : undefined}
+                  whileTap={{ scale: 0.85 }}
+                >
+                  {tab === id && (
+                    <motion.span
+                      className="dock-active"
+                      layoutId="dock-selection"
+                      transition={{ type: 'spring', damping: 23, stiffness: 330 }}
                     />
-                    <span className="sr-only">{label}</span>
-                  </motion.button>
-                ))}
+                  )}
+                  <motion.span
+                    className="dock-icon"
+                    animate={{ scale: tab === id ? [0.9, 1.12, 1] : 1, y: 0 }}
+                    transition={{ duration: 0.32, ease: 'easeOut' }}
+                  >
+                    <Icon size={27} weight={tab === id ? 'fill' : 'regular'} />
+                  </motion.span>
+                </motion.button>
+              ))}
+            </nav>
+          )}
+        </div>
+        <Sheet
+          open={!!detail}
+          title={detailTitle}
+          onClose={closeDetail}
+          variant={
+            detail?.type === 'assistant'
+              ? 'assistant'
+              : detail?.type === 'event'
+                ? 'event'
+                : 'default'
+          }
+        >
+          {detail?.type === 'fact' ? (
+            <FactDetail
+              key={detail.fact.id}
+              pet={pet}
+              fact={detail.fact}
+              onFact={(fact) => openDetail({ type: 'fact', fact })}
+            />
+          ) : detail?.type === 'diet' ? (
+            <DietDetail pet={pet} />
+          ) : detail?.type === 'event' ? (
+            <EventEditor
+              key={detail.event?.id ?? 'new-event'}
+              event={detail.event}
+              pet={pet}
+              onSave={saveEvent}
+              onDelete={deleteEvent}
+              onClose={closeDetail}
+            />
+          ) : detail?.type === 'lesson' ? (
+            <LessonDetail
+              key={`${pet.id}-${detail.lesson.id}`}
+              pet={pet}
+              lesson={detail.lesson}
+              completed={data.trained.includes(`${pet.id}:${detail.lesson.id}`)}
+              sound={data.sound}
+              onAsk={() =>
+                openDetail({
+                  type: 'assistant',
+                  prompt: `Help me practise ${detail.lesson.title}.`,
+                })
+              }
+              onComplete={() => {
+                setData((prev) => ({
+                  ...prev,
+                  trained: Array.from(new Set([...prev.trained, `${pet.id}:${detail.lesson.id}`])),
+                  history: [
+                    ...(prev.history ?? []),
+                    {
+                      id: crypto.randomUUID(),
+                      petId: pet.id,
+                      date: dateKey(new Date()),
+                      kind: 'practice' as const,
+                      title: detail.lesson.title,
+                      note: 'A little time spent growing together.',
+                      minutes: detail.lesson.duration,
+                      lessonId: detail.lesson.id,
+                    },
+                  ],
+                }));
+                haptic(true);
+                if (data.sound) playTone();
+                notify('A little closer, one practice at a time.');
+                closeDetail();
+              }}
+            />
+          ) : detail?.type === 'search' ? (
+            <SearchDetail
+              pet={pet}
+              events={data.events}
+              onFact={(fact) => openDetail({ type: 'fact', fact })}
+              onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
+              onEvent={(event) => openDetail({ type: 'event', event })}
+            />
+          ) : detail?.type === 'history' ? (
+            <MonthReview
+              data={data}
+              pet={pet}
+              onSummarize={() =>
+                openDetail({ type: 'assistant', prompt: 'Summarize our last month.' })
+              }
+              onAddNote={(entry) => {
+                setData((previous) => ({
+                  ...previous,
+                  history: [...(previous.history ?? []), entry],
+                }));
+                notify('An observation, kept close.');
+              }}
+              onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
+            />
+          ) : detail?.type === 'brand' ? (
+            <BrandStudio />
+          ) : detail?.type === 'assistant' ? (
+            <OfflineAssistant
+              key={`${pet.id}:${detail.prompt ?? ''}:${detail.panel ?? 'chat'}`}
+              data={data}
+              pet={pet}
+              initialPrompt={detail.prompt}
+              initialPanel={detail.panel}
+              onSaveReminder={saveEvent}
+              onLesson={(lesson) => openDetail({ type: 'lesson', lesson })}
+            />
+          ) : detail?.type === 'settings' ? (
+            <div className="settings-detail">
+              <Brand />
+              <h3>Little things, your way.</h3>
+              <p>A calmer everyday companion.</p>
+              <p>
+                <a href="/about/">About Nuzzle, sources & privacy</a>
+              </p>
+              <div className="settings-row">
+                <div>
+                  <strong>Offline companion</strong>
+                  <span>Model downloads, device storage, and private conversations.</span>
+                </div>
+                <IconButton
+                  label="Manage offline companion"
+                  onClick={() => openDetail({ type: 'assistant', panel: 'model' })}
+                >
+                  <SparkleIcon size={22} />
+                </IconButton>
               </div>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>Gentle sounds</strong>
-                <span>A soft note for a completed moment.</span>
+              <div className="settings-row">
+                <div>
+                  <strong>A little identity</strong>
+                  <span>Nuzzle, Pippa, and Kindred. Explore the directions.</span>
+                </div>
+                <IconButton
+                  label="Explore brand directions"
+                  onClick={() => openDetail({ type: 'brand' })}
+                >
+                  <PawPrintIcon size={22} />
+                </IconButton>
               </div>
-              <SoundToggle
-                enabled={data.sound}
-                onToggle={() => {
-                  setData((p) => ({ ...p, sound: !p.sound }));
-                  if (!data.sound) playTone();
-                }}
-              />
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>On your home screen</strong>
-                <span>Your little world, one tap away.</span>
+              <div className="settings-row">
+                <div>
+                  <strong>A month of little moments</strong>
+                  <span>Care, practice, and observations for {pet.name}.</span>
+                </div>
+                <IconButton
+                  label="Open care history"
+                  onClick={() => openDetail({ type: 'history' })}
+                >
+                  <CalendarDotsIcon size={22} />
+                </IconButton>
               </div>
-              <IconButton
-                label="Install Nuzzle"
-                onClick={() => {
-                  if (install) {
-                    void install.prompt();
-                    setInstall(null);
-                  } else
-                    notify(
-                      'On iPhone: Share → Add to Home Screen. On other browsers, choose Install app from the menu.',
-                    );
-                }}
-              >
-                <DownloadSimpleIcon size={22} />
-              </IconButton>
-            </div>
-            <p className="fine-print">
-              On iPhone or iPad, open Safari’s Share menu and choose Add to Home Screen. The app
-              respects your appearance choice and reduced motion settings.
-            </p>
-            <div className="settings-row">
-              <div>
-                <strong>Keep your rhythm close</strong>
-                <span>Export {pet.name}’s care schedule.</span>
+              <div className="appearance-settings">
+                <strong>Appearance</strong>
+                <p>Follow your device, or choose your own.</p>
+                <div className="appearance-segment" role="group" aria-label="Appearance">
+                  {(
+                    [
+                      { id: 'system', label: 'System', Icon: DeviceMobileIcon },
+                      { id: 'light', label: 'Light', Icon: SunIcon },
+                      { id: 'dark', label: 'Dark', Icon: MoonIcon },
+                    ] as const
+                  ).map(({ id, label, Icon }) => (
+                    <motion.button
+                      key={id}
+                      aria-label={label}
+                      title={label}
+                      aria-pressed={(data.appearance ?? 'system') === id}
+                      onClick={() => {
+                        setData((previous) => ({ ...previous, appearance: id as Appearance }));
+                        haptic();
+                      }}
+                      whileTap={{ scale: 0.96 }}
+                    >
+                      {(data.appearance ?? 'system') === id && (
+                        <motion.span
+                          className="appearance-highlight"
+                          layoutId="appearance-selection"
+                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                      <Icon
+                        size={21}
+                        weight={(data.appearance ?? 'system') === id ? 'fill' : 'regular'}
+                      />
+                      <span className="sr-only">{label}</span>
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-              <IconButton label="Export calendar" onClick={() => exportCalendar(new Date())}>
-                <CalendarDotsIcon size={22} />
-              </IconButton>
-            </div>
-            <p className="fine-print">
-              Browser notifications work while this app is open. Device calendars can remind you
-              while it’s closed.
-            </p>
-            <div className="settings-row">
-              <div>
-                <strong>Share a little love</strong>
-                <span>Send someone the app.</span>
+              <div className="settings-row">
+                <div>
+                  <strong>Playful animal illustrations</strong>
+                  <span>
+                    {data.animalAnimations === false
+                      ? 'Original illustrations, completely still.'
+                      : 'Gentle movement, little reactions and drag to play.'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={'text-toggle ' + (data.animalAnimations !== false ? 'on' : '')}
+                  role="switch"
+                  aria-checked={data.animalAnimations !== false}
+                  aria-label="Playful animal illustrations"
+                  onClick={() => {
+                    setData((previous) => ({
+                      ...previous,
+                      animalAnimations: previous.animalAnimations === false,
+                    }));
+                    haptic();
+                  }}
+                >
+                  {data.animalAnimations === false ? 'Static' : 'Animated'}
+                </button>
               </div>
-              <IconButton
-                label="Share Nuzzle"
-                onClick={() => {
-                  void share();
-                }}
-              >
-                <ShareNetworkIcon size={22} />
-              </IconButton>
-            </div>
-            <div className="settings-row">
-              <div>
-                <strong>A copy of your little world</strong>
-                <span>Back up your pets and routines.</span>
+              <div className="settings-row">
+                <div>
+                  <strong>Gentle sounds</strong>
+                  <span>A soft note for a completed moment.</span>
+                </div>
+                <SoundToggle
+                  enabled={data.sound}
+                  onToggle={() => {
+                    setData((p) => ({ ...p, sound: !p.sound }));
+                    if (!data.sound) playTone();
+                  }}
+                />
               </div>
-              <IconButton label="Download your pet data" onClick={exportBackup}>
-                <DownloadSimpleIcon size={22} />
-              </IconButton>
+              <div className="settings-row">
+                <div>
+                  <strong>On your home screen</strong>
+                  <span>Your little world, one tap away.</span>
+                </div>
+                <IconButton
+                  label="Install Nuzzle"
+                  onClick={() => {
+                    if (install) {
+                      void install.prompt();
+                      setInstall(null);
+                    } else
+                      notify(
+                        'On iPhone: Share → Add to Home Screen. On other browsers, choose Install app from the menu.',
+                      );
+                  }}
+                >
+                  <DownloadSimpleIcon size={22} />
+                </IconButton>
+              </div>
+              <p className="fine-print">
+                On iPhone or iPad, open Safari’s Share menu and choose Add to Home Screen. The app
+                respects your appearance choice and reduced motion settings.
+              </p>
+              <div className="settings-row">
+                <div>
+                  <strong>Keep your rhythm close</strong>
+                  <span>Export {pet.name}’s care schedule.</span>
+                </div>
+                <IconButton label="Export calendar" onClick={() => exportCalendar(new Date())}>
+                  <CalendarDotsIcon size={22} />
+                </IconButton>
+              </div>
+              <p className="fine-print">
+                Browser notifications work while this app is open. Device calendars can remind you
+                while it’s closed.
+              </p>
+              <div className="settings-row">
+                <div>
+                  <strong>Share a little love</strong>
+                  <span>Send someone the app.</span>
+                </div>
+                <IconButton
+                  label="Share Nuzzle"
+                  onClick={() => {
+                    void share();
+                  }}
+                >
+                  <ShareNetworkIcon size={22} />
+                </IconButton>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <strong>A copy of your little world</strong>
+                  <span>Back up your pets and routines.</span>
+                </div>
+                <IconButton label="Download your pet data" onClick={exportBackup}>
+                  <DownloadSimpleIcon size={22} />
+                </IconButton>
+              </div>
+              <p className="fine-print">
+                Your pets, photos, and progress are saved in this browser. Clearing browser data
+                removes them. Care information is a starting point; your vet can tailor it to their
+                health.
+              </p>
             </div>
-            <p className="fine-print">
-              Your pets, photos, and progress are saved in this browser. Clearing browser data
-              removes them. Care information is a starting point; your vet can tailor it to their
-              health.
-            </p>
-          </div>
-        ) : null}
-      </Sheet>
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            className="toast"
-            role="status"
-            style={{ x: '-50%' }}
-            initial={{ opacity: 0, y: 24, scale: 0.94 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12 }}
-          >
-            <CheckIcon size={18} />
-            <span>{toast}</span>
-            <button onClick={() => setToast('')} aria-label="Dismiss message">
-              <XIcon size={16} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ) : null}
+        </Sheet>
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              className="toast"
+              role="status"
+              style={{ x: '-50%' }}
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12 }}
+            >
+              <CheckIcon size={18} />
+              <span>{toast}</span>
+              <button onClick={() => setToast('')} aria-label="Dismiss message">
+                <XIcon size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </AnimalAnimationContext.Provider>
     </MotionConfig>
   );
 }
