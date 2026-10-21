@@ -6342,5 +6342,7 @@ textarea,
   filter: drop-shadow(0 2px 5px #00000014);
 }
 @media (prefers-reduced-motion: reduce) {
-  .animal-delight { display: none; }
+  .animal-delight {
+    display: none;
+  }
 }

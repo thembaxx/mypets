@@ -1,7 +1,13 @@
 'use client';
 import { createContext, useContext, useRef, useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'motion/react';
-import { XIcon, ArrowUpRightIcon, SpeakerHighIcon, SpeakerSlashIcon, HeartIcon } from '@phosphor-icons/react';
+import {
+  XIcon,
+  ArrowUpRightIcon,
+  SpeakerHighIcon,
+  SpeakerSlashIcon,
+  HeartIcon,
+} from '@phosphor-icons/react';
 import { brand } from '@/lib/brand';
 import type { Species } from '@/lib/care';
 import { animalAsset, speciesNames } from '@/lib/species';
@@ -67,10 +73,19 @@ export function IconButton({
 export const AnimalAnimationContext = createContext(true);
 
 export function Animal({
-  species, breed, className = '', interactive = false, photo, sound = false,
+  species,
+  breed,
+  className = '',
+  interactive = false,
+  photo,
+  sound = false,
 }: {
-  species: Species; breed?: string; className?: string; interactive?: boolean;
-  photo?: string; sound?: boolean;
+  species: Species;
+  breed?: string;
+  className?: string;
+  interactive?: boolean;
+  photo?: string;
+  sound?: boolean;
 }) {
   const enabled = useContext(AnimalAnimationContext);
   const reduced = useReducedMotion();
@@ -83,13 +98,18 @@ export function Animal({
   const flier = ['bird', 'chicken'].includes(species);
   const playful = ['dog', 'cat', 'ferret', 'rabbit', 'hamster', 'guinea-pig'].includes(species);
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
 
   const graphic = (
     <motion.div
-      className={'animal-art ' + species + ' asset-' + asset + (photo ? ' user-photo' : '') + ' ' + className}
+      className={
+        'animal-art ' + species + ' asset-' + asset + (photo ? ' user-photo' : '') + ' ' + className
+      }
       animate={
         !animated
           ? { x: 0, y: 0, rotate: 0, scale: 1 }
@@ -119,7 +139,11 @@ export function Animal({
     >
       <img
         src={photo || '/animals/' + asset + '.webp'}
-        alt={photo ? 'Your pet' : 'The supplied ' + speciesNames[species].toLowerCase() + ' illustration'}
+        alt={
+          photo
+            ? 'Your pet'
+            : 'The supplied ' + speciesNames[species].toLowerCase() + ' illustration'
+        }
         draggable={false}
       />
     </motion.div>

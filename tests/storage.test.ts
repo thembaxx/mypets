@@ -96,5 +96,8 @@ test('animal illustration animation preference survives reload and older saves s
   const paused = parseData(JSON.stringify({ ...base, animalAnimations: false }));
   assert.equal(paused?.animalAnimations, false);
   assert.equal(parseData(JSON.stringify(paused))?.animalAnimations, false);
-  assert.equal(parseData(JSON.stringify({ ...base, animalAnimations: 'off' }))?.animalAnimations, true);
+  assert.equal(
+    parseData(JSON.stringify({ ...base, animalAnimations: 'off' }))?.animalAnimations,
+    true,
+  );
 });

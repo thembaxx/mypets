@@ -235,7 +235,9 @@ export function Today({
             <AmbientScene />
             <Animal species={pet.species} breed={pet.breed} photo={pet.photo} interactive />
           </div>
-          <span className="discovery-note">{animalAnimations ? 'Tap to delight. Drag to play.' : 'A quiet little moment.'}</span>
+          <span className="discovery-note">
+            {animalAnimations ? 'Tap to delight. Drag to play.' : 'A quiet little moment.'}
+          </span>
         </motion.section>
         <section className="day-card">
           <div className="card-topline">
