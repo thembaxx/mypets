@@ -6326,3 +6326,21 @@ textarea,
 .public-overview footer {
   margin-top: 2rem;
 }
+
+/* The supplied animal pixels, palette and silhouette are untouched by motion settings. */
+.animal-interaction.is-static {
+  touch-action: auto;
+  cursor: default;
+}
+.animal-delight {
+  position: absolute;
+  z-index: 3;
+  right: 12%;
+  top: 8%;
+  color: var(--accent);
+  pointer-events: none;
+  filter: drop-shadow(0 2px 5px #00000014);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animal-delight { display: none; }
+}

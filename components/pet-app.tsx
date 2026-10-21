@@ -26,7 +26,7 @@ import LaunchSplash from './launch-splash';
 import { MonthCard, MonthReview, BrandStudio } from './history';
 import { createDemoData } from '@/lib/history';
 import { brand } from '@/lib/brand';
-import { Brand, IconButton, Sheet, SoundToggle, haptic, playTone } from './shared';
+import { AnimalAnimationContext, Brand, IconButton, Sheet, SoundToggle, haptic, playTone } from './shared';
 import { Today, Schedule, Training, PetCollection } from './views';
 import { DietDetail, EventEditor, FactDetail, LessonDetail, SearchDetail } from './details';
 import {
@@ -68,6 +68,7 @@ const initialData: AppData & { demoMode?: boolean } = {
   sound: false,
   demoMode: true,
   appearance: 'system',
+  animalAnimations: true,
 };
 const OfflineAssistant = dynamic(() => import('./offline-assistant'), {
   ssr: false,
@@ -349,6 +350,7 @@ export default function PetApp() {
   if (!data.onboarded || page === 'onboard')
     return (
       <MotionConfig reducedMotion="user">
+        <AnimalAnimationContext.Provider value={data.animalAnimations !== false}>
         <Onboarding
           initial={editPet}
           onSave={savePet}
@@ -365,6 +367,7 @@ export default function PetApp() {
               : undefined
           }
         />
+        </AnimalAnimationContext.Provider>
       </MotionConfig>
     );
   const detailTitle =
@@ -389,6 +392,7 @@ export default function PetApp() {
                     : 'Make it yours';
   return (
     <MotionConfig reducedMotion="user">
+      <AnimalAnimationContext.Provider value={data.animalAnimations !== false}>
       <div className={`app-shell ${detail ? 'has-sheet' : ''}`}>
         <header className="app-header">
           <div className="header-left">
@@ -735,6 +739,30 @@ export default function PetApp() {
             </div>
             <div className="settings-row">
               <div>
+                <strong>Playful animal illustrations</strong>
+                <span>{data.animalAnimations === false
+                  ? 'Original illustrations, completely still.'
+                  : 'Gentle movement, little reactions and drag to play.'}</span>
+              </div>
+              <button
+                type="button"
+                className={'text-toggle ' + (data.animalAnimations !== false ? 'on' : '')}
+                role="switch"
+                aria-checked={data.animalAnimations !== false}
+                aria-label="Playful animal illustrations"
+                onClick={() => {
+                  setData((previous) => ({
+                    ...previous,
+                    animalAnimations: previous.animalAnimations === false,
+                  }));
+                  haptic();
+                }}
+              >
+                {data.animalAnimations === false ? 'Static' : 'Animated'}
+              </button>
+            </div>
+            <div className="settings-row">
+              <div>
                 <strong>Gentle sounds</strong>
                 <span>A soft note for a completed moment.</span>
               </div>
@@ -832,6 +860,7 @@ export default function PetApp() {
           </motion.div>
         )}
       </AnimatePresence>
+      </AnimalAnimationContext.Provider>
     </MotionConfig>
   );
 }

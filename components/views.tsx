@@ -1,5 +1,5 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -26,7 +26,7 @@ import {
   PencilSimpleIcon,
 } from '@phosphor-icons/react';
 import { discoveryTitles, speciesNames } from '@/lib/species';
-import { Animal, IconButton, haptic } from './shared';
+import { Animal, AnimalAnimationContext, IconButton, haptic } from './shared';
 import {
   ageLabel,
   careGuide,
@@ -147,6 +147,7 @@ export function Today({
   onPersonalize: () => void;
   historyCard?: ReactNode;
 }) {
+  const animalAnimations = useContext(AnimalAnimationContext);
   const guide = careGuide(pet);
   const facts = factsFor(pet);
   const today = dateKey(new Date());
@@ -234,7 +235,7 @@ export function Today({
             <AmbientScene />
             <Animal species={pet.species} breed={pet.breed} photo={pet.photo} interactive />
           </div>
-          <span className="discovery-note">Tap to delight. Drag to play.</span>
+          <span className="discovery-note">{animalAnimations ? 'Tap to delight. Drag to play.' : 'A quiet little moment.'}</span>
         </motion.section>
         <section className="day-card">
           <div className="card-topline">
