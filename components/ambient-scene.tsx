@@ -6,19 +6,28 @@ import type { Group } from 'three';
 import { AnimalAnimationContext } from './shared';
 function Toys({ reduced }: { reduced: boolean }) {
   const group = useRef<Group>(null);
+  const paw = useRef<Group>(null);
   const [active, setActive] = useState(false);
   useFrame(({ clock, pointer }) => {
     if (!group.current) return;
+    if (reduced) {
+      group.current.rotation.set(0, 0, 0);
+      group.current.position.y = 0;
+      if (paw.current) paw.current.rotation.y = 0;
+      return;
+    }
     const t = clock.getElapsedTime();
     group.current.rotation.y += (pointer.x * 0.3 - group.current.rotation.y) * 0.04;
     group.current.rotation.x += (-pointer.y * 0.2 - group.current.rotation.x) * 0.04;
-    if (!reduced) {
-      group.current.position.y = Math.sin(t * 0.65) * 0.07;
-      group.current.rotation.z = Math.sin(t * 0.4) * 0.04;
+    group.current.position.y = Math.sin(t * 0.65) * 0.07;
+    group.current.rotation.z = Math.sin(t * 0.4) * 0.04;
+    if (paw.current) {
+      paw.current.rotation.y = Math.sin(t * 0.48) * 0.2;
+      paw.current.position.y = 0.6 + Math.sin(t * 0.8) * 0.08;
     }
   });
   return (
-    <group ref={group} onClick={() => setActive(!active)}>
+    <group ref={group} onClick={() => setActive(previous => !previous)}>
       <mesh position={[1.4, -0.8, 0]} rotation={[0.3, 0.2, 0.1]} scale={active ? 1.18 : 1}>
         <sphereGeometry args={[0.4, 32, 32]} />
         <meshStandardMaterial color="#eebd88" roughness={0.48} />
@@ -31,6 +40,23 @@ function Toys({ reduced }: { reduced: boolean }) {
         <torusGeometry args={[0.32, 0.095, 16, 40]} />
         <meshStandardMaterial color="#9aaf85" roughness={0.8} />
       </mesh>
+      {/* Original low-poly paw charm, distinct from the approved animal illustrations. */}
+      <group ref={paw} position={[-1.55, 0.6, -0.55]} rotation={[-0.2, 0, -0.15]} scale={active ? 1.13 : 1}>
+        <mesh castShadow position={[0, -0.16, 0]} scale={[0.5, 0.39, 0.18]}>
+          <sphereGeometry args={[1, 20, 14]} />
+          <meshStandardMaterial color="#efb58e" roughness={0.73} />
+        </mesh>
+        {[-0.39, -0.14, 0.14, 0.39].map((x, i) => (
+          <mesh key={i} castShadow position={[x, 0.38 - Math.abs(x) * 0.26, 0]} rotation={[0, 0, -x * 0.18]} scale={[0.18, 0.23, 0.14]}>
+            <sphereGeometry args={[1, 12, 10]} />
+            <meshStandardMaterial color={i % 2 === 0 ? '#f1c59c' : '#e5a987'} roughness={0.7} />
+          </mesh>
+        ))}
+        <mesh position={[0, -0.16, 0.175]} scale={[0.29, 0.2, 0.03]}>
+          <sphereGeometry args={[1, 12, 8]} />
+          <meshStandardMaterial color="#fff3df" roughness={0.84} />
+        </mesh>
+      </group>
       <mesh position={[1.9, 1.2, -1]} rotation={[0.5, 0.3, 1.3]}>
         <sphereGeometry args={[0.13, 20, 20]} />
         <meshStandardMaterial color="#fff3d6" />
