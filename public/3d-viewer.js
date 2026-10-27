@@ -361,7 +361,7 @@
     variant.value='local';
     inform('Opening local review file…');
     try {
-      if(!/\\.glb$/i.test(file.name))throw Error('Choose a .glb model file.');
+      if(!/\.glb$/i.test(file.name))throw Error('Choose a .glb model file.');
       if(file.size<28||file.size>MAX_FILE)throw Error('The GLB exceeds the 8 MiB review limit.');
       const bytes=await file.arrayBuffer();
       resource=readGlb(bytes);
