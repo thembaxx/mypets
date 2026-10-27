@@ -20,14 +20,18 @@ jobs:
             sudo DEBIAN_FRONTEND=noninteractive apt-get install -y blender
           fi
           blender --version | head -2
-      - name: Validate standalone Blender source syntax
-        run: python3 -m py_compile scripts/author-blender-candidate.py
+      - name: Validate Python syntax and candidate gate tests
+        run: |
+          python3 -m py_compile scripts/author-blender-candidate.py
+          node --test scripts/check-blender-review.test.mjs
       - name: Author original candidate models in Blender
         run: |
           blender --background --factory-startup --python scripts/author-blender-candidate.py -- \
             --preset paw --output-dir "$RUNNER_TEMP/blender-review"
       - name: Validate embedded web GLB size and geometry
         run: node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/blender-review" --require-assets
+      - name: Verify Blender animation and provenance before upload
+        run: node scripts/check-blender-review.mjs paw "$RUNNER_TEMP/blender-review"
       - name: Upload unapproved review pack (no production writes)
         uses: actions/upload-artifact@v4
         with:
