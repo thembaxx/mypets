@@ -349,6 +349,36 @@
     }
     updatePlayButton();
   }
+  // The browser reads candidate files locally. No remote model upload occurs.
+  const candidateInput=document.getElementById('candidate');
+  candidateInput.addEventListener('change',async()=>{
+    const file=candidateInput.files?.[0];
+    if(!file)return;
+    setPlaying(false);
+    currentController?.abort();
+    disposeResource();
+    resource=null;
+    variant.value='local';
+    inform('Opening local review file…');
+    try {
+      if(!/\.glb$/i.test(file.name))throw Error('Choose a .glb model file.');
+      if(file.size<28||file.size>MAX_FILE)throw Error('The GLB exceeds the 8 MiB review limit.');
+      const bytes=await file.arrayBuffer();
+      resource=readGlb(bytes);
+      clockElapsed=0;
+      orbit={yaw:0.7,pitch:-0.5,distance:5.4};
+      updatePose(0);
+      draw();
+      const count=resource.meshes.reduce((sum,mesh)=>sum+mesh.length,0);
+      inform('Local review · '+count+' mesh parts · '+resource.clips.length+' clips · never uploaded');
+      setPlaying(resource.clips.length>0&&!preference.matches);
+    } catch(error) {
+      inform('Candidate unavailable: '+error.message);
+    } finally {
+      candidateInput.value='';
+      updatePlayButton();
+    }
+  });
   const clearTouches=()=>{touches.clear();previousDistance=null;};
   canvas.addEventListener('pointerdown',e=>{
     e.preventDefault();
@@ -406,7 +436,7 @@
   animationButton.addEventListener('click',()=>setPlaying(!playing));
   variant.addEventListener('change',changeVariant);
   document.addEventListener('visibilitychange',()=>{stopAnimation();if(!document.hidden&&playing){clockStart=performance.now()-clockElapsed*1000;startAnimation();}});
-  preference.addEventListener('change',()=>setPlaying(!preference.matches&&variant.value==='animated'));
+  preference.addEventListener('change',()=>setPlaying(!preference.matches&&!!resource?.clips.length));
   window.addEventListener('pagehide',()=>{stopAnimation();currentController?.abort();disposeResource();resource=null;clearTouches();});
   if('ResizeObserver'in window)new ResizeObserver(draw).observe(canvas);
   else window.addEventListener('resize',draw);
