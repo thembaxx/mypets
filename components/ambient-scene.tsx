@@ -3,11 +3,20 @@ import { Suspense, useContext, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { motion, useReducedMotion } from 'motion/react';
 import type { Group } from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AnimalAnimationContext } from './shared';
 function Toys({ reduced }: { reduced: boolean }) {
   const group = useRef<Group>(null);
   const paw = useRef<Group>(null);
   const [active, setActive] = useState(false);
+  const [originalPaw, setOriginalPaw] = useState<Group | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    new GLTFLoader().load('/models/original/mypets-paw-charm.glb', ({ scene }) => {
+      if (!cancelled) setOriginalPaw(scene);
+    }, undefined, () => { /* The procedural paw remains visible offline. */ });
+    return () => { cancelled = true; };
+  }, []);
   useFrame(({ clock, pointer }) => {
     if (!group.current) return;
     if (reduced) {
@@ -42,6 +51,7 @@ function Toys({ reduced }: { reduced: boolean }) {
       </mesh>
       {/* Original low-poly paw charm, distinct from the approved animal illustrations. */}
       <group ref={paw} position={[-1.55, 0.6, -0.55]} rotation={[-0.2, 0, -0.15]} scale={active ? 1.13 : 1}>
+        {originalPaw ? <primitive object={originalPaw} dispose={null} /> : <>}
         <mesh castShadow position={[0, -0.16, 0]} scale={[0.5, 0.39, 0.18]}>
           <sphereGeometry args={[1, 20, 14]} />
           <meshStandardMaterial color="#efb58e" roughness={0.73} />
@@ -56,6 +66,7 @@ function Toys({ reduced }: { reduced: boolean }) {
           <sphereGeometry args={[1, 12, 8]} />
           <meshStandardMaterial color="#fff3df" roughness={0.84} />
         </mesh>
+        </>}
       </group>
       <mesh position={[1.9, 1.2, -1]} rotation={[0.5, 0.3, 1.3]}>
         <sphereGeometry args={[0.13, 20, 20]} />
