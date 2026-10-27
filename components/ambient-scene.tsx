@@ -2,27 +2,41 @@
 import { Suspense, useContext, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { motion, useReducedMotion } from 'motion/react';
-import type { Group } from 'three';
+import { AnimationMixer, type AnimationClip, type Group } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AnimalAnimationContext } from './shared';
 function Toys({ reduced }: { reduced: boolean }) {
   const group = useRef<Group>(null);
   const paw = useRef<Group>(null);
   const [active, setActive] = useState(false);
-  const [originalPaw, setOriginalPaw] = useState<Group | null>(null);
+  const [originalPaw, setOriginalPaw] = useState<{ scene: Group; animations: AnimationClip[] } | null>(null);
+  const mixerRef = useRef<AnimationMixer | null>(null);
   useEffect(() => {
     let cancelled = false;
-    new GLTFLoader().load(
-      '/models/original/mypets-paw-charm.glb',
-      ({ scene }) => {
-        if (!cancelled) setOriginalPaw(scene);
-      },
-      undefined,
-      () => { /* The procedural paw remains visible offline. */ },
-    );
+    const loader = new GLTFLoader();
+    const load = (path: string, older = false) => {
+      loader.load(path, ({ scene, animations }) => {
+        if (!cancelled) setOriginalPaw({ scene, animations });
+      }, undefined, () => {
+        if (!cancelled && !older) load('/models/original/mypets-paw-charm.glb', true);
+      });
+    };
+    load('/models/original/mypets-paw-charm-animated.glb');
     return () => { cancelled = true; };
   }, []);
-  useFrame(({ clock, pointer }) => {
+  useEffect(() => {
+    if (!originalPaw || reduced || !originalPaw.animations.length) return;
+    const mixer = new AnimationMixer(originalPaw.scene);
+    originalPaw.animations.forEach(clip => mixer.clipAction(clip).play());
+    mixerRef.current = mixer;
+    return () => {
+      mixer.stopAllAction();
+      mixer.uncacheRoot(originalPaw.scene);
+      mixerRef.current = null;
+    };
+  }, [originalPaw, reduced]);
+  useFrame(({ clock, pointer }, delta) => {
+    if (!reduced) mixerRef.current?.update(Math.min(delta, 0.05));
     if (!group.current) return;
     if (reduced) {
       group.current.rotation.set(0, 0, 0);
@@ -56,7 +70,7 @@ function Toys({ reduced }: { reduced: boolean }) {
       </mesh>
       {/* Original low-poly paw charm, distinct from the approved animal illustrations. */}
       <group ref={paw} position={[-1.55, 0.6, -0.55]} rotation={[-0.2, 0, -0.15]} scale={active ? 1.13 : 1}>
-        {originalPaw ? <primitive object={originalPaw} dispose={null} /> : <>
+        {originalPaw ? <primitive object={originalPaw.scene} dispose={null} /> : <>
         <mesh castShadow position={[0, -0.16, 0]} scale={[0.5, 0.39, 0.18]}>
           <sphereGeometry args={[1, 20, 14]} />
           <meshStandardMaterial color="#efb58e" roughness={0.73} />
@@ -84,6 +98,8 @@ export default function AmbientScene() {
   const enabled = useContext(AnimalAnimationContext);
   const reduced = !!useReducedMotion() || !enabled;
   const [supported, setSupported] = useState(false);
+  const [inViewport, setInViewport] = useState(true);
+  const sceneRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     try {
       const canvas = document.createElement('canvas');
@@ -94,6 +110,19 @@ export default function AmbientScene() {
       setSupported(false);
     }
   }, []);
+  useEffect(() => {
+    if (!supported || !sceneRef.current) return;
+    const element = sceneRef.current;
+    let visible = true;
+    const refresh = () => setInViewport(visible && document.visibilityState === 'visible');
+    const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(
+      ([entry]) => { visible = entry.isIntersecting; refresh(); }, { threshold: 0.02 },
+    );
+    observer?.observe(element);
+    document.addEventListener('visibilitychange', refresh);
+    refresh();
+    return () => { observer?.disconnect(); document.removeEventListener('visibilitychange', refresh); };
+  }, [supported]);
   if (!enabled) return null;
   if (!supported)
     return (
@@ -105,12 +134,12 @@ export default function AmbientScene() {
       </div>
     );
   return (
-    <div className="ambient-canvas" role="img" aria-label="Subtle interactive 3D ball and ring">
+    <div ref={sceneRef} className="ambient-canvas" role="img" aria-label="Gently animated 3D toys and a paw charm">
       <Canvas
         dpr={[1, 1.5]}
         camera={{ position: [0, 0, 5], fov: 42 }}
         gl={{ alpha: true, antialias: true }}
-        frameloop={reduced ? 'demand' : 'always'}
+        frameloop={reduced || !inViewport ? 'demand' : 'always'}
       >
         <ambientLight intensity={2} />
         <directionalLight position={[3, 4, 4]} intensity={3} />

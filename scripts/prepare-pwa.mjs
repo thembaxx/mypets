@@ -60,6 +60,7 @@ const shell = [
   '/brand/directions.webp',
   '/brand/launch.webp',
   '/brand/launch.mp4',
+  '/models/original/mypets-paw-charm-animated.glb',
   '/runtime/assistant-assets.json',
   '/runtime/llama-LICENSE.txt',
   '/runtime/llama-NOTICE.txt',
