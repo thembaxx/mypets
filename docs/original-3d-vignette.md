@@ -6,3 +6,9 @@
 - The context pause control and reduced-motion preference remain authoritative; low-power devices retain their WebGL fallback.
 - The asset is deliberately not added to `approvedTripoModels`: it is a charm, not a substitute for a species-specific animated animal.
 - Run `npm run assets:check`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test` and `npm run build` when runners are available; visually verify iPhone-sized layouts before claiming full QA. GitHub Actions capacity failures do not imply checks passed.
+
+## Inspect and export on a phone
+
+Open **`/3d-preview.html`** on the deployed site's origin to view the committed GLB interactively in a mobile browser. Swipe to orbit, use the view controls, or tap **Save PNG** for a transparent browser render. This static WebGL2 page has no CDN or paid-service dependency. On devices without WebGL2, it reports that the main application keeps its original fallback. These previews are **not Blender renders**.
+
+Do not confuse the separately downloadable *procedural candidate review pack* with this repository's committed GLB: the phone preview loads the actual file under `public/models/original/`. Browser touch, PNG saving, iOS downloads and production deployment need device-side verification; GitHub Actions quota failures do not certify them.
