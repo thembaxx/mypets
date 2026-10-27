@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "postbuild": "node scripts/prepare-pwa.mjs",
-    "brand:icons": "node scripts/brand-icons.mjs"
+    "brand:icons": "node scripts/brand-icons.mjs",
+    "assets:check": "node scripts/validate-3d-assets.mjs public/models && node --test scripts/validate-3d-assets.selfcheck.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0",
