@@ -51,7 +51,7 @@ void main(){pixel=color;}
 <script>
 (() => {
 'use strict';
-const modelPath="/models/original/mypets-paw-charm.glb",canvas=document.getElementById('viewer'),status=document.getElementById('status');
+const modelPath="/models/original/mypets-paw-charm-animated.glb",canvas=document.getElementById('viewer'),status=document.getElementById('status');
 const gl=canvas.getContext('webgl2',{alpha:true,antialias:true,preserveDrawingBuffer:true,powerPreference:'low-power'});
 if(!gl){status.textContent='WebGL2 unavailable; the main app keeps its fallback.';return;}
 function compile(type,id){
