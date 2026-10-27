@@ -190,7 +190,7 @@
       const channels=[];
       for(const channel of animation.channels||[]) {
         const sampler=animation.samplers[channel.sampler];
-        if(!sampler||!['translation','rotation','scale'].includes(channel.target.path)||sampler.interpolation!=='LINEAR') continue;
+        if(!sampler||!['translation','rotation','scale'].includes(channel.target.path)||(sampler.interpolation||'LINEAR')!=='LINEAR') continue;
         const times=values(sampler.input),points=values(sampler.output),size=channel.target.path==='rotation'?4:3;
         if(points.length!==times.length*size||!json.nodes[channel.target.node]) throw Error('Invalid animation data.');
         channels.push({node:channel.target.node,path:channel.target.path,times,points,size});
@@ -207,6 +207,16 @@
       }
     }
     return {json,meshes,instances,initial,clips,low,high,vertexBuffer,elementBuffer};
+  }
+
+  function disposeResource() {
+    if(!resource)return;
+    const created = new Set();
+    for(const mesh of resource.meshes)for(const part of mesh) {
+      if(!created.has(part.vao)) {gl.deleteVertexArray(part.vao); created.add(part.vao);}
+    }
+    gl.deleteBuffer(resource.vertexBuffer);
+    gl.deleteBuffer(resource.elementBuffer);
   }
 
   function updatePose(seconds) {
@@ -314,6 +324,7 @@
   }
   async function changeVariant() {
     setPlaying(false);
+    disposeResource();
     resource=null;
     if(currentController)currentController.abort();
     const controller=new AbortController();
@@ -396,7 +407,7 @@
   variant.addEventListener('change',changeVariant);
   document.addEventListener('visibilitychange',()=>{stopAnimation();if(!document.hidden&&playing){clockStart=performance.now()-clockElapsed*1000;startAnimation();}});
   preference.addEventListener('change',()=>setPlaying(!preference.matches&&variant.value==='animated'));
-  window.addEventListener('pagehide',()=>{stopAnimation();currentController?.abort();clearTouches();});
+  window.addEventListener('pagehide',()=>{stopAnimation();currentController?.abort();disposeResource();resource=null;clearTouches();});
   if('ResizeObserver'in window)new ResizeObserver(draw).observe(canvas);
   else window.addEventListener('resize',draw);
   void changeVariant();
