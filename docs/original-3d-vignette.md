@@ -16,7 +16,7 @@ Do not confuse the separately downloadable *procedural candidate review pack* wi
 ## Animated v2 candidate
 The new `public/models/original/mypets-paw-charm-animated.glb` (109,060 bytes) contains two glTF animation clips: **Gentle hello** and **Floating heart**. It is original **procedural geometry**, not a Blender render. The old GLB and mesh fallback remain available; all animal WebP artwork stays unchanged, and no unapproved 3D animal is enabled.
 Animation stops when motion is disabled in settings or when the OS requests reduced motion, and the canvas does not continuously render offscreen. The small model is included in the PWA shell for offline availability.
-The `/3d-preview.html` tool continues to show the original compatible static asset; animated GLB inspection needs a multi-mesh-capable previewer. Full production visual/mobile QA remains pending; GitHub Actions quota errors are not passing checks.
+The `/3d-preview.html` preview now includes a selectable animated GLB (see v3 below). Full production visual/mobile QA remains pending; GitHub Actions quota errors are not passing checks.
 
 ## Browser model preview v3
 
