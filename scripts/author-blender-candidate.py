@@ -161,11 +161,14 @@ def main():
     if len([o for o in bpy.context.scene.objects if o.type == "MESH"]) > 80:
         raise RuntimeError("Candidate exceeded 80-mesh authoring budget")
     blend_path, glb_path = out_dir / (name + ".blend"), out_dir / (name + ".glb")
+    bpy.context.scene.frame_set(1)
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_path), check_existing=False)
     bpy.ops.export_scene.gltf(
         filepath=str(glb_path),
         export_format="GLB",
         export_animations=True,
+        export_frame_range=True,
+        export_force_sampling=True,
         export_materials="EXPORT",
         use_visible=True,
         export_yup=True,
