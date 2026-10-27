@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { inspectGlb } from '../scripts/validate-3d-assets.mjs';
+import { inspectGlb } from './validate-3d-assets.mjs';
 
 function glb(gltf) {
   const payload = Buffer.from(JSON.stringify(gltf));
