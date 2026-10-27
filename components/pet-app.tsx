@@ -50,6 +50,7 @@ import {
 } from '@/lib/care';
 import { applyAppearance } from '@/lib/appearance';
 import { readData, STORAGE_KEY, type Appearance, type AppData } from '@/lib/storage';
+import { CaregiverHandoff } from './caregiver-handoff';
 type Tab = 'today' | 'schedule' | 'training';
 type Detail =
   | { type: 'fact'; fact: Fact }
@@ -59,7 +60,8 @@ type Detail =
   | { type: 'search' }
   | { type: 'settings' }
   | { type: 'history' }
-  | { type: 'brand' };
+  | { type: 'brand' }
+  | { type: 'handoff' };
 type AssistantDetail = { type: 'assistant'; prompt?: string; panel?: 'chat' | 'model' };
 interface InstallPrompt extends Event {
   prompt: () => Promise<void>;
@@ -379,25 +381,27 @@ export default function PetApp() {
       </MotionConfig>
     );
   const detailTitle =
-    detail?.type === 'fact'
-      ? 'A little discovery'
-      : detail?.type === 'diet'
-        ? `${pet.name}’s bowl`
-        : detail?.type === 'event'
-          ? detail.event
-            ? 'A care moment'
-            : 'Make a little room'
-          : detail?.type === 'lesson'
-            ? 'Grow together'
-            : detail?.type === 'search'
-              ? 'Find a little something'
-              : detail?.type === 'history'
-                ? `${pet.name}’s little history`
-                : detail?.type === 'brand'
-                  ? 'The identity studio'
-                  : detail?.type === 'assistant'
-                    ? `Ask about ${pet.name}`
-                    : 'Make it yours';
+    detail?.type === 'handoff'
+      ? 'Caregiver handoff'
+      : detail?.type === 'fact'
+        ? 'A little discovery'
+        : detail?.type === 'diet'
+          ? `${pet.name}’s bowl`
+          : detail?.type === 'event'
+            ? detail.event
+              ? 'A care moment'
+              : 'Make a little room'
+            : detail?.type === 'lesson'
+              ? 'Grow together'
+              : detail?.type === 'search'
+                ? 'Find a little something'
+                : detail?.type === 'history'
+                  ? `${pet.name}’s little history`
+                  : detail?.type === 'brand'
+                    ? 'The identity studio'
+                    : detail?.type === 'assistant'
+                      ? `Ask about ${pet.name}`
+                      : 'Make it yours';
   return (
     <MotionConfig reducedMotion="user">
       <AnimalAnimationContext.Provider value={data.animalAnimations !== false}>
@@ -581,7 +585,9 @@ export default function PetApp() {
                 : 'default'
           }
         >
-          {detail?.type === 'fact' ? (
+          {detail?.type === 'handoff' ? (
+            <CaregiverHandoff data={data} petId={pet.id} />
+          ) : detail?.type === 'fact' ? (
             <FactDetail
               key={detail.fact.id}
               pet={pet}
@@ -830,6 +836,18 @@ export default function PetApp() {
                 Browser notifications work while this app is open. Device calendars can remind you
                 while it’s closed.
               </p>
+              <div className="settings-row">
+                <div>
+                  <strong>Caregiver handoff</strong>
+                  <span>Review recent care and upcoming tasks for {pet.name}.</span>
+                </div>
+                <IconButton
+                  label="Prepare caregiver handoff"
+                  onClick={() => openDetail({ type: 'handoff' })}
+                >
+                  <ShareNetworkIcon size={22} />
+                </IconButton>
+              </div>
               <div className="settings-row">
                 <div>
                   <strong>Share a little love</strong>
