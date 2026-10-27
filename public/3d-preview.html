@@ -19,101 +19,12 @@ button{border:1px solid #cddbdc;background:#eef3f4;color:#18323f;border-radius:2
 button:focus-visible{outline:3px solid #327fa2}button.primary{background:#17323f;color:white}
 footer{padding:0 24px 28px;color:#687b83;font-size:13px;line-height:1.6}
 @media(prefers-color-scheme:dark){:root{background:#111c22;color:#e6eef0}main{background:#172832}footer,p{color:#b6c5ca}}
-</style>
+label{align-self:center;font-weight:600;font-size:14px}select{min-height:44px;border-radius:16px;border:1px solid #cddbdc;padding:8px 12px;background:#eef3f4;color:#18323f;font:inherit}button:disabled{opacity:.55;cursor:not-allowed}.stage{touch-action:none}@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important}}</style>
 </head>
-<body><main>
-<header><h1>MyPets · Paw charm</h1><p>Original procedural GLB model. Rotate with a finger or arrow keys and export a PNG. No third-party viewer, model CDN or paid service.</p></header>
+<body><main data-model-stem="mypets-paw-charm">
+<header><h1>MyPets · Paw charm</h1><p>Inspect the actual embedded GLB asset. Choose its static or animated version, rotate with touch or keyboard, pinch to zoom, and export a PNG. Runs locally with WebGL2—no model CDN.</p></header>
 <div class="stage"><canvas id="viewer" tabindex="0" role="img" aria-label="3D model. Drag to rotate. Arrow keys rotate. Plus and minus zoom."></canvas><div role="status" aria-live="polite" id="status">Loading model…</div></div>
-<div class="controls"><button id="reset">Reset</button><button id="top">Top view</button><button id="zoom">Zoom in</button><button id="save" class="primary">Save PNG</button></div>
-<footer>This is a live browser rendering of the model committed to this repository, <strong>not a Blender render</strong>. Static by default for reduced-motion accessibility. The production app retains its existing WebGL and offline fallbacks. View <a href="https://github.com/thembaxx/mypets/blob/main/docs/original-3d-vignette.md">asset provenance</a>.</footer>
+<div class="controls"><label for="variant">Model</label><select id="variant" aria-label="3D model version"><option value="animated">Animated</option><option value="static">Original static</option></select><button id="animate" type="button" aria-pressed="false">Pause animation</button><button id="reset" type="button">Reset</button><button id="top" type="button">Top view</button><button id="zoom" type="button">Zoom in</button><button id="save" type="button" class="primary">Save PNG</button></div>
+<footer>Loads the exact GLB committed to this repository, including separate mesh materials and built-in glTF animations. This is a browser rendering, <strong>not a Blender render</strong>. Playback respects your device’s reduced-motion preference. The production app maintains its original fallbacks.</footer>
 </main>
-<script id="vert" type="x-shader/x-vertex">#version 300 es
-precision highp float;
-layout(location=0) in vec3 pos; layout(location=1) in vec3 normal; layout(location=2) in vec4 tint;
-uniform mat4 proj; uniform vec3 center; uniform float scale, yaw, pitch, distance;
-out vec4 color;
-void main(){
-float c=cos(yaw),s=sin(yaw),a=cos(pitch),b=sin(pitch);
-vec3 p=(pos-center)*scale;
-p=vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);
-p=vec3(p.x,a*p.y-b*p.z,b*p.y+a*p.z);
-vec3 n=vec3(c*normal.x+s*normal.z,normal.y,-s*normal.x+c*normal.z);
-n=normalize(vec3(n.x,a*n.y-b*n.z,b*n.y+a*n.z));
-float l=0.46+0.54*max(0.,dot(n,normalize(vec3(-0.4,0.8,0.7))));
-color=vec4(tint.rgb*l,tint.a);
-gl_Position=proj*vec4(p.x,p.y,p.z-distance,1.);
-}</script>
-<script id="frag" type="x-shader/x-fragment">#version 300 es
-precision highp float;
-in vec4 color;out vec4 pixel;
-void main(){pixel=color;}
-</script>
-<script>
-(() => {
-'use strict';
-const modelPath="/models/original/mypets-paw-charm.glb",canvas=document.getElementById('viewer'),status=document.getElementById('status');
-const gl=canvas.getContext('webgl2',{alpha:true,antialias:true,preserveDrawingBuffer:true,powerPreference:'low-power'});
-if(!gl){status.textContent='WebGL2 unavailable; the main app keeps its fallback.';return;}
-function compile(type,id){
-const shader=gl.createShader(type);gl.shaderSource(shader,document.getElementById(id).textContent);gl.compileShader(shader);
-if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(shader));
-return shader;
-}
-const program=gl.createProgram();
-try{gl.attachShader(program,compile(gl.VERTEX_SHADER,'vert'));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,'frag'));gl.linkProgram(program);
-if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));}
-catch(error){status.textContent='Preview shader unavailable: '+error.message;return;}
-gl.useProgram(program);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);
-const uniforms={};for(const key of ['proj','center','scale','yaw','pitch','distance'])uniforms[key]=gl.getUniformLocation(program,key);
-const view={yaw:0.7,pitch:-0.5,distance:5.4,bounds:null,count:0,indexType:gl.UNSIGNED_SHORT,indexOffset:0};
-function draw(){
-if(!view.bounds)return;
-const w=Math.max(1,canvas.clientWidth),h=Math.max(1,canvas.clientHeight),d=Math.min(1.75,devicePixelRatio||1,1440/w);
-canvas.width=Math.ceil(w*d);canvas.height=Math.ceil(h*d);gl.viewport(0,0,canvas.width,canvas.height);
-gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-const aspect=canvas.width/canvas.height,near=.1,far=50,f=1/Math.tan(37*Math.PI/360);
-gl.uniformMatrix4fv(uniforms.proj,false,new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]));
-const [low,high]=view.bounds,max=Math.max(...high.map((v,i)=>v-low[i]),.01);
-gl.uniform3fv(uniforms.center,new Float32Array(low.map((v,i)=>(v+high[i])/2)));
-gl.uniform1f(uniforms.scale,2.7/max);gl.uniform1f(uniforms.yaw,view.yaw);gl.uniform1f(uniforms.pitch,view.pitch);gl.uniform1f(uniforms.distance,view.distance);
-gl.drawElements(gl.TRIANGLES,view.count,view.indexType,view.indexOffset);
-}
-function load(ab){
-const v=new DataView(ab),n=ab.byteLength;
-if(n<28||n>8*1024*1024||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==n)throw Error('Invalid GLB');
-const jlen=v.getUint32(12,true);if(jlen>200000||v.getUint32(16,true)!==0x4e4f534a)throw Error('Invalid JSON');
-const json=JSON.parse(new TextDecoder().decode(new Uint8Array(ab,20,jlen)));
-const at=20+jlen;if(v.getUint32(at+4,true)!==0x004e4942||at+8+v.getUint32(at,true)!==n)throw Error('Invalid embedded buffer');
-const primitive=json.meshes?.[0]?.primitives?.[0];if(!primitive)throw Error('No mesh');
-const accessors=json.accessors,views=json.bufferViews,start=at+8,len=v.getUint32(at,true);
-const vertex=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vertex);gl.bufferData(gl.ARRAY_BUFFER,new Uint8Array(ab,start,len),gl.STATIC_DRAW);
-function attribute(slot,key){const a=accessors[primitive.attributes[key]],bv=views[a.bufferView];if(!a||!bv)throw Error('Missing '+key);gl.enableVertexAttribArray(slot);gl.vertexAttribPointer(slot,{VEC3:3,VEC4:4}[a.type],a.componentType,!!a.normalized,bv.byteStride||0,(bv.byteOffset||0)+(a.byteOffset||0));return a;}
-const pos=attribute(0,'POSITION');attribute(1,'NORMAL');attribute(2,'COLOR_0');
-if(!pos.min||!pos.max||pos.count>160000)throw Error('Invalid bounds');
-const indices=accessors[primitive.indices],iv=views[indices.bufferView];if(![gl.UNSIGNED_SHORT,gl.UNSIGNED_INT].includes(indices.componentType))throw Error('Unsupported indices');
-const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint8Array(ab,start,len),gl.STATIC_DRAW);
-view.bounds=[pos.min,pos.max];view.count=indices.count;view.indexType=indices.componentType;view.indexOffset=(iv.byteOffset||0)+(indices.byteOffset||0);
-status.textContent='Loaded · '+pos.count.toLocaleString()+' vertices';draw();
-}
-fetch(modelPath,{credentials:'same-origin'}).then(response=>{if(!response.ok)throw Error('HTTP '+response.status);return response.arrayBuffer()}).then(load).catch(err=>{status.textContent='Preview unavailable: '+err.message});
-let last=null;
-canvas.addEventListener('pointerdown',event=>{last=[event.clientX,event.clientY];canvas.setPointerCapture(event.pointerId)});
-canvas.addEventListener('pointermove',event=>{if(!last)return;view.yaw+=(event.clientX-last[0])*.009;view.pitch=Math.min(1.35,Math.max(-1.35,view.pitch+(event.clientY-last[1])*.006));last=[event.clientX,event.clientY];draw()});
-for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,()=>last=null);
-canvas.addEventListener('keydown',event=>{
-if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(event.key))return;event.preventDefault();
-if(event.key==='ArrowLeft')view.yaw-=.14;if(event.key==='ArrowRight')view.yaw+=.14;
-if(event.key==='ArrowUp')view.pitch=Math.min(1.35,view.pitch+.1);if(event.key==='ArrowDown')view.pitch=Math.max(-1.35,view.pitch-.1);
-if(event.key==='+')view.distance=Math.max(3,view.distance-.4);if(event.key==='-')view.distance=Math.min(12,view.distance+.4);
-draw();
-});
-document.getElementById('reset').onclick=()=>{view.yaw=.7;view.pitch=-.5;view.distance=5.4;draw();canvas.focus()};
-document.getElementById('top').onclick=()=>{view.pitch=-1.35;draw();canvas.focus()};
-document.getElementById('zoom').onclick=()=>{view.distance=Math.max(3,view.distance-.45);draw();canvas.focus()};
-document.getElementById('save').onclick=()=>{
-if(!view.bounds){status.textContent='Model not loaded';return;}
-draw();canvas.toBlob(blob=>{if(!blob){status.textContent='PNG export failed';return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mypets-3d-model.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);},'image/png');
-};
-if('ResizeObserver'in window)new ResizeObserver(draw).observe(canvas);else window.addEventListener('resize',draw);
-})();
-</script></body></html>
+<script src="/3d-viewer.js" defer></script></body></html>

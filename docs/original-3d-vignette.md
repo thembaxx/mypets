@@ -16,4 +16,8 @@ Do not confuse the separately downloadable *procedural candidate review pack* wi
 ## Animated v2 candidate
 The new `public/models/original/mypets-paw-charm-animated.glb` (109,060 bytes) contains two glTF animation clips: **Gentle hello** and **Floating heart**. It is original **procedural geometry**, not a Blender render. The old GLB and mesh fallback remain available; all animal WebP artwork stays unchanged, and no unapproved 3D animal is enabled.
 Animation stops when motion is disabled in settings or when the OS requests reduced motion, and the canvas does not continuously render offscreen. The small model is included in the PWA shell for offline availability.
-The `/3d-preview.html` tool continues to show the original compatible static asset; animated GLB inspection needs a multi-mesh-capable previewer. Full production visual/mobile QA remains pending; GitHub Actions quota errors are not passing checks.
+The `/3d-preview.html` preview now includes a selectable animated GLB (see v3 below). Full production visual/mobile QA remains pending; GitHub Actions quota errors are not passing checks.
+
+## Browser model preview v3
+
+The bundled `/3d-preview.html` route now loads either original or animated GLBs in the same-origin `/3d-viewer.js` WebGL2 renderer. It supports embedded binary buffers, multiple material-based primitive meshes, indexed or non-indexed triangles, node transforms, keyframe animation clips, touch orbit/pinch zoom, keyboard controls, a play/pause control, reduced motion, and PNG capture without external CDNs. Switch between **Animated** and **Original static**. The browser preview is not a Blender render. Unsupported GLB features (skins, textures, external URIs, compressed geometry) are intentionally not decoded. Mobile Safari and real device GPU validation are still required.
