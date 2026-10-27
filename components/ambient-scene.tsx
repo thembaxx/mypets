@@ -12,9 +12,14 @@ function Toys({ reduced }: { reduced: boolean }) {
   const [originalPaw, setOriginalPaw] = useState<Group | null>(null);
   useEffect(() => {
     let cancelled = false;
-    new GLTFLoader().load('/models/original/mypets-paw-charm.glb', ({ scene }) => {
-      if (!cancelled) setOriginalPaw(scene);
-    }, undefined, () => { /* The procedural paw remains visible offline. */ });
+    new GLTFLoader().load(
+      '/models/original/mypets-paw-charm.glb',
+      ({ scene }) => {
+        if (!cancelled) setOriginalPaw(scene);
+      },
+      undefined,
+      () => { /* The procedural paw remains visible offline. */ },
+    );
     return () => { cancelled = true; };
   }, []);
   useFrame(({ clock, pointer }) => {
@@ -51,7 +56,7 @@ function Toys({ reduced }: { reduced: boolean }) {
       </mesh>
       {/* Original low-poly paw charm, distinct from the approved animal illustrations. */}
       <group ref={paw} position={[-1.55, 0.6, -0.55]} rotation={[-0.2, 0, -0.15]} scale={active ? 1.13 : 1}>
-        {originalPaw ? <primitive object={originalPaw} dispose={null} /> : <>}
+        {originalPaw ? <primitive object={originalPaw} dispose={null} /> : <>
         <mesh castShadow position={[0, -0.16, 0]} scale={[0.5, 0.39, 0.18]}>
           <sphereGeometry args={[1, 20, 14]} />
           <meshStandardMaterial color="#efb58e" roughness={0.73} />
