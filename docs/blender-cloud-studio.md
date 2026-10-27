@@ -11,3 +11,7 @@ The runner checks the GLB with the existing 8 MiB and 160,000-position limits. P
 **No automatic release.** Nothing in this pipeline pushes, deploys, merges, overwrites existing assets or changes the pet/recipe UI. A reviewer must verify actual output, test iOS/desktop WebGL and approve the appearance before any candidate is adopted. Existing original artwork and fallback scenes remain authoritative.
 
 **Current limitation:** Blender is not installed in this ChatGPT session and monthly GitHub Actions credits are exhausted. These scripts have not been executed in a real Blender runtime. The workflow will only produce actual Blender-authored files when a hosted run succeeds, and downloading the artifact from GitHub requires the usual access to this private repository.
+
+## Private iPhone candidate review
+
+Download the GitHub Actions review artifact to Files on iPhone, open the app’s same-origin `/3d-preview.html` page, and choose **Review candidate**. The browser reads the selected `.glb` directly with the File API (8 MiB limit), checks GLB structure, and can play embedded linear animation tracks. Nothing is uploaded. You can use orbit, pinch, pause, and Save PNG locally. The existing static/animated selector restores the repository models. A candidate remains unapproved; this is not a deployment, a Blender render from this ChatGPT session, or real-device QA.
