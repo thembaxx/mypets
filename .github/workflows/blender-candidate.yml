@@ -53,6 +53,7 @@ jobs:
           cp "$RUNNER_TEMP/blender-review/mypets-paw-blender-candidate.json" "assets/blender-source/mypets-paw-blender-candidate.json"
           node scripts/validate-3d-assets.mjs public/models --require-assets
           npm ci --ignore-scripts --no-audit --no-fund
+          git show 89ce6067177603db0ea482ee91344ab487783175:.github/workflows/blender-candidate.yml > .github/workflows/blender-candidate.yml
           npm test
           npm run typecheck
           git show 89ce6067177603db0ea482ee91344ab487783175:.github/workflows/blender-candidate.yml > .github/workflows/blender-candidate.yml
