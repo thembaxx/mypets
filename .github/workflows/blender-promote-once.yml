@@ -1,0 +1,50 @@
+name: One-time Blender model staging (feature branch only)
+on:
+  push:
+    branches:
+      - feat/blender-models-production-20261028
+    paths:
+      - .github/workflows/blender-promote-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  stage-reviewed-model:
+    if: github.event.head_commit.message == 'ci: generate and stage reviewed Blender files'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Install Blender and numpy
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y blender python3-numpy
+          /usr/bin/python3 -c "import numpy; print(numpy.__version__)"
+      - name: Generate Blender asset using checked-in authoring script
+        run: |
+          blender --background --factory-startup --python-exit-code 1 --python scripts/author-blender-candidate.py -- \
+            --preset paw --output-dir "$RUNNER_TEMP/blender-review"
+          node scripts/check-blender-review.mjs paw "$RUNNER_TEMP/blender-review"
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/blender-review" --require-assets
+      - name: Stage GLB, editable source, and provenance
+        run: |
+          mkdir -p assets/blender-source public/models/original
+          cp "$RUNNER_TEMP/blender-review/mypets-paw-blender-candidate.glb" "public/models/original/mypets-paw-blender-candidate.glb"
+          cp "$RUNNER_TEMP/blender-review/mypets-paw-blender-candidate.blend" "assets/blender-source/mypets-paw-blender-candidate.blend"
+          cp "$RUNNER_TEMP/blender-review/mypets-paw-blender-candidate.json" "assets/blender-source/mypets-paw-blender-candidate.json"
+          node scripts/validate-3d-assets.mjs public/models --require-assets
+      - name: Install locked dependencies and run regression tests
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm test
+          npm run typecheck
+      - name: Commit only validated assets to this PR branch
+        run: |
+          git add -- "public/models/original/mypets-paw-blender-candidate.glb" "assets/blender-source/mypets-paw-blender-candidate.blend" "assets/blender-source/mypets-paw-blender-candidate.json"
+          git rm -- .github/workflows/blender-promote-once.yml
+          git diff --cached --check
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "assets: stage validated Blender paw model and editable source"
+          git push origin "HEAD:refs/heads/feat/blender-models-production-20261028"
