@@ -1,14 +1,9 @@
 name: Blender candidate art studio (manual review)
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feat/blender-models-production-20261028
-    paths:
-      - .github/workflows/blender-candidate.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   author-candidate:
@@ -17,8 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: true
-          fetch-depth: 0
+          persist-credentials: false
       - name: Install Blender and glTF exporter dependencies
         run: |
           sudo apt-get update -qq
@@ -44,22 +38,3 @@ jobs:
           path: ${{ runner.temp }}/blender-review/
           if-no-files-found: error
           retention-days: 7
-
-      - name: Promote Blender candidate only on this feature branch
-        if: github.event_name == 'push' && github.ref_name == 'feat/blender-models-production-20261028'
-        run: |
-          mkdir -p public/models/original assets/blender-source
-          cp "$RUNNER_TEMP/blender-review/mypets-paw-blender-candidate.glb" "public/models/original/mypets-paw-blender-candidate.glb"
-          cp "$RUNNER_TEMP/blender-review/mypets-paw-blender-candidate.blend" "assets/blender-source/mypets-paw-blender-candidate.blend"
-          cp "$RUNNER_TEMP/blender-review/mypets-paw-blender-candidate.json" "assets/blender-source/mypets-paw-blender-candidate.json"
-          node scripts/validate-3d-assets.mjs public/models --require-assets
-          npm ci --ignore-scripts --no-audit --no-fund
-          git show 89ce6067177603db0ea482ee91344ab487783175:.github/workflows/blender-candidate.yml > .github/workflows/blender-candidate.yml
-          npm test
-          npm run typecheck
-          git show 89ce6067177603db0ea482ee91344ab487783175:.github/workflows/blender-candidate.yml > .github/workflows/blender-candidate.yml
-          git add public/models/original/mypets-paw-blender-candidate.glb assets/blender-source/mypets-paw-blender-candidate.blend assets/blender-source/mypets-paw-blender-candidate.json .github/workflows/blender-candidate.yml
-          git rm -- .github/workflows/blender-promote-once.yml
-          git diff --cached --check
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "assets: verified original Blender model and editable source"
-          git push origin "HEAD:refs/heads/feat/blender-models-production-20261028"
