@@ -1,6 +1,11 @@
 name: Blender candidate art studio (manual review)
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - automation/blender-review-retry-20261028
+    paths:
+      - .github/workflows/blender-candidate.yml
 
 permissions:
   contents: read
