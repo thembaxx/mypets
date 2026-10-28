@@ -64,6 +64,7 @@ const shell = [
   '/3d-viewer.js',
   '/models/original/mypets-paw-charm.glb',
   '/models/original/mypets-paw-charm-animated.glb',
+  '/models/original/mypets-paw-blender-candidate.glb',
   '/runtime/assistant-assets.json',
   '/runtime/llama-LICENSE.txt',
   '/runtime/llama-NOTICE.txt',
