@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true
       - name: Install Blender and glTF exporter dependencies
         run: |
           sudo apt-get update -qq
