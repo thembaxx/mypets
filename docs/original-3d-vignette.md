@@ -21,3 +21,13 @@ The `/3d-preview.html` preview now includes a selectable animated GLB (see v3 be
 ## Browser model preview v3
 
 The bundled `/3d-preview.html` route now loads either original or animated GLBs in the same-origin `/3d-viewer.js` WebGL2 renderer. It supports embedded binary buffers, multiple material-based primitive meshes, indexed or non-indexed triangles, node transforms, keyframe animation clips, touch orbit/pinch zoom, keyboard controls, a play/pause control, reduced motion, and PNG capture without external CDNs. Switch between **Animated** and **Original static**. The browser preview is not a Blender render. Unsupported GLB features (skins, textures, external URIs, compressed geometry) are intentionally not decoded. Mobile Safari and real device GPU validation are still required.
+
+## Blender-authored primary model — October 2026
+
+- Production first choice: `public/models/original/mypets-paw-blender-candidate.glb` (generated with Blender 4.0.2 in GitHub Actions).
+- Editable source: `assets/blender-source/mypets-paw-blender-candidate.blend`; SHA-256 provenance: `assets/blender-source/mypets-paw-blender-candidate.json`.
+- Existing procedural animated `mypets-paw-charm-animated.glb`, static `mypets-paw-charm.glb`, and React/Three built-in fallback geometry remain intact, in that order when loading fails.
+- Reduced-motion and model toggles remain authoritative. The new model is a decorative element and does not replace unrelated original artwork or app functionality.
+- The updated same-origin `/3d-preview.html` page offers Blender original, previous animated and original static previews.
+- GLB integrity/animation metadata can pass automated tests without confirming visual appearance on physical devices; iPhone GPU QA and production deploy remain separate checks.
+- This model's geometry, materials and motion were authored using the checked-in Blender generator, without external paid art or artist assets.

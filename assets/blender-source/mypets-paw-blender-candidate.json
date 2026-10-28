@@ -1,0 +1,10 @@
+{
+  "project": "paw",
+  "source": "mypets-paw-blender-candidate.blend",
+  "candidate": "mypets-paw-blender-candidate.glb",
+  "generator": "Blender bpy",
+  "blender_version": "4.0.2",
+  "sha256": "d0f26f202b4b2211e9b2dcd40bbcfeef41a6c4c069b076096fa2b9c215dee49c",
+  "review_status": "UNAPPROVED",
+  "notes": "Original procedural Blender work; not an approved replacement for live assets"
+}

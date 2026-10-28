@@ -330,7 +330,7 @@
     const controller=new AbortController();
     currentController=controller;
     inform('Loading model…');
-    const path=prefix+(variant.value==='animated'?'-animated':'')+'.glb';
+    const path=variant.value==='blender'?stage.dataset.blenderSrc:prefix+(variant.value==='animated'?'-animated':'')+'.glb';
     try {
       const response=await fetch(path,{credentials:'same-origin',signal:controller.signal});
       if(!response.ok)throw Error('HTTP '+response.status);

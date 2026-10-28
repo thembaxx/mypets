@@ -9,19 +9,21 @@ function Toys({ reduced }: { reduced: boolean }) {
   const group = useRef<Group>(null);
   const paw = useRef<Group>(null);
   const [active, setActive] = useState(false);
-  const [originalPaw, setOriginalPaw] = useState<{ scene: Group; animations: AnimationClip[] } | null>(null);
+  const [originalPaw, setOriginalPaw] = useState<{ scene: Group; animations: AnimationClip[]; blender: boolean } | null>(null);
   const mixerRef = useRef<AnimationMixer | null>(null);
   useEffect(() => {
     let cancelled = false;
     const loader = new GLTFLoader();
-    const load = (path: string, older = false) => {
+    const sources = ['/models/original/mypets-paw-blender-candidate.glb', '/models/original/mypets-paw-charm-animated.glb', '/models/original/mypets-paw-charm.glb'];
+    const load = (index: number) => {
+      const path = sources[index];
       loader.load(path, ({ scene, animations }) => {
-        if (!cancelled) setOriginalPaw({ scene, animations });
+        if (!cancelled) setOriginalPaw({ scene, animations, blender: path.includes('blender-candidate') });
       }, undefined, () => {
-        if (!cancelled && !older) load('/models/original/mypets-paw-charm.glb', true);
+        if (!cancelled && index + 1 < sources.length) load(index + 1);
       });
     };
-    load('/models/original/mypets-paw-charm-animated.glb');
+    load(0);
     return () => { cancelled = true; };
   }, []);
   useEffect(() => {
@@ -70,7 +72,7 @@ function Toys({ reduced }: { reduced: boolean }) {
       </mesh>
       {/* Original low-poly paw charm, distinct from the approved animal illustrations. */}
       <group ref={paw} position={[-1.55, 0.6, -0.55]} rotation={[-0.2, 0, -0.15]} scale={active ? 1.13 : 1}>
-        {originalPaw ? <primitive object={originalPaw.scene} dispose={null} /> : <>
+        {originalPaw ? <group rotation={originalPaw.blender ? [Math.PI / 2, 0, 0] : [0, 0, 0]}><primitive object={originalPaw.scene} dispose={null} /></group> : <>
         <mesh castShadow position={[0, -0.16, 0]} scale={[0.5, 0.39, 0.18]}>
           <sphereGeometry args={[1, 20, 14]} />
           <meshStandardMaterial color="#efb58e" roughness={0.73} />
