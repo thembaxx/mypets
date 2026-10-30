@@ -18,3 +18,17 @@ test('3D fallbacks and motion preference are retained', () => {
   const source = readFileSync(new URL('../components/ambient-scene.tsx', import.meta.url), 'utf8');
   for (const pattern of ['mypets-paw-charm-animated.glb', 'mypets-paw-charm.glb', 'useReducedMotion', 'inViewport']) assert.ok(source.includes(pattern));
 });
+
+
+test('pet model viewer honours animation settings and keeps reduced-motion orbit controls usable', () => {
+  const source = readFileSync(new URL('../components/tripo-pet.tsx', import.meta.url), 'utf8');
+  for (const fragment of [
+    'AnimalAnimationContext',
+    'useReducedMotion',
+    "frameloop={reducedMotion ? 'demand' : 'always'}",
+    "controls.addEventListener('change', repaint)",
+    "controls.removeEventListener('change', repaint)",
+    'if (animated) mixer.update',
+    'mixer.uncacheRoot(model)',
+  ]) assert.ok(source.includes(fragment), fragment);
+});
