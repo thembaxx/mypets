@@ -1,0 +1,27 @@
+name: One-time r187 format remediation
+on:
+  push:
+    branches:
+      - fix/r187-postmerge-format
+permissions:
+  contents: write
+jobs:
+  apply-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Format only files flagged by CI
+        run: |
+          ./node_modules/.bin/oxfmt --write ".github/workflows/threejs-r187-qa.yml" "docs/original-3d-vignette.md" "docs/visual-milestone.md" "public/3d-preview.html" "public/3d-viewer.js" "scripts/check-blender-review.mjs" "scripts/check-blender-review.test.mjs" "scripts/validate-3d-assets.mjs" "scripts/validate-3d-assets.selfcheck.mjs" "tests/3d-viewer.test.ts" "tests/blender-candidate.test.ts" "tests/blender-production.test.ts"
+          git add -- ".github/workflows/threejs-r187-qa.yml" "docs/original-3d-vignette.md" "docs/visual-milestone.md" "public/3d-preview.html" "public/3d-viewer.js" "scripts/check-blender-review.mjs" "scripts/check-blender-review.test.mjs" "scripts/validate-3d-assets.mjs" "scripts/validate-3d-assets.selfcheck.mjs" "tests/3d-viewer.test.ts" "tests/blender-candidate.test.ts" "tests/blender-production.test.ts"
+          if ! git diff --cached --quiet; then
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "style: apply Oxfmt to existing CI drift"
+            git push origin HEAD:fix/r187-postmerge-format
+          fi
