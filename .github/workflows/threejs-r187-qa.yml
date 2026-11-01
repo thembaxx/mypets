@@ -2,10 +2,10 @@ name: Three.js r187 focused QA
 on:
   pull_request:
     paths:
-      - "components/tripo-pet.tsx"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/threejs-r187-qa.yml"
+      - 'components/tripo-pet.tsx'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/threejs-r187-qa.yml'
 permissions:
   contents: read
 jobs:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ONNXRUNTIME_NODE_INSTALL_CUDA: skip
-      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
