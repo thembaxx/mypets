@@ -20,16 +20,32 @@ test('accepts a self-contained glTF 2.0 scene', () => {
 });
 test('rejects malformed magic, file length, and oversize assets', () => {
   const binary = glb(valid);
-  assert.throws(() => inspectGlb(Buffer.concat([Buffer.from('nope'), binary.subarray(4)])), /magic/);
+  assert.throws(
+    () => inspectGlb(Buffer.concat([Buffer.from('nope'), binary.subarray(4)])),
+    /magic/,
+  );
   assert.throws(() => inspectGlb(binary.subarray(0, binary.length - 4)), /length/);
   assert.throws(() => inspectGlb(binary, 10), /size/);
 });
 test('rejects remote buffers and texture URIs', () => {
-  assert.throws(() => inspectGlb(glb({ ...valid, images: [{ uri: 'https://example.com/track.png' }] })), /External asset URI/);
-  assert.throws(() => inspectGlb(glb({ ...valid, buffers: [{ uri: '../secret.bin' }] })), /External asset URI/);
+  assert.throws(
+    () => inspectGlb(glb({ ...valid, images: [{ uri: 'https://example.com/track.png' }] })),
+    /External asset URI/,
+  );
+  assert.throws(
+    () => inspectGlb(glb({ ...valid, buffers: [{ uri: '../secret.bin' }] })),
+    /External asset URI/,
+  );
 });
 test('enforces mesh vertex budget and supported required extensions', () => {
-  const large = { ...valid, meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }], accessors: [{ count: 160_001 }] };
+  const large = {
+    ...valid,
+    meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+    accessors: [{ count: 160_001 }],
+  };
   assert.throws(() => inspectGlb(glb(large)), /Geometry exceeds/);
-  assert.throws(() => inspectGlb(glb({ ...valid, extensionsRequired: ['KHR_unknown'] })), /Unsupported mandatory/);
+  assert.throws(
+    () => inspectGlb(glb({ ...valid, extensionsRequired: ['KHR_unknown'] })),
+    /Unsupported mandatory/,
+  );
 });
