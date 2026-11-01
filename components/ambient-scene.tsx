@@ -9,27 +9,43 @@ function Toys({ reduced }: { reduced: boolean }) {
   const group = useRef<Group>(null);
   const paw = useRef<Group>(null);
   const [active, setActive] = useState(false);
-  const [originalPaw, setOriginalPaw] = useState<{ scene: Group; animations: AnimationClip[]; blender: boolean } | null>(null);
+  const [originalPaw, setOriginalPaw] = useState<{
+    scene: Group;
+    animations: AnimationClip[];
+    blender: boolean;
+  } | null>(null);
   const mixerRef = useRef<AnimationMixer | null>(null);
   useEffect(() => {
     let cancelled = false;
     const loader = new GLTFLoader();
-    const sources = ['/models/original/mypets-paw-blender-candidate.glb', '/models/original/mypets-paw-charm-animated.glb', '/models/original/mypets-paw-charm.glb'];
+    const sources = [
+      '/models/original/mypets-paw-blender-candidate.glb',
+      '/models/original/mypets-paw-charm-animated.glb',
+      '/models/original/mypets-paw-charm.glb',
+    ];
     const load = (index: number) => {
       const path = sources[index];
-      loader.load(path, ({ scene, animations }) => {
-        if (!cancelled) setOriginalPaw({ scene, animations, blender: path.includes('blender-candidate') });
-      }, undefined, () => {
-        if (!cancelled && index + 1 < sources.length) load(index + 1);
-      });
+      loader.load(
+        path,
+        ({ scene, animations }) => {
+          if (!cancelled)
+            setOriginalPaw({ scene, animations, blender: path.includes('blender-candidate') });
+        },
+        undefined,
+        () => {
+          if (!cancelled && index + 1 < sources.length) load(index + 1);
+        },
+      );
     };
     load(0);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
   useEffect(() => {
     if (!originalPaw || reduced || !originalPaw.animations.length) return;
     const mixer = new AnimationMixer(originalPaw.scene);
-    originalPaw.animations.forEach(clip => mixer.clipAction(clip).play());
+    originalPaw.animations.forEach((clip) => mixer.clipAction(clip).play());
     mixerRef.current = mixer;
     return () => {
       mixer.stopAllAction();
@@ -57,7 +73,7 @@ function Toys({ reduced }: { reduced: boolean }) {
     }
   });
   return (
-    <group ref={group} onClick={() => setActive(previous => !previous)}>
+    <group ref={group} onClick={() => setActive((previous) => !previous)}>
       <mesh position={[1.4, -0.8, 0]} rotation={[0.3, 0.2, 0.1]} scale={active ? 1.18 : 1}>
         <sphereGeometry args={[0.4, 32, 32]} />
         <meshStandardMaterial color="#eebd88" roughness={0.48} />
@@ -71,23 +87,40 @@ function Toys({ reduced }: { reduced: boolean }) {
         <meshStandardMaterial color="#9aaf85" roughness={0.8} />
       </mesh>
       {/* Original low-poly paw charm, distinct from the approved animal illustrations. */}
-      <group ref={paw} position={[-1.55, 0.6, -0.55]} rotation={[-0.2, 0, -0.15]} scale={active ? 1.13 : 1}>
-        {originalPaw ? <group rotation={originalPaw.blender ? [Math.PI / 2, 0, 0] : [0, 0, 0]}><primitive object={originalPaw.scene} dispose={null} /></group> : <>
-        <mesh castShadow position={[0, -0.16, 0]} scale={[0.5, 0.39, 0.18]}>
-          <sphereGeometry args={[1, 20, 14]} />
-          <meshStandardMaterial color="#efb58e" roughness={0.73} />
-        </mesh>
-        {[-0.39, -0.14, 0.14, 0.39].map((x, i) => (
-          <mesh key={i} castShadow position={[x, 0.38 - Math.abs(x) * 0.26, 0]} rotation={[0, 0, -x * 0.18]} scale={[0.18, 0.23, 0.14]}>
-            <sphereGeometry args={[1, 12, 10]} />
-            <meshStandardMaterial color={i % 2 === 0 ? '#f1c59c' : '#e5a987'} roughness={0.7} />
-          </mesh>
-        ))}
-        <mesh position={[0, -0.16, 0.175]} scale={[0.29, 0.2, 0.03]}>
-          <sphereGeometry args={[1, 12, 8]} />
-          <meshStandardMaterial color="#fff3df" roughness={0.84} />
-        </mesh>
-        </>}
+      <group
+        ref={paw}
+        position={[-1.55, 0.6, -0.55]}
+        rotation={[-0.2, 0, -0.15]}
+        scale={active ? 1.13 : 1}
+      >
+        {originalPaw ? (
+          <group rotation={originalPaw.blender ? [Math.PI / 2, 0, 0] : [0, 0, 0]}>
+            <primitive object={originalPaw.scene} dispose={null} />
+          </group>
+        ) : (
+          <>
+            <mesh castShadow position={[0, -0.16, 0]} scale={[0.5, 0.39, 0.18]}>
+              <sphereGeometry args={[1, 20, 14]} />
+              <meshStandardMaterial color="#efb58e" roughness={0.73} />
+            </mesh>
+            {[-0.39, -0.14, 0.14, 0.39].map((x, i) => (
+              <mesh
+                key={i}
+                castShadow
+                position={[x, 0.38 - Math.abs(x) * 0.26, 0]}
+                rotation={[0, 0, -x * 0.18]}
+                scale={[0.18, 0.23, 0.14]}
+              >
+                <sphereGeometry args={[1, 12, 10]} />
+                <meshStandardMaterial color={i % 2 === 0 ? '#f1c59c' : '#e5a987'} roughness={0.7} />
+              </mesh>
+            ))}
+            <mesh position={[0, -0.16, 0.175]} scale={[0.29, 0.2, 0.03]}>
+              <sphereGeometry args={[1, 12, 8]} />
+              <meshStandardMaterial color="#fff3df" roughness={0.84} />
+            </mesh>
+          </>
+        )}
       </group>
       <mesh position={[1.9, 1.2, -1]} rotation={[0.5, 0.3, 1.3]}>
         <sphereGeometry args={[0.13, 20, 20]} />
@@ -117,13 +150,23 @@ export default function AmbientScene() {
     const element = sceneRef.current;
     let visible = true;
     const refresh = () => setInViewport(visible && document.visibilityState === 'visible');
-    const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(
-      ([entry]) => { visible = entry.isIntersecting; refresh(); }, { threshold: 0.02 },
-    );
+    const observer =
+      typeof IntersectionObserver === 'undefined'
+        ? null
+        : new IntersectionObserver(
+            ([entry]) => {
+              visible = entry.isIntersecting;
+              refresh();
+            },
+            { threshold: 0.02 },
+          );
     observer?.observe(element);
     document.addEventListener('visibilitychange', refresh);
     refresh();
-    return () => { observer?.disconnect(); document.removeEventListener('visibilitychange', refresh); };
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [supported]);
   if (!enabled) return null;
   if (!supported)
@@ -136,7 +179,12 @@ export default function AmbientScene() {
       </div>
     );
   return (
-    <div ref={sceneRef} className="ambient-canvas" role="img" aria-label="Gently animated 3D toys and a paw charm">
+    <div
+      ref={sceneRef}
+      className="ambient-canvas"
+      role="img"
+      aria-label="Gently animated 3D toys and a paw charm"
+    >
       <Canvas
         dpr={[1, 1.5]}
         camera={{ position: [0, 0, 5], fov: 42 }}
