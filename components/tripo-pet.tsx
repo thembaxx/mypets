@@ -114,8 +114,14 @@ export default function TripoPet({
           camera={{ position: [0, 0, 4.6], fov: 39 }}
           gl={{ alpha: true, antialias: true }}
         >
-          <ambientLight intensity={2} />
-          <directionalLight position={[2, 3, 4]} intensity={3} />
+          <hemisphereLight args={['#fff5e5', '#7b91a1', 1.15]} />
+          <ambientLight intensity={0.7} />
+          <directionalLight position={[-3, 5, 4]} intensity={2.8} color="#fff2db" />
+          <directionalLight position={[3, 2, -4]} intensity={1.6} color="#c8e8ff" />
+          <mesh position={[0, -1.52, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[1.35, 48]} />
+            <meshBasicMaterial color="#766c68" transparent opacity={0.12} depthWrite={false} />
+          </mesh>
           <Suspense fallback={null}>
             <AnimalModel url={url} animated={!reducedMotion} />
           </Suspense>
