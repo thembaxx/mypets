@@ -9,13 +9,29 @@ test('phone GLB viewer compiles and supports original plus animated models witho
   assert.doesNotThrow(() => new Script(viewer));
   assert.match(page, /data-model-stem="mypets-paw-charm"/);
   assert.match(page, /<script src="\/3d-viewer\.js" defer>/);
-  for (const feature of ['gl.drawElements', 'gl.drawArrays', 'nodeMatrix', 'updatePose', 'requestAnimationFrame', 'pointermove', 'ResizeObserver', 'toBlob', 'prefers-reduced-motion']) assert.ok(viewer.includes(feature), feature);
+  for (const feature of [
+    'gl.drawElements',
+    'gl.drawArrays',
+    'nodeMatrix',
+    'updatePose',
+    'requestAnimationFrame',
+    'pointermove',
+    'ResizeObserver',
+    'toBlob',
+    'prefers-reduced-motion',
+  ])
+    assert.ok(viewer.includes(feature), feature);
   assert.doesNotMatch(viewer, /https?:\/\//);
 });
 
 test('service worker precaches the static and animated local models plus the viewer', () => {
   const pwa = readFileSync(new URL('../scripts/prepare-pwa.mjs', import.meta.url), 'utf8');
-  for (const asset of ['3d-preview.html', '3d-viewer.js', 'mypets-paw-charm-animated.glb', 'mypets-paw-charm.glb']) {
+  for (const asset of [
+    '3d-preview.html',
+    '3d-viewer.js',
+    'mypets-paw-charm-animated.glb',
+    'mypets-paw-charm.glb',
+  ]) {
     assert.ok(pwa.includes(asset), asset);
   }
 });
