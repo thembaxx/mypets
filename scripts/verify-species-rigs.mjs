@@ -107,6 +107,24 @@ for (const [species, kind] of Object.entries(candidates)) {
     );
   }
   if (kind === 'quadruped' || kind === 'reptile') {
+    // Anatomically connected cranium and muzzle, not two overlapping balls.
+    assert.ok(
+      !entries.some((node) => node.name === species + ' muzzle'),
+      species + ': old detached muzzle returned',
+    );
+    const head = entries.find((node) => node.name === 'Skinned ' + species + ' skull');
+    assert.ok(head, species + ': missing unified cranium/cheek/rostrum');
+    const headParts = gltf.meshes[head.mesh]?.primitives ?? [];
+    assert.ok(
+      headParts.some(
+        (part) =>
+          part.attributes?.JOINTS_0 !== undefined &&
+          part.attributes?.WEIGHTS_0 !== undefined &&
+          part.attributes?.TEXCOORD_0 !== undefined &&
+          (gltf.accessors?.[part.attributes.POSITION]?.count ?? 0) >= 1900,
+      ),
+      species + ': skull must be substantial continuous skinned topology',
+    );
     for (const node of entries.filter((n) => n.name?.endsWith('connected limb'))) {
       const mesh = gltf.meshes[node.mesh];
       assert.ok(
