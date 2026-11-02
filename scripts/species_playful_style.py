@@ -58,6 +58,18 @@ def decorate(slug, spec, rig, ellipsoid, curve_tube, make_material):
     shine = make_material(slug + " shiny catchlight", (.99, .97, .93), .15)
 
     face_y = length * .63
+    if kind == "fish":
+        # The supplied goldfish has a cream-coloured round face over its
+        # brilliant orange body; keep the coloured caudal fins free.
+        face_color = make_material(
+            slug + " soft peach face", (.99, .91, .77), .91,
+        )
+        ellipsoid(
+            slug + " round contrasting smiling face",
+            (0, -.16 + length * .76, centre_z + depth * .03),
+            (width*.71, radius*.095, depth*.56),
+            face_color, rig, "Head", 32, 24,
+        )
     for side in (-1, 1):
         cheek = ellipsoid(
             slug + (" left" if side < 0 else " right") + " rosy cheek",
