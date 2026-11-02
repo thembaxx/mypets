@@ -145,7 +145,10 @@ for (const [species, kind] of Object.entries(candidates)) {
         species + ' missing reference-inspired facial geometry: ' + fragment,
       );
     }
-    assert.ok(nodes.some((name) => name.includes('tongue')), species + ' missing joyful tongue');
+    assert.ok(
+      nodes.some((name) => name.includes('tongue')),
+      species + ' missing joyful tongue',
+    );
     const mouth = entries.find((node) => node.name === species + ' eating mouth');
     assert.ok(mouth, species + ' missing original animated mouth');
     assert.ok(
