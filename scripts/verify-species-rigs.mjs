@@ -77,6 +77,44 @@ for (const [species, kind] of Object.entries(candidates)) {
       ),
     species + ' is a static mesh, not a skinned rig',
   );
+  // Every species now has a distinct coloured iris behind the dark pupil.
+  const irisNodes = entries.filter(
+    (node) => node.name?.includes(species + ' ') && node.name?.endsWith(' iris'),
+  );
+  assert.equal(irisNodes.length, 2, species + ' must export two skinned iris surfaces');
+  if (kind !== 'fish' && kind !== 'snake') {
+    for (const side of ['left', 'right']) {
+      const lid = entries.find((node) => node.name === species + ' ' + side + ' upper eyelid');
+      assert.ok(lid, species + ' missing articulated ' + side + ' eyelid');
+      const targets = gltf.meshes[lid.mesh]?.extras?.targetNames ?? [];
+      assert.ok(targets.includes('Eye_Wide'), species + ' missing eyelid curiosity morph');
+      assert.ok(
+        targets.includes('Blink_' + (side === 'left' ? 'L' : 'R')),
+        species + ' missing eyelid close morph',
+      );
+      assert.ok(
+        (gltf.meshes[lid.mesh]?.primitives ?? []).some(
+          (part) =>
+            part.attributes?.JOINTS_0 !== undefined && part.attributes?.WEIGHTS_0 !== undefined,
+        ),
+        species + ' eyelid is not skinned to the skull',
+      );
+    }
+  } else {
+    assert.ok(
+      !nodes.some((name) => name.endsWith('upper eyelid')),
+      species + ' must not be given mammalian blinking eyelids',
+    );
+  }
+  if (kind === 'quadruped' || kind === 'reptile') {
+    for (const node of entries.filter((n) => n.name?.endsWith('connected limb'))) {
+      const mesh = gltf.meshes[node.mesh];
+      assert.ok(
+        (mesh?.primitives ?? []).some((part) => part.attributes?.TEXCOORD_0 !== undefined),
+        species + ' limb missing UVs for directional coat/skin rendering',
+      );
+    }
+  }
   const preview = join(output, species + '-review.png');
   assert.ok(
     existsSync(preview) && statSync(preview).size > 2000,

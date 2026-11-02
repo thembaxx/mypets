@@ -15,7 +15,7 @@ from mathutils import Vector
 FURRED = {"dog", "rabbit", "hamster", "guinea-pig", "ferret", "hedgehog"}
 
 
-def bake_coat_normal(slug, output_dir, size=96):
+def bake_coat_normal(slug, output_dir, size=128):
     """Create an actual tileable, non-black, PNG normal map for glTF PBR."""
     if slug not in FURRED:
         return None
@@ -25,8 +25,9 @@ def bake_coat_normal(slug, output_dir, size=96):
         rgba.append(0)
         for x in range(size):
             u, v = x / size, y / size
-            dx = .07 * math.sin(math.tau * (u * 27 + .19 * math.sin(v*19)))
-            dy = .088 * math.sin(math.tau * (v * 43 + .16 * math.cos(u*23)))
+            # Wrapped frequency warps prevent the previous repeating seam.
+            dx = .07 * math.sin(math.tau * (u * 27 + .19 * math.sin(math.tau*v*19)))
+            dy = .088 * math.sin(math.tau * (v * 43 + .16 * math.cos(math.tau*u*23)))
             n = Vector((-dx, -dy, 1)).normalized()
             pixel = (round(255*(.5+.5*n.x)), round(255*(.5+.5*n.y)),
                      round(255*(.5+.5*n.z)),255)
@@ -72,7 +73,7 @@ def shade_coat(material, image):
 
 def sculpt_profile(ob, slug, section, body_length, head_radius):
     """Conservative continuous-vertex torso/skull refinements in bind pose."""
-    if slug not in ("dog","rabbit"):
+    if slug not in FURRED | {"bird","budgie","canary","chicken","snake","iguana","gecko","salamander"}:
         return
     for vertex in ob.data.vertices:
         p=vertex.co
@@ -81,15 +82,23 @@ def sculpt_profile(ob, slug, section, body_length, head_radius):
             if slug=="dog":
                 p.x *= 1-.15*max(t,0)**2+.025*max(-t,0)
                 p.z += .04*t+.016*(1-t*t)
-            else:
+            elif slug=="rabbit":
                 p.x *= 1+.16*max(-t,0)-.17*max(t,0)
                 p.z += .05*max(-t,0)+.016*(1-t*t)
+            elif slug in FURRED:
+                p.x *= 1-.07*max(t,0)+.04*max(-t,0)
+                p.z += .015*(1-t*t)
+            else:
+                p.x *= 1-.06*max(t,0)
+                p.z += .012*(1-t*t)
         elif section=="skull":
             p.x *= .94
             if slug=="rabbit":
                 p.z += .02*(1-min(1,abs(p.x)/head_radius))
-            else:
+            elif slug=="dog":
                 p.y += .035*max(0,1-abs(p.x)/head_radius)
+            else:
+                p.y += .012*max(0,1-abs(p.x)/head_radius)
     ob.data.update()
 
 
@@ -163,3 +172,53 @@ def articulated_gait(slug, bone, phase, cycle):
         bone.rotation_euler.x=(.24 if slug=="dog" else .29)*swing
     elif bone.name.endswith("_Lower"):
         bone.rotation_euler.x=-(.32 if slug=="rabbit" else .20)*max(0,swing)
+
+
+def feline_style_eyelid(slug, side, eye_centre, radius, surface, rig, bind):
+    """Skinned deforming upper eyelid on terrestrial animals and birds.
+
+    Fish and snakes have no authored eyelid here. Species accuracy remains
+    approximate, especially for geckos with different ocular anatomy.
+    """
+    x0, y0, z0 = eye_centre
+    columns = 15
+    verts, faces = [], []
+    for i in range(columns):
+        u = 2 * i / (columns - 1) - 1
+        envelope = math.sqrt(max(0, 1-u*u))
+        x = x0 + radius * .185 * u
+        y = y0 + radius * .087 - radius * .016*u*u
+        z = z0 + radius * (.095 + .041*envelope)
+        verts.extend(((x,y,z),(x,y,z-radius*.031)))
+    for i in range(columns-1):
+        k = i*2
+        faces.append((k,k+2,k+3,k+1))
+    mesh = bpy.data.meshes.new(slug+" eyelid surface")
+    mesh.from_pydata(verts,[],faces)
+    mesh.update()
+    obj = bpy.data.objects.new(slug+(" left" if side<0 else " right")+" upper eyelid",mesh)
+    bpy.context.collection.objects.link(obj)
+    mesh.materials.append(surface)
+    for face in mesh.polygons:
+        face.use_smooth = True
+    # The furred species use a PBR normal material here; explicitly supply
+    # UVs so skin-deforming eyelids have valid glTF texture coordinates.
+    uv = mesh.uv_layers.new(name="Eyelid skin UV")
+    for polygon in mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            index = mesh.loops[loop_index].vertex_index
+            uv.data[loop_index].uv = (index // 2 / (columns - 1), index % 2)
+    obj.shape_key_add(name="Basis")
+    closed = obj.shape_key_add(name="Blink_L" if side<0 else "Blink_R")
+    wide = obj.shape_key_add(name="Eye_Wide")
+    basis = mesh.shape_keys.key_blocks["Basis"].data
+    for i in range(columns):
+        u = 2*i/(columns-1)-1
+        envelope = math.sqrt(max(0, 1-u*u))
+        for part in (0,1):
+            k = 2*i+part
+            src = basis[k].co
+            closed.data[k].co = (src.x,src.y,src.z-radius*.23*envelope)
+            wide.data[k].co = (src.x,src.y,src.z+radius*.047*envelope)
+    bind(obj,rig,{"Head":{i:1.0 for i in range(len(verts))}})
+    return obj

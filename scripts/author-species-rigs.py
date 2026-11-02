@@ -20,13 +20,10 @@ from species_avian_aquatic import (
     wing_membrane, specimen_fins, fish_body_shell, shape_avian_torso,
 )
 from species_realism import (
-    articulated_gait,
-    bake_coat_normal,
-    cupped_pinna,
-    joined_limb_profile,
-    sculpt_profile,
-    shade_coat,
+    bake_coat_normal, cupped_pinna, joined_limb_profile,
+    sculpt_profile, shade_coat, feline_style_eyelid,
 )
+from species_motion import limb_angles, tail_wave, walk_torso, wing_stroke
 
 # 13 species beyond the independently authored cat, plus breed/colour variants.
 # body width,length,depth; center height; head radius; head height; colours.
@@ -121,6 +118,17 @@ def tapered_mesh(name, points, radii, material, arm, upper, lower, body=None):
     mesh.materials.append(material)
     for poly in mesh.polygons:
         poly.use_smooth = True
+    # UVs follow the skinned limbs, including the toe joints.
+    uv = mesh.uv_layers.new(name="Continuous limb coat UV")
+    for poly in mesh.polygons:
+        indices = [mesh.loops[li].vertex_index for li in poly.loop_indices]
+        wrap = any(i % count == 0 for i in indices) and any(i % count == count-1 for i in indices)
+        for li in poly.loop_indices:
+            vi = mesh.loops[li].vertex_index
+            row = min(vi // count, len(points)-1)
+            step = vi % count
+            u = 1.0 if wrap and step == 0 else step / count
+            uv.data[li].uv = (u, row / (len(points)-1))
     weights = {upper:{},lower:{}}
     if body:
         weights[body] = {}
@@ -217,6 +225,7 @@ def make_animal(slug, spec, rig, output_dir):
     coat=shade_coat(mat(slug+" coat",main),normal_map)
     light=shade_coat(mat(slug+" pale markings",accent),normal_map)
     dark=mat(slug+" eyes",(.075,.055,.05),.29)
+    iris=mat(slug+" iris",(.44,.29,.15) if kind in ("quadruped","bird") else (.48,.51,.32),.32)
     ear_pink=mat(slug+" ear cartilage",(.80,.49,.49))
     body=(fish_body_shell(slug,w,l,depth,cz,rig,coat) if kind=="fish"
           else ellipsoid("Anatomical "+slug+" torso",(0,-.16,cz),
@@ -254,15 +263,23 @@ def make_animal(slug, spec, rig, output_dir):
            else side*hr*.53)
         eye_centre=((x,.12,cz+depth*.19) if kind=="fish"
                     else (x,face_y+hr*.68,hz+hr*.20))
-        eye=ellipsoid(slug+(" left" if side<0 else " right")+" living eye",
-                      eye_centre,
-                      (hr*.13,hr*.075,hr*.15),dark,rig,"Head",24,16)
-        eye.shape_key_add(name="Basis")
-        blink=eye.shape_key_add(name="Blink_L" if side<0 else "Blink_R")
-        basis=eye.data.shape_keys.key_blocks["Basis"].data
-        centre=sum(v.co.z for v in basis)/len(basis)
-        for source,target in zip(basis,blink.data):
-            target.co.z=centre+(source.co.z-centre)*.18
+        side_name=" left" if side<0 else " right"
+        # Two-layer eyes with actual iris and pupil rather than a single dark ball.
+        iris_eye=ellipsoid(slug+side_name+" iris",eye_centre,
+                           (hr*.135,hr*.074,hr*.15),iris,rig,"Head",28,20)
+        eye=ellipsoid(slug+side_name+" living eye",
+                      (eye_centre[0],eye_centre[1]+hr*.042,eye_centre[2]),
+                      (hr*.058,hr*.032,hr*.115),dark,rig,"Head",24,16)
+        # Fish and snakes should not squeeze their entire eyeballs shut.
+        if kind not in ("fish","snake"):
+            for mesh in (iris_eye,eye):
+                mesh.shape_key_add(name="Basis")
+                blink=mesh.shape_key_add(name="Blink_L" if side<0 else "Blink_R")
+                basis=mesh.data.shape_keys.key_blocks["Basis"].data
+                centre=sum(v.co.z for v in basis)/len(basis)
+                for source,target in zip(basis,blink.data):
+                    target.co.z=centre+(source.co.z-centre)*.18
+            feline_style_eyelid(slug,side,eye_centre,hr,light,rig,weighted)
     mouth_pos=((0,muzzle_y+hr*.08,cz-.045) if kind=="fish"
                else (0,muzzle_y+hr*.30,hz-hr*.48))
     mouth_radii=((hr*.12,hr*.035,hr*.050) if kind=="fish"
@@ -416,46 +433,55 @@ def animate(slug, spec, rig):
             elif label=="Walk":
                 # Distinct swimming/slithering/wing patterns, not a copied cat gait.
                 speed=2 if kind in ("quadruped","reptile") else 3
-                body.location.y=.026*math.sin(cycle*speed)
+                bob,sway,pitch=walk_torso(slug,kind,t)
+                body.location.y=bob
+                body.location.x=sway
+                body.rotation_euler.x=pitch
                 body.rotation_euler.z=.032*math.sin(cycle*speed)
-                tail1.rotation_euler.z=.18*math.sin(cycle*speed)
-                tail2.rotation_euler.z=.25*math.sin(cycle*speed+.5)
+                tail1.rotation_euler.z,tail2.rotation_euler.z=tail_wave(kind,t)
                 if kind=="fish":
                     # Traveling lateral swimming wave from the torso toward the tail.
                     body.rotation_euler.z=.055*math.sin(cycle*3)
                     tail1.rotation_euler.z=.28*math.sin(cycle*3-.65)
                     tail2.rotation_euler.z=.42*math.sin(cycle*3-1.15)
                 for bone in rig.pose.bones:
+                    if kind in ("quadruped","reptile") and bone.name.startswith(("Front_","Rear_")) and bone.name.endswith(("_Upper","_Lower")):
+                        upper,lower=limb_angles(slug,bone.name,t)
+                        bone.rotation_euler.x=upper if bone.name.endswith("_Upper") else lower
                     if kind=="bird" and bone.name.startswith("Wing_"):
-                        bone.rotation_euler.y=.09*math.sin(cycle*2)
-                        bone.rotation_euler.x=.08*math.sin(cycle*2) if bone.name.endswith("_Tip") else 0
-                        continue
-                    if bone.name.endswith("_Upper"):
-                        phase=math.pi if bone.name.endswith("_L_Upper") else 0
-                        if bone.name.startswith("Rear"):
-                            phase+=math.pi
-                        if slug in ("dog","rabbit"):
-                            articulated_gait(slug,bone,phase,cycle)
-                        else:
-                            bone.rotation_euler.x=.25*math.sin(cycle*2+phase)
-                    if bone.name.endswith("_Lower") and slug in ("dog","rabbit"):
-                        phase=math.pi if bone.name.endswith("_L_Lower") else 0
-                        if bone.name.startswith("Rear"):
-                            phase+=math.pi
-                        articulated_gait(slug,bone,phase,cycle)
-                    if bone.name.startswith(("Wing_","Fin_")):
-                        bone.rotation_euler.y=.30*math.sin(cycle*3)
+                        tip=bone.name.endswith("_Tip")
+                        side=-1 if "_L" in bone.name else 1
+                        bone.rotation_euler.y=side*wing_stroke(t,tip=tip)
+                        if tip:
+                            bone.rotation_euler.x=.035*math.sin(cycle*2-.4)
+                    if kind=="fish" and bone.name.startswith("Fin_"):
+                        side=-1 if "_L" in bone.name else 1
+                        bone.rotation_euler.y=side*.26*math.sin(cycle*3+side*.35)
                     if bone.name.startswith("Leg_"):
-                        bone.rotation_euler.x=.30*math.sin(cycle*2)
+                        bone.rotation_euler.x=.25*math.sin(cycle*2)
+                if kind=="bird":
+                    head.rotation_euler.x=.055*math.sin(cycle*2)
+                elif kind=="snake":
+                    head.rotation_euler.z=.055*math.sin(cycle*2-.4)
             elif label=="Eat":
                 ramp=math.sin(math.pi*t)**2
-                head.rotation_euler.x=-.27*ramp
+                head.rotation_euler.x=(-.40 if kind=="bird" else -.18 if kind=="fish" else -.27)*ramp
                 rig.pose.bones["Jaw"].rotation_euler.x=.26*max(0,math.sin(cycle*5))*ramp
+                if kind=="bird":
+                    body.rotation_euler.x=.045*ramp
+                elif kind=="fish":
+                    for bone in rig.pose.bones:
+                        if bone.name.startswith("Fin_"):
+                            bone.rotation_euler.y=.11*math.sin(cycle*4)
             elif label=="Play":
                 body.location.y=.055*abs(math.sin(cycle*2))
                 body.rotation_euler.z=.09*math.sin(cycle*2)
                 head.rotation_euler.z=.13*math.sin(cycle*2)
                 tail1.rotation_euler.z=.21*math.sin(cycle*2)
+                if slug=="rabbit":
+                    body.location.y=.085*abs(math.sin(cycle*2))
+                if kind=="fish":
+                    tail1.rotation_euler.z,tail2.rotation_euler.z=tail_wave("fish",t)
                 if kind=="bird":
                     for pb in rig.pose.bones:
                         if pb.name.startswith("Wing_"):
@@ -468,6 +494,10 @@ def animate(slug, spec, rig):
             elif label=="Groom":
                 head.rotation_euler.x=-.13*math.sin(math.pi*t)**2
                 head.rotation_euler.z=.12*math.sin(cycle*2)
+                if kind=="bird":
+                    for bone in rig.pose.bones:
+                        if bone.name.startswith("Wing_"):
+                            bone.rotation_euler.y=wing_stroke(t,tip=bone.name.endswith("_Tip"))
             elif label=="Sniff":
                 head.rotation_euler.x=-.12*math.sin(math.pi*t)**2
                 head.rotation_euler.z=.08*math.sin(cycle*3)
