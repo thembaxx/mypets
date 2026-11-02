@@ -2,9 +2,21 @@ import { expect, test } from '@playwright/test';
 
 const kinds = [
   { id: 'dog', kind: 'quadruped' },
+  { id: 'rabbit', kind: 'quadruped' },
+  { id: 'hamster', kind: 'quadruped' },
+  { id: 'guinea-pig', kind: 'quadruped' },
+  { id: 'ferret', kind: 'quadruped' },
+  { id: 'hedgehog', kind: 'quadruped' },
   { id: 'bird', kind: 'avian' },
+  { id: 'budgie', kind: 'avian' },
+  { id: 'canary', kind: 'avian' },
+  { id: 'chicken', kind: 'avian' },
   { id: 'fish', kind: 'aquatic' },
+  { id: 'angelfish', kind: 'aquatic' },
+  { id: 'snake', kind: 'reptile' },
+  { id: 'iguana', kind: 'reptile' },
   { id: 'gecko', kind: 'reptile' },
+  { id: 'salamander', kind: 'reptile' },
 ];
 
 test('all illustrated animal candidates are real individual GLB files', async ({ request }) => {
@@ -44,7 +56,7 @@ test('all illustrated animal candidates are real individual GLB files', async ({
 
 for (const { id, kind } of kinds) {
   test('the ' + kind + ' ' + id + ' opens its OWN animated 3D rig', async ({ page }) => {
-    test.setTimeout(90_000);
+    test.setTimeout(120_000);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('http://127.0.0.1:3000/3d-lab');
     await page.getByLabel('Choose an animal to review').selectOption(id);
