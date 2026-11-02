@@ -170,7 +170,10 @@ function AnimalModel({
     // Only animate morphs that actually exist on the authored model.
     // Body motion cannot be invented from an unrigged, static photograph.
     const blink = state.clock.elapsedTime % 4.1 < 0.14 ? 1 : 0;
-    const chew = activity === 'eat' || activity === 'groom' ? Math.max(0, Math.sin(state.clock.elapsedTime * 10)) : 0;
+    const chew =
+      activity === 'eat' || activity === 'groom'
+        ? Math.max(0, Math.sin(state.clock.elapsedTime * 10))
+        : 0;
     const sniff = activity === 'sniff' ? 0.35 + Math.sin(state.clock.elapsedTime * 9) * 0.2 : 0;
     for (const { mesh, index, name } of morphTargetsRef.current) {
       const influences = mesh.morphTargetInfluences;
@@ -182,20 +185,24 @@ function AnimalModel({
         : /jaw.?open|mouth.?open/i.test(name)
           ? chew * 0.8
           : /sniff|nose.?flare/i.test(name)
-          ? sniff
-          : /cheek.?puff/i.test(name)
-            ? activity === 'groom' ? 0.25 : mood === 'happy' ? 0.18 : 0
-        : /eye.?wide/i.test(name)
-            ? mood === 'curious'
-              ? 0.9
-              : 0
-            : /smile|happy/i.test(name)
-              ? mood === 'happy'
-                ? 0.7
-                : 0
-              : /ears?.?back|fear|angry/i.test(name)
-                ? 0
-                : null;
+            ? sniff
+            : /cheek.?puff/i.test(name)
+              ? activity === 'groom'
+                ? 0.25
+                : mood === 'happy'
+                  ? 0.18
+                  : 0
+              : /eye.?wide/i.test(name)
+                ? mood === 'curious'
+                  ? 0.9
+                  : 0
+                : /smile|happy/i.test(name)
+                  ? mood === 'happy'
+                    ? 0.7
+                    : 0
+                  : /ears?.?back|fear|angry/i.test(name)
+                    ? 0
+                    : null;
       if (target !== null) updateMeshMorph(mesh, index, target, dt);
     }
   });
