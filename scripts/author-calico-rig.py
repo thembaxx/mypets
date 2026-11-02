@@ -134,13 +134,15 @@ def plant_feet(frame, paw_meshes, target_z=.012):
     """
     bpy.context.scene.frame_set(frame)
     low = vertex_contact(paw_meshes)
-    correction = max(-.34, min(.34, target_z-low))
+    # A fully posed leg can shift by more than 34 cm at an extreme
+    # gait pose; use the measured sole discrepancy rather than truncating it.
+    correction = max(-.85, min(.85, target_z-low))
     root = RIG.pose.bones["Root"]
     root.location.z += correction
     root.keyframe_insert("location", frame=frame, group="Root")
     bpy.context.scene.frame_set(frame)
     actual = vertex_contact(paw_meshes)
-    if abs(actual-target_z) > .065:
+    if abs(actual-target_z) > .028:
         raise RuntimeError("Foot contact correction failed at %s: %.3fm" % (frame, actual))
 
 
