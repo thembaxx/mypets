@@ -20,14 +20,14 @@ assert.ok(
   'Require actual exported skin and skeleton',
 );
 const actualNames = (doc.animations ?? []).map((clip) => clip.name || '');
-const expected = ['Idle', 'Walk', 'Eat', 'Play', 'Rest'];
+const expected = ['Idle', 'Walk', 'Eat', 'Play', 'Rest', 'Groom', 'Sniff'];
 for (const clip of expected)
   assert.ok(
     actualNames.some((name) => name.toLowerCase().includes(clip.toLowerCase())),
     `Rigged model must expose separate authored clip ${clip}; found ${actualNames.join(', ')}`,
   );
 const morphs = (doc.meshes ?? []).flatMap((mesh) => mesh.extras?.targetNames ?? []);
-for (const key of ['Blink_L', 'Blink_R', 'Jaw_Open', 'Lick'])
+for (const key of ['Blink_L', 'Blink_R', 'Jaw_Open', 'Lick', 'Smile', 'Cheek_Puff', 'Sniff'])
   assert.ok(
     morphs.includes(key),
     `Expected animated facial geometry ${key}; available: ${morphs.join(', ')}`,
