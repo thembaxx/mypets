@@ -293,12 +293,16 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
         pb.rotation_euler = (0, 0, 0)
     # Calibrated resting height from evaluated Blender paw soles at Idle.
     # Collision-aware IK and dynamic foot planting are not yet implemented.
-    RIG.pose.bones["Root"].location = (0, root_y, root_z - .048)
-    RIG.pose.bones["Body"].location.z = body_z
+    # Blender pose translation is in BONE-LOCAL coordinates, not world
+    # coordinates. Upright Root/Body/Head bones have local +Y along world +Z,
+    # while local +Z points roughly toward -world Y. This is why adjusting
+    # Root.location.z previously never lifted planted feet off the floor.
+    RIG.pose.bones["Root"].location = (0, root_z - .048, -root_y)
+    RIG.pose.bones["Body"].location.y = body_z
     RIG.pose.bones["Body"].rotation_euler.x = body_pitch
     RIG.pose.bones["Head"].rotation_euler.x = head_pitch
-    RIG.pose.bones["Head"].location.z = -head_drop
-    RIG.pose.bones["Head"].location.y = head_reach
+    RIG.pose.bones["Head"].location.y = -head_drop
+    RIG.pose.bones["Head"].location.z = -head_reach
     RIG.pose.bones["Head"].rotation_euler.z = head_yaw
     RIG.pose.bones["Jaw"].rotation_euler.x = jaw
     RIG.pose.bones["Tongue"].location.y = tongue
