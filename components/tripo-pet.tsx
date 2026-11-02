@@ -179,14 +179,16 @@ function AnimalModel({
         : /jaw.?open|mouth.?open/i.test(name)
           ? chew * 0.8
           : /eye.?wide/i.test(name)
-            ? (mood === 'curious' ? 0.9 : 0)
-            : /smile|happy/i.test(name)
-            ? mood === 'happy'
-              ? 0.7
+            ? mood === 'curious'
+              ? 0.9
               : 0
-            : /ears?.?back|fear|angry/i.test(name)
-              ? 0
-              : null;
+            : /smile|happy/i.test(name)
+              ? mood === 'happy'
+                ? 0.7
+                : 0
+              : /ears?.?back|fear|angry/i.test(name)
+                ? 0
+                : null;
       if (target !== null) updateMeshMorph(mesh, index, target, dt);
     }
   });
@@ -274,9 +276,12 @@ export default function TripoPet({
     },
     [],
   );
-  useEffect(() => () => {
-    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+    },
+    [],
+  );
   const loadLocalModel = async (file?: File) => {
     if (!file || recording) return;
     try {
@@ -410,12 +415,12 @@ export default function TripoPet({
                 {activeUrl ? (
                   <group rotation={[0, localPreview ? Math.PI : 0, 0]}>
                     <AnimalModel
-                    url={activeUrl}
-                    activity={activity}
-                    mood={mood}
-                    animated={!reduced}
-                    onReport={setReport}
-                  />
+                      url={activeUrl}
+                      activity={activity}
+                      mood={mood}
+                      animated={!reduced}
+                      onReport={setReport}
+                    />
                   </group>
                 ) : (
                   <LivingCat activity={activity} mood={mood} paused={reduced} />
@@ -441,7 +446,11 @@ export default function TripoPet({
               }}
             />
           </label>
-          {previewError && <p className="tripo-living-status" role="alert">{previewError}</p>}
+          {previewError && (
+            <p className="tripo-living-status" role="alert">
+              {previewError}
+            </p>
+          )}
           <div className="tripo-activity-picker" role="group" aria-label="Animal behaviour">
             {actions.map(({ activity: next, label, Icon }) => (
               <button

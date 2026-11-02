@@ -8,14 +8,20 @@ export function validateLocalGlb(input: ArrayBuffer): void {
   if (bytes.byteLength < 20 || bytes.byteLength > 8 * 1024 * 1024) {
     throw new Error('Choose a GLB smaller than 8 MB.');
   }
-  if (bytes.getUint32(0, true) !== 0x46546c67 ||
-    bytes.getUint32(4, true) !== 2 || bytes.getUint32(8, true) !== bytes.byteLength) {
+  if (
+    bytes.getUint32(0, true) !== 0x46546c67 ||
+    bytes.getUint32(4, true) !== 2 ||
+    bytes.getUint32(8, true) !== bytes.byteLength
+  ) {
     throw new Error('This is not a complete glTF 2.0 binary (.glb).');
   }
   const jsonLength = bytes.getUint32(12, true);
-  if (bytes.getUint32(16, true) !== 0x4e4f534a ||
-    jsonLength < 2 || jsonLength > bytes.byteLength - 20 ||
-    jsonLength % 4 !== 0) {
+  if (
+    bytes.getUint32(16, true) !== 0x4e4f534a ||
+    jsonLength < 2 ||
+    jsonLength > bytes.byteLength - 20 ||
+    jsonLength % 4 !== 0
+  ) {
     throw new Error('Invalid GLB JSON chunk.');
   }
   let doc: {
@@ -39,12 +45,17 @@ export function validateLocalGlb(input: ArrayBuffer): void {
   if (assets.some(({ uri }) => uri && !uri.startsWith('data:'))) {
     throw new Error('External model textures or network resources are not allowed.');
   }
-  const supported = ['KHR_draco_mesh_compression', 'KHR_texture_basisu',
-    'KHR_mesh_quantization', 'EXT_meshopt_compression'];
+  const supported = [
+    'KHR_draco_mesh_compression',
+    'KHR_texture_basisu',
+    'KHR_mesh_quantization',
+    'EXT_meshopt_compression',
+  ];
   if ((doc.extensionsRequired ?? []).some((name) => !supported.includes(name))) {
     throw new Error('The model requires an unsupported GLB extension.');
   }
-  const vertices = (doc.meshes ?? []).flatMap((mesh) => mesh.primitives ?? [])
+  const vertices = (doc.meshes ?? [])
+    .flatMap((mesh) => mesh.primitives ?? [])
     .reduce((sum, part) => {
       const i = part.attributes?.POSITION;
       return sum + (i === undefined ? 0 : (doc.accessors?.[i]?.count ?? 0));

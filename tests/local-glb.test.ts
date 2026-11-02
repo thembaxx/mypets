@@ -4,7 +4,7 @@ import { validateLocalGlb } from '../lib/validate-local-glb';
 
 function makeGlb(doc: Record<string, unknown>) {
   const json = JSON.stringify(doc);
-  const padding = (4 - json.length % 4) % 4;
+  const padding = (4 - (json.length % 4)) % 4;
   const body = Buffer.from(json + ' '.repeat(padding), 'utf8');
   const bytes = Buffer.alloc(20 + body.length);
   bytes.write('glTF', 0, 4, 'ascii');
@@ -22,22 +22,35 @@ test('accepts self-contained glTF 2.0 payload', () => {
   assert.doesNotThrow(() => validateLocalGlb(makeGlb(valid)));
 });
 test('rejects malicious external texture references', () => {
-  assert.throws(() =>
-    validateLocalGlb(makeGlb({ ...valid, images: [{ uri: 'https://not-local.invalid/tracker.png' }] })),
-    /External model textures/);
+  assert.throws(
+    () =>
+      validateLocalGlb(
+        makeGlb({ ...valid, images: [{ uri: 'https://not-local.invalid/tracker.png' }] }),
+      ),
+    /External model textures/,
+  );
 });
 test('rejects external buffers, unsupported extensions and invalid header', () => {
-  assert.throws(() =>
-    validateLocalGlb(makeGlb({ ...valid, buffers: [{ uri: '../external.bin' }] })),
-    /External model textures/);
-  assert.throws(() =>
-    validateLocalGlb(makeGlb({ ...valid, extensionsRequired: ['VENDOR_untrusted'] })),
-    /unsupported GLB extension/);
+  assert.throws(
+    () => validateLocalGlb(makeGlb({ ...valid, buffers: [{ uri: '../external.bin' }] })),
+    /External model textures/,
+  );
+  assert.throws(
+    () => validateLocalGlb(makeGlb({ ...valid, extensionsRequired: ['VENDOR_untrusted'] })),
+    /unsupported GLB extension/,
+  );
   assert.throws(() => validateLocalGlb(new ArrayBuffer(20)), /glTF 2.0 binary/);
 });
 test('enforces mobile vertex limit', () => {
-  assert.throws(() =>
-    validateLocalGlb(makeGlb({ ...valid, accessors: [{ count: 160001 }],
-      meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }] })),
-    /too detailed/);
+  assert.throws(
+    () =>
+      validateLocalGlb(
+        makeGlb({
+          ...valid,
+          accessors: [{ count: 160001 }],
+          meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+        }),
+      ),
+    /too detailed/,
+  );
 });
