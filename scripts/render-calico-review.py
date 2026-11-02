@@ -41,16 +41,20 @@ def main():
     scene.render.engine = "BLENDER_WORKBENCH"
     scene.display.shading.light = "STUDIO"
     scene.display.shading.color_type = "MATERIAL"
-    scene.display.shading.show_shadows = True
+    scene.display.shading.show_shadows = False
     scene.display.shading.show_cavity = True
-    # A ground receiver makes paw contact testable in the actual review images.
+    # Workbench's long screen-space shadows on a 200m review plane generated
+    # false diagonal streaks during Eat. Contact is measured from evaluated
+    # paw vertices in audit-calico-contact.py; the preview retains cavity
+    # shading but deliberately avoids unphysical projected shadow bands.
+    # A neutral plane gives scale reference only, not a proof of contact.
     bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, -.012))
     ground = bpy.context.object
     ground.name = "Review floor, not part of export"
     floor_material = bpy.data.materials.new("Soft studio ground")
     floor_material.diffuse_color = (.89, .87, .83, 1)
     ground.data.materials.append(floor_material)
-    scene.display.shading.show_shadows = True
+    scene.display.shading.show_shadows = False
     scene.render.resolution_x = 720
     scene.render.resolution_y = 720
     scene.render.resolution_percentage = 100

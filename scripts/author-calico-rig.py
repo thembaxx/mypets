@@ -18,6 +18,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from calico_gait import root_height, walk_leg_pose, groom_paw_pose
+from calico_feline_sculpt import apply_sculpt, torso_position, skull_position, toe_position
 
 FPS = 24
 LAST = 49
@@ -344,6 +345,9 @@ def joined_limb(name, side, fore, hip_y, hip_z, mat, gold):
         a=(len(sections)-1)*sides+step
         b=(len(sections)-1)*sides+(step+1)%sides
         faces.append((bottom,a,b))
+    # A tiny four-lobe sculpt is applied to the connected paw *before*
+    # armature weights and the glTF normal-map UVs are generated.
+    vertices = [toe_position(*position, x, hip_y, hip_z) for position in vertices]
     mesh = bpy.data.meshes.new(label+" seamless limb geometry")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
@@ -523,6 +527,7 @@ def model():
     dark = material("Eye and mouth cocoa", (.19, .10, .095), .62)
     mouth_red = material("Open mouth ruby", (.65, .13, .16))
     body = make_mesh("Longer natural calico torso", (0, -.27, .94), (.59, .94, .54), cream, "Body", 64, 40)
+    apply_sculpt(body, torso_position)
     coat_microrelief(body)
     soften_skin(body, "Body", "Neck", lambda v:
                 .48 * smoothstep(.02,.58,v.y) * smoothstep(.78,1.39,v.z))
@@ -547,6 +552,7 @@ def model():
     make_mesh("Soft belly", (0, .36, .82), (.39, .28, .34), white, "Body")
     face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
                      (.58, .53, .52), white, "Head", 128, 88)
+    apply_sculpt(face, skull_position)
     coat_microrelief(face, .003)
     soften_skin(face, "Head", "Neck", lambda v:
                 .40 * (1-smoothstep(.97,1.42,v.z))
@@ -635,10 +641,9 @@ def model():
             # Pads belong to each paw's own underside, not a shared absolute
             # world height. The previous z=.18 made rear pads float about 26 cm
             # above the evaluated stance paw despite correct lower-mesh contact.
-            # In bind pose the lower paw is centred at z-.68 with radius .27;
-            # its sole lies near z-.95. Use fore/hind anatomical offsets,
-            # calibrated against the *evaluated* stance and swing pad bounds
-            # in the Blender contact-audit report.
+            # Keep the rear pad tied to the calibrated WALK stance geometry.
+            # Grounding its idle/groom pose is a skeletal animation problem,
+            # not a reason to move the pad 20 cm above planted walking toes.
             toe_pad = make_mesh(label + " rosy toe pad",
                                 (x,y+.19,z-(.89 if fore else .95)), (.12,.035,.08),
                                 pink, label + "_Lower", 16,12)
@@ -703,10 +708,18 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
     RIG.pose.bones["Tail_2"].rotation_euler.x = .20 * math.sin(2*math.pi*(frame-1)/(LAST-1))
     RIG.pose.bones["Ear_L"].rotation_euler.y = ears
     RIG.pose.bones["Ear_R"].rotation_euler.y = -ears
+    # Reuse the actual validated heel/hock stance pose for idle, eating,
+    # grooming and sniffing rather than letting the hind legs revert to
+    # Blender bone-neutral and sink through the floor.
+    supported = {
+        "Rear_L": walk_leg_pose(0.0, False, -1)[0],
+        "Rear_R": walk_leg_pose(0.0, False, 1)[0],
+    }
     if legs:
-        for name, (upper, lower) in legs.items():
-            RIG.pose.bones[name+"_Upper"].rotation_euler.x = upper
-            RIG.pose.bones[name+"_Lower"].rotation_euler.x = lower
+        supported.update(legs)
+    for name, (upper, lower) in supported.items():
+        RIG.pose.bones[name+"_Upper"].rotation_euler.x = upper
+        RIG.pose.bones[name+"_Lower"].rotation_euler.x = lower
     for pb in RIG.pose.bones:
         pb.keyframe_insert("location", frame=frame, group=pb.name)
         pb.keyframe_insert("rotation_euler", frame=frame, group=pb.name)
@@ -761,6 +774,68 @@ def fit_walk_stance(frame, t):
             if frame in (1, 13, 25, 37, 49):
                 print("STANCE_CONTACT name=%s frame=%d before=%.4f after=%.4f" %
                       (name, frame, before, actual), flush=True)
+
+
+def evaluated_lowest(name):
+    """Lowest WORLD-Z point of the actual evaluated skinned preview mesh."""
+    ob = bpy.data.objects[name]
+    bpy.context.view_layer.update()
+    graph = bpy.context.evaluated_depsgraph_get()
+    evaluated = ob.evaluated_get(graph)
+    mesh = evaluated.to_mesh(preserve_all_data_layers=False, depsgraph=graph)
+    try:
+        return min((evaluated.matrix_world @ vertex.co).z for vertex in mesh.vertices)
+    finally:
+        evaluated.to_mesh_clear()
+
+
+def fit_nonwalk_support(frame, raised=()):
+    """Keep supported feet above the ground after non-walk body/head animation.
+
+    The exported cat has no runtime rigid-body collision solver. Measure and
+    correct the *evaluated* paw AND cosmetic pad against world-Z instead of
+    trusting the knee-tip rig. Skip raised grooming limbs, preserving the
+    independently measured paw-to-muzzle interaction.
+    """
+    for fore in (True, False):
+        for side in (-1, 1):
+            label = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
+            if label in raised:
+                continue
+            surfaces = (label+" lower paw", label+" rosy toe pad")
+            def low():
+                return min(evaluated_lowest(name) for name in surfaces)
+
+            before = low()
+            # A jumping/playing paw above ground must remain airborne.
+            # Correct penetration only: forcing every paw to z=.006 would
+            # flatten existing Play bounce and flight arcs.
+            if before >= .002:
+                continue
+            bone = RIG.pose.bones[label+"_Lower"]
+            original = bone.location.y
+            probe = .018
+            bone.location.y = original + probe
+            tested = low()
+            bone.location.y = original
+            gradient = (tested-before)/probe
+            if not math.isfinite(gradient) or abs(gradient) < .13:
+                raise RuntimeError(
+                    "Support-foot contact derivative is invalid: %s %.4f" %
+                    (label, gradient)
+                )
+            correction = max(-.28, min(.28, (.006-before)/gradient))
+            bone.location.y = original + correction
+            bone.keyframe_insert("location", frame=frame, group=bone.name)
+            after = low()
+            if not (-.045 <= after <= .050):
+                raise RuntimeError(
+                    "Supported paw cannot reach ground: %s frame=%d before=%.3f after=%.3f" %
+                    (label, frame, before, after)
+                )
+            if frame in (1, 21, 25, 49):
+                print("NONWALK_PAW_SUPPORT %s frame=%d %.4f -> %.4f" %
+                      (label, frame, before, after), flush=True)
 
 
 def evaluated_mesh_centre(name):
@@ -893,6 +968,7 @@ def build_actions():
                          tail=.09*math.sin(cycle),
                          legs={"Front_L":groom_paw_pose(reach)})
                 aim_grooming_forepaw(frame, reach)
+                fit_nonwalk_support(frame, raised=("Front_L",))
             elif clip == "Sniff":
                 # Gentle nose-first inspection with small ear/head movement.
                 reach = math.sin(math.pi*t)**2
@@ -904,6 +980,8 @@ def build_actions():
                 set_pose(frame, body_z=.016*math.sin(cycle),
                          head_yaw=.07*math.sin(cycle), head_pitch=.03*math.sin(cycle),
                          tail=.14*math.sin(cycle), ears=.035*math.sin(cycle))
+            if clip not in ("Walk", "Groom"):
+                fit_nonwalk_support(frame)
         # Frame LAST is already authored in the above loop at the same
         # walk-cycle phase as frame 1. Never overwrite it with neutral limbs:
         # that introduces a visible gait/feeding snap at the loop seam.

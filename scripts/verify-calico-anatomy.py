@@ -50,6 +50,8 @@ assert len([obj for obj in bpy.data.objects if obj.type == "MESH"
 assert any(img.name.startswith("calico-short-fur-normal") or img.name == "Calico short-fur normal" for img in bpy.data.images), (
     "Baked glTF normal map is required for mobile PBR coat shading"
 )
+# Verify real articulated pose contact with audit-calico-pose-bounds.py.
+# The rear pad's bind-pose coordinates are not its gait-contact height.
 fur = [ob for ob in bpy.data.objects if ob.type == "MESH" and ob.name.startswith("Fur ")]
 assert len(fur) >= 5, f"Need batched tuft groups, got {len(fur)}"
 assert all(len(ob.data.polygons) >= 20 for ob in fur)
