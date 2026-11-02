@@ -641,14 +641,11 @@ def model():
             # Pads belong to each paw's own underside, not a shared absolute
             # world height. The previous z=.18 made rear pads float about 26 cm
             # above the evaluated stance paw despite correct lower-mesh contact.
-            # The rear ankle's bind origin is .13 m lower than the front.
-            # The former rear z-.95 placed its decorative pad underneath the
-            # floor during grooming. z-.75 aligns the actual rear pad sole
-            # with the forepaw's world-ground contact; both are checked
-            # against evaluated skinned mesh coordinates in CI.
-            # in the Blender contact-audit report.
+            # Keep the rear pad tied to the calibrated WALK stance geometry.
+            # Grounding its idle/groom pose is a skeletal animation problem,
+            # not a reason to move the pad 20 cm above planted walking toes.
             toe_pad = make_mesh(label + " rosy toe pad",
-                                (x,y+.19,z-(.89 if fore else .75)), (.12,.035,.08),
+                                (x,y+.19,z-(.89 if fore else .95)), (.12,.035,.08),
                                 pink, label + "_Lower", 16,12)
             soften_skin(toe_pad, label+"_Lower", label+"_Upper",
                         lambda v: .13)
@@ -711,10 +708,18 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
     RIG.pose.bones["Tail_2"].rotation_euler.x = .20 * math.sin(2*math.pi*(frame-1)/(LAST-1))
     RIG.pose.bones["Ear_L"].rotation_euler.y = ears
     RIG.pose.bones["Ear_R"].rotation_euler.y = -ears
+    # Reuse the actual validated heel/hock stance pose for idle, eating,
+    # grooming and sniffing rather than letting the hind legs revert to
+    # Blender bone-neutral and sink through the floor.
+    supported = {
+        "Rear_L": walk_leg_pose(0.0, False, -1)[0],
+        "Rear_R": walk_leg_pose(0.0, False, 1)[0],
+    }
     if legs:
-        for name, (upper, lower) in legs.items():
-            RIG.pose.bones[name+"_Upper"].rotation_euler.x = upper
-            RIG.pose.bones[name+"_Lower"].rotation_euler.x = lower
+        supported.update(legs)
+    for name, (upper, lower) in supported.items():
+        RIG.pose.bones[name+"_Upper"].rotation_euler.x = upper
+        RIG.pose.bones[name+"_Lower"].rotation_euler.x = lower
     for pb in RIG.pose.bones:
         pb.keyframe_insert("location", frame=frame, group=pb.name)
         pb.keyframe_insert("rotation_euler", frame=frame, group=pb.name)
