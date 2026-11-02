@@ -64,4 +64,17 @@ assert face.dimensions.x / body.dimensions.x <= 1.12, (
 assert body.dimensions.y >= .90*face.dimensions.x, (
     "Torso is too short relative to head"
 )
-print("ANATOMY_PASS one-piece four limbs, multi-bone weights, batched fur and balanced silhouette")
+
+for suffix in ("L", "R"):
+    lid = bpy.data.objects.get(suffix + " upper eyelid")
+    assert lid and lid.type == "MESH", "Missing skinned animated eyelid " + suffix
+    keys = lid.data.shape_keys
+    assert keys and {"Basis", "Blink_" + suffix, "Eye_Wide"} <= {
+        key.name for key in keys.key_blocks
+    }, "Animated eyelid must expose real closure and eye-widening morphs"
+    assert len(lid.data.polygons) >= 16, "Eyelid must be a skinned surface, not a smile arc"
+    assert lid.vertex_groups.get("Head") is not None, "Eyelid must follow articulated skull"
+assert not any(ob.name.endswith("smiling lid") for ob in bpy.data.objects), (
+    "Static, oversized cartoon smile-line eyelids must be removed"
+)
+print("ANATOMY_PASS: articulated eyelids, continuous four limbs, blended coat and skin")
