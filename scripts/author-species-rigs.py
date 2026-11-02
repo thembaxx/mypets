@@ -25,14 +25,15 @@ from species_realism import (
     sculpt_muzzle, sculpt_beak,
 )
 from species_motion import limb_angles, tail_wave, walk_torso, wing_stroke
+from species_playful_style import celebration_height, decorate
 from species_anatomy import anatomical_skull, head_eye_offset
 from audit_species_contact import audit as audit_species_motion
 
 # 13 species beyond the independently authored cat, plus breed/colour variants.
 # body width,length,depth; center height; head radius; head height; colours.
 CONFIG = {
-    "dog":         ("quadruped", .49, .96, .41, 1.01, .34, 1.38, (.70,.49,.30), (.91,.76,.53)),
-    "rabbit":      ("quadruped", .40, .72, .40, .76, .29, 1.10, (.80,.74,.67), (.91,.85,.78)),
+    "dog":         ("quadruped", .49, .96, .41, 1.01, .34, 1.38, (.79,.52,.31), (.99,.90,.73)),
+    "rabbit":      ("quadruped", .40, .72, .40, .76, .29, 1.10, (.95,.79,.57), (.99,.95,.88)),
     "hamster":     ("quadruped", .52, .57, .43, .65, .34, .94, (.85,.55,.28), (.98,.84,.62)),
     "guinea-pig":  ("quadruped", .49, .72, .40, .62, .33, .91, (.68,.45,.30), (.98,.88,.68)),
     "ferret":      ("quadruped", .36, 1.03, .34, .68, .30, 1.04, (.66,.52,.40), (.89,.78,.63)),
@@ -41,7 +42,7 @@ CONFIG = {
     "bird":        ("bird", .37, .62, .40, .94, .22, 1.29, (.26,.57,.76), (.43,.75,.88)),
     "budgie":      ("bird", .37, .62, .40, .94, .22, 1.29, (.39,.73,.35), (.82,.89,.41)),
     "canary":      ("bird", .37, .60, .40, .94, .22, 1.29, (.96,.77,.19), (.99,.88,.38)),
-    "fish":        ("fish", .30, .66, .38, 1.04, .26, 1.10, (.27,.57,.78), (.66,.85,.93)),
+    "fish":        ("fish", .30, .66, .38, 1.04, .26, 1.10, (.99,.48,.15), (.99,.79,.43)),
     "angelfish":   ("fish", .30, .49, .60, 1.04, .24, 1.10, (.86,.67,.31), (.97,.89,.61)),
     "snake":       ("snake", .27, 1.18, .27, .54, .28, .76, (.39,.57,.32), (.67,.78,.45)),
     "iguana":      ("reptile", .38, .89, .34, .66, .31, .97, (.42,.59,.34), (.68,.76,.49)),
@@ -288,14 +289,20 @@ def make_animal(slug, spec, rig, output_dir):
             feline_style_eyelid(slug,side,eye_centre,hr,light,rig,weighted)
     mouth_pos=((0,muzzle_y+hr*.08,cz-.045) if kind=="fish"
                else (0,muzzle_y+hr*.30,hz-hr*.48))
-    mouth_radii=((hr*.12,hr*.035,hr*.050) if kind=="fish"
-                 else (hr*.20,hr*.06,hr*.10))
+    mouth_radii=((hr*.17,hr*.041,hr*.095) if kind=="fish"
+                 else (hr*.24,hr*.065,hr*.14))
     mouth=ellipsoid(slug+" eating mouth",mouth_pos,
                     mouth_radii,dark,rig,"Jaw",20,12)
     mouth.shape_key_add(name="Basis")
     jaw=mouth.shape_key_add(name="Jaw_Open")
     for basis,target in zip(mouth.data.shape_keys.key_blocks["Basis"].data,jaw.data):
         target.co.z=basis.co.z-.035
+    # The WebGL viewer drives Smile when the pet is happy.
+    smile=mouth.shape_key_add(name="Smile")
+    for basis,target in zip(mouth.data.shape_keys.key_blocks["Basis"].data,smile.data):
+        corner=min(1.,abs(basis.co.x)/(hr*.24))
+        target.co.x=basis.co.x*1.12
+        target.co.z=basis.co.z+hr*.10*corner
 
     if kind=="quadruped":
         for side in (-1,1):
@@ -416,6 +423,7 @@ def make_animal(slug, spec, rig, output_dir):
         curve_tube(slug+" forked tongue",
                    [(0,face_y+hr*.90,hz-.16),(0,face_y+hr*1.29,hz-.18),
                     (-.06,face_y+hr*1.49,hz-.17)],.014,ear_pink,rig,"Jaw")
+    decorate(slug,spec,rig,ellipsoid,curve_tube,mat)
     return body
 
 
@@ -431,6 +439,7 @@ def animate(slug, spec, rig):
             for pb in rig.pose.bones:
                 pb.location=(0,0,0)
                 pb.rotation_euler=(0,0,0)
+            root=rig.pose.bones["Root"]
             body=rig.pose.bones["Body"]
             head=rig.pose.bones["Head"]
             tail1=rig.pose.bones["Tail_1"]
@@ -482,12 +491,22 @@ def animate(slug, spec, rig):
                         if bone.name.startswith("Fin_"):
                             bone.rotation_euler.y=.11*math.sin(cycle*4)
             elif label=="Play":
+                # True vertical jump uses Blender Z, not the former horizontal Y.
+                # Two smooth airborne hops match the reference video rhythm.
+                root.location.z=celebration_height(slug,kind,t)
                 body.location.y=.055*abs(math.sin(cycle*2))
                 body.rotation_euler.z=.09*math.sin(cycle*2)
                 head.rotation_euler.z=.13*math.sin(cycle*2)
                 tail1.rotation_euler.z=.21*math.sin(cycle*2)
                 if slug=="rabbit":
-                    body.location.y=.085*abs(math.sin(cycle*2))
+                    # Paired rear-leg kick while the character is airborne.
+                    body.rotation_euler.x=.12*math.sin(cycle*2)
+                    for side in ("L","R"):
+                        rig.pose.bones["Rear_"+side+"_Upper"].rotation_euler.x=.22*math.sin(cycle*2)
+                        rig.pose.bones["Rear_"+side+"_Lower"].rotation_euler.x=-.25*max(0,math.sin(cycle*2))
+                if slug=="dog":
+                    tail1.rotation_euler.z=.43*math.sin(cycle*4)
+                    head.rotation_euler.z=.16*math.sin(cycle*2)
                 if kind=="fish":
                     tail1.rotation_euler.z,tail2.rotation_euler.z=tail_wave("fish",t)
                 if kind=="bird":
