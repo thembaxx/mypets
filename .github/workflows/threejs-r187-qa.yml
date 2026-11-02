@@ -7,6 +7,9 @@ on:
       - 'app/living-cat.css'
       - 'tests/calico-browser.spec.mjs'
       - 'tests/species-browser.spec.mjs'
+      - 'tests/species-realism-browser.spec.mjs'
+      - 'scripts/species_realism.py'
+      - 'scripts/author-species-rigs.py'
       - 'public/models/candidates/**'
       - 'package.json'
       - 'package-lock.json'
@@ -48,12 +51,12 @@ jobs:
         run: |
           curl --fail --silent --retry 30 --retry-delay 1 --retry-connrefused --max-time 2 http://127.0.0.1:3000/3d-lab/ > /dev/null
           mkdir -p test-results
-          npx playwright test tests/calico-browser.spec.mjs tests/species-browser.spec.mjs --reporter=line --workers=1
+          npx playwright test tests/calico-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --reporter=line --workers=1
       - name: Install Safari WebKit browser runtime
         run: npx playwright install --with-deps webkit
       - name: Verify rigged cat interactions in Safari WebKit
         run: |
-          npx playwright test tests/calico-browser.spec.mjs tests/species-browser.spec.mjs --browser=webkit --reporter=line --workers=1
+          npx playwright test tests/calico-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --browser=webkit --reporter=line --workers=1
 
       - name: Upload cat action and facial animation screenshots
         if: always()
