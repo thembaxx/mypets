@@ -149,16 +149,28 @@ def model():
     mouth_red = material("Open mouth ruby", (.65, .13, .16))
     make_mesh("Full chibi torso", (0, -.26, .96), (.64, .83, .59), cream, "Body", 40, 28)
     make_mesh("Cream fluffy ruff", (0, .14, 1.12), (.57, .45, .48), white, "Neck", 32, 20)
-    make_mesh("Amber left shoulder marking", (-.49, -.02, 1.09), (.19, .43, .27), gold, "Body")
-    make_mesh("Amber left flank", (-.50, -.53, .87), (.18, .27, .32), gold, "Body")
+    # Painted calico forehead and ears carry the distinct original markings.
     make_mesh("Soft belly", (0, .36, .82), (.43, .29, .37), white, "Body")
-    make_mesh("Large rounded face", (0, .53, 1.60), (.76, .59, .64), white, "Head", 48, 32)
-    make_mesh("Amber left temple", (-.47, .76, 1.91), (.32, .30, .23), gold, "Head", 32, 22)
-    make_mesh("Chocolate right temple", (.48, .74, 1.94), (.34, .33, .26), cocoa, "Head", 32, 22)
-    make_cone("Left amber ear", (-.50, .45, 2.18), .30, .61, gold, "Ear_L")
-    make_cone("Right chocolate ear", (.50, .45, 2.18), .30, .61, cocoa, "Ear_R")
-    make_cone("Left rose ear inset", (-.50, .67, 2.17), .16, .38, pink, "Ear_L")
-    make_cone("Right rose ear inset", (.50, .67, 2.17), .16, .38, pink, "Ear_R")
+    face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
+                     (.76, .59, .64), white, "Head", 64, 40)
+    # Real surface paint zones rather than floating sphere patches. Geometry
+    # remains continuous so forehead markings follow all head rotations.
+    face.data.materials.append(gold)
+    face.data.materials.append(cocoa)
+    for polygon in face.data.polygons:
+        verts = [face.data.vertices[i].co for i in polygon.vertices]
+        avg = sum(verts, Vector()) / len(verts)
+        wave = .04 * math.sin(avg.x * 15) + .025 * math.sin(avg.y * 13)
+        if avg.z > 1.79 + wave and avg.y > .25:
+            # Camera faces the character from +Y, so +X is screen-left.
+            if avg.x > .035:
+                polygon.material_index = 1
+            elif avg.x < -.05:
+                polygon.material_index = 2
+    make_cone("Screen-left amber ear", (.50, .45, 2.18), .30, .61, gold, "Ear_R")
+    make_cone("Screen-right chocolate ear", (-.50, .45, 2.18), .30, .61, cocoa, "Ear_L")
+    make_cone("Screen-left rose ear inset", (.50, .67, 2.17), .16, .38, pink, "Ear_R")
+    make_cone("Screen-right rose ear inset", (-.50, .67, 2.17), .16, .38, pink, "Ear_L")
     make_mesh("Left rose cheek", (-.47, 1.04, 1.44), (.19, .055, .12), blush, "Head")
     make_mesh("Right rose cheek", (.47, 1.04, 1.44), (.19, .055, .12), blush, "Head")
     make_mesh("Left muzzle", (-.16, 1.08, 1.30), (.23, .13, .18), white, "Head")
@@ -173,12 +185,12 @@ def model():
         # Distinct eyes instead of permanently painted arcs. The eyeballs
         # deform with Blink shape keys; the raised smile lids preserve art style.
         eye = make_mesh("%s deep cocoa eye" % pos, (side*.30, 1.038, 1.75),
-                        (.12, .052, .16), dark, "Head", 24, 16)
+                        (.11, .042, .045), dark, "Head", 24, 16)
         shape_target(eye, "Blink_" + pos, .12)
         # Additional shape key for exaggerated curiosity.
         key = eye.shape_key_add(name="Eye_Wide")
         for src, dst in zip(eye.data.shape_keys.key_blocks["Basis"].data, key.data):
-            dst.co = (src.co.x, src.co.y, src.co.z * 1.25)
+            dst.co = (src.co.x, src.co.y, src.co.z * 4.2)
         # Upper smiling eyelid arc
         points = []
         for i in range(11):
