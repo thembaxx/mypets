@@ -12,7 +12,7 @@ import bpy
 
 MAX_X = 3.5
 MAX_Y = 3.8
-MIN_Z = -0.18
+MIN_Z = -0.08
 MAX_Z = 3.7
 
 def main():

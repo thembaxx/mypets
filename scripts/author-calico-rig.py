@@ -641,12 +641,14 @@ def model():
             # Pads belong to each paw's own underside, not a shared absolute
             # world height. The previous z=.18 made rear pads float about 26 cm
             # above the evaluated stance paw despite correct lower-mesh contact.
-            # In bind pose the lower paw is centred at z-.68 with radius .27;
-            # its sole lies near z-.95. Use fore/hind anatomical offsets,
-            # calibrated against the *evaluated* stance and swing pad bounds
+            # The rear ankle's bind origin is .13 m lower than the front.
+            # The former rear z-.95 placed its decorative pad underneath the
+            # floor during grooming. z-.75 aligns the actual rear pad sole
+            # with the forepaw's world-ground contact; both are checked
+            # against evaluated skinned mesh coordinates in CI.
             # in the Blender contact-audit report.
             toe_pad = make_mesh(label + " rosy toe pad",
-                                (x,y+.19,z-(.89 if fore else .95)), (.12,.035,.08),
+                                (x,y+.19,z-(.89 if fore else .75)), (.12,.035,.08),
                                 pink, label + "_Lower", 16,12)
             soften_skin(toe_pad, label+"_Lower", label+"_Upper",
                         lambda v: .13)
