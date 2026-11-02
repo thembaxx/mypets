@@ -5,13 +5,16 @@ This is a review of the **unapproved** Blender calico candidate on
 
 ## Measured result (2 November 2026)
 
-- Blender workflow: [rigged candidate build #41458390640](https://github.com/thembaxx/mypets/actions/runs/41458390640)
-- Stance lower-paw underside, relative to the ground: +5.66 to +6.19 mm.
-- Swing lower-paw minimum ground clearance: +13.36 mm.
-- Previous lowest planted paw: -48.72 mm (penetration).
-- Feeding mouth to food-centre distance (closest sampled): 356.6 mm.
-- Grooming paw to muzzle-centre distance (closest sampled): 354.74 mm.
-- The pink decorative pads remain higher than the actual contact soles.
+- Last verified geometry audit: [Blender build #41467111898](https://github.com/thembaxx/mypets/actions/runs/41467111898).
+- Stance lower-paw underside: +5.66 to +6.19 mm above the floor.
+- Swing lower-paw minimum clearance: +13.36 mm.
+- Original worst planted paw penetration: -48.72 mm.
+- Stance pink toe-pad range: +8.37 to +98.97 mm; previously
+  +18.13 to +149.56 mm before separate hind-paw calibration.
+- Feeding mouth to food-centre minimum: **76.34 mm**, improved from
+  356.6 mm through a revised head approach and prop alignment.
+- Grooming paw to muzzle-centre minimum: 354.74 mm in the verified build.
+  A Jacobian-fitted paw reach is currently experimental and not yet verified.
 
 These are evaluated **deformed mesh** measurements. They are not bone-tip
 estimates. The recorded frame sample includes the loop seam; it does not
