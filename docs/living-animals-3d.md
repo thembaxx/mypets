@@ -1,5 +1,20 @@
 # Living animals — 3D production brief
 
+## Rigged Blender calico candidate (unapproved)
+
+The Blender authoring pipeline in `scripts/author-calico-rig.py` now creates an actual skinned GLB and an editable `.blend` source. The exported character has **Idle, Walk, Eat, Play, Rest** animation clips, separate leg chains, animated neck/head/jaw/tongue/tail/ears, plus **Blink_L, Blink_R, Eye_Wide, Jaw_Open, Lick** facial shapes. `scripts/verify-calico-rig.mjs` validates the binary's exported skin, clips and morph targets, not merely animation source text. `.github/workflows/rigged-calico-candidate.yml` builds in offline Blender, checks limits, renders front, side, 3/4, eating and walking snapshots, and exports a genuine 49-frame H.264 feeding preview with a review-only food bowl.
+
+The workflow uploads a `nuzzle-calico-rigged-review` pack containing `.blend`, `.glb`, `.json`, preview PNGs and a short `.mp4`; it only commits an **unapproved** GLB to `public/models/candidates/` on this isolated feature branch after pipeline checks pass. It does **not** register the candidate in `approvedTripoModels`, deploy it as the default animal, or merge the PR.
+
+### Review on iPhone without a computer
+
+1. Open **[MyPets PR #37](https://github.com/thembaxx/mypets/pull/37)** and the latest successful **Rigged calico candidate build** under Actions. Download `nuzzle-calico-rigged-review` from the workflow artifacts and unzip with iOS Files.
+2. On the MyPets feature preview, open the existing interactive cat and choose **Meet the 3D cat prototype**. Select **Preview rigged Blender cat (experimental)** to load the branch's GLB, or **Review a downloaded Blender GLB (on-device only)** and pick the `.glb` from Files.
+3. Try **Breathe, Walk, Eat, Play, Rest**, the facial expression selector, pinch zoom, rotation and pause. Where supported, **Record feeding video (8s)** captures the actual WebGL scene. Local model imports enforce the app's 8 MiB, external-URL and geometry limits. The chosen file stays on device.
+4. Compare the screenshots and live model with `public/animals/cat.webp` before approving appearance. Look for correct orange/chocolate patches and ear positions, facial resemblance, real foot contact, neck reach to bowl, cheeks/eyes and smooth animation loop seams.
+
+**Known fidelity gap:** this generated skinned quadruped remains a procedural, stylized candidate with rigidly weighted mesh pieces and approximate two-bone gait. It is not a continuous skinned sculpt, body/fur physics simulation, truly collision-resolving quadruped IK, or exact photo reconstruction. The animated eating video is real 3D output, but does not prove the movements are biologically realistic. A manual Blender character-artist retopology/refinement stage and real-device review are still required before default release.
+
 ## What is already implemented (prototype)
 
 - Three.js r187 / React Three Fiber live scene for the original cream, orange, and chocolate calico. It uses real geometry and separate head, mouth, tongue, legs, ears, tail and eye meshes, not a flat image or CSS sprite.
