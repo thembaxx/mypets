@@ -48,6 +48,12 @@ def ankle_from_angles(first, second, upper=UPPER, lower=LOWER):
             -upper*math.cos(first)-lower*math.cos(first+second))
 
 
+def walk_weight_shift(t):
+    """Loop-safe lateral weight transfer and trunk pitch, not true physics."""
+    cycle = 4 * math.pi * t
+    return .016 * math.sin(cycle), .012 * math.cos(cycle)
+
+
 def walk_leg_pose(t, fore, side):
     y, ankle_height, planted = foot_target(t, fore, side)
     hip_height = (1.02 if fore else .89) + root_height(t)

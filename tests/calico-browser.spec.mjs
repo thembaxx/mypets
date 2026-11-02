@@ -10,6 +10,15 @@ test.describe('real WebGL cat lab', () => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('http://127.0.0.1:3000/3d-lab');
+    // Read the exact binary served by this revision before inspecting canvas
+    // interactions; previously a stale cached GLB could conceal a bad export.
+    const candidate = await page.request.get(
+      'http://127.0.0.1:3000/models/candidates/nuzzle-calico-rig.glb',
+    );
+    expect(candidate.status()).toBe(200);
+    const glbBytes = await candidate.body();
+    expect(glbBytes.subarray(0, 4).toString('ascii')).toBe('glTF');
+    expect(glbBytes.readUInt32LE(8)).toBe(glbBytes.byteLength);
     await page.getByRole('button', { name: 'Open the Blender cat studio' }).click();
     const dialog = page.getByRole('dialog', { name: /calico cat interactive 3d studio/i });
     await expect(dialog).toBeVisible();

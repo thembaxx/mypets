@@ -17,7 +17,7 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from calico_gait import root_height, walk_leg_pose, groom_paw_pose
+from calico_gait import root_height, walk_leg_pose, groom_paw_pose, walk_weight_shift
 from calico_feline_sculpt import apply_sculpt, torso_position, skull_position, toe_position
 
 FPS = 24
@@ -31,7 +31,7 @@ LAST = 49
 FUR_NORMAL_IMAGE = None
 
 
-def prepare_fur_normals(output_dir, size=128):
+def prepare_fur_normals(output_dir, size=256):
     """Exportable short-fur bump detail; no translucent hair cards or uploads.
 
     Tileable value-noise gradients emulate subtle directional fur combing.
@@ -49,16 +49,17 @@ def prepare_fur_normals(output_dir, size=128):
         ix, iy = math.floor(x), math.floor(y)
         a, b = x-ix, y-iy
         a, b = a*a*(3-2*a), b*b*(3-2*b)
-        v0 = seed(ix, iy)*(1-a) + seed(ix+1, iy)*a
-        v1 = seed(ix, iy+1)*(1-a) + seed(ix+1, iy+1)*a
+        # Wrap lattice samples to prevent seams in tiled coat normal maps.
+        v0 = seed(ix % scale_u, iy % scale_v)*(1-a) + seed((ix+1) % scale_u, iy % scale_v)*a
+        v1 = seed(ix % scale_u, (iy+1) % scale_v)*(1-a) + seed((ix+1) % scale_u, (iy+1) % scale_v)*a
         return v0*(1-b)+v1*b
 
     def relief(x, y):
         # Anisotropic strokes with finer undercoat variation.
         u, v = x / size, y / size
-        return (.64*noise(u, v, 37, 83) +
-                .26*noise(u, v, 71, 111) +
-                .10*noise(u, v, 17, 29))
+        return (.64*noise(u, v, 74, 166) +
+                .26*noise(u, v, 142, 222) +
+                .10*noise(u, v, 34, 58))
 
     # Image.pixels.foreach_set + Image.save sometimes writes a black PNG.
     # Generate deterministic PNG bytes directly, reload and pack into GLB.
@@ -521,7 +522,7 @@ def model():
     white = material("Face cream", (1, .956, .87), .93)
     gold = material("Calico amber", (.87, .53, .23), .94)
     cocoa = material("Calico chocolate", (.33, .20, .17), .92)
-    blush = material("Calico cheeks", (1, .69, .66))
+    blush = material("Calico cheeks", (.95, .83, .78))
     pink = material("Ear and paw pink", (.98, .56, .58))
     nose = material("Little coral nose", (.98, .28, .32))
     dark = material("Eye and mouth cocoa", (.19, .10, .095), .62)
@@ -577,16 +578,16 @@ def model():
     make_cone("Screen-right rose ear inset", (-.46, .52, 2.17), .12, .30, pink, "Ear_L")
     for side, label in ((-1, "Left"), (1, "Right")):
         cheek = make_mesh(label+" rose cheek", (side*.40, .945, 1.45),
-                          (.09, .015, .052), blush, "Head")
+                          (.070, .012, .036), blush, "Head")
         cheek.shape_key_add(name="Basis")
         puff = cheek.shape_key_add(name="Cheek_Puff")
         for source, vertex in zip(cheek.data.shape_keys.key_blocks["Basis"].data, puff.data):
             vertex.co = (source.co.x + side*.034,
                          source.co.y + .022, source.co.z + .012)
-    make_mesh("Left muzzle", (-.135, 1.05, 1.34), (.16, .073, .095), white, "Head")
-    make_mesh("Right muzzle", (.135, 1.05, 1.34), (.16, .073, .095), white, "Head")
+    make_mesh("Left muzzle", (-.135, 1.05, 1.34), (.146, .060, .081), white, "Head")
+    make_mesh("Right muzzle", (.135, 1.05, 1.34), (.146, .060, .081), white, "Head")
     nose_mesh = make_mesh("Heart shaped coral nose", (0, 1.115, 1.46),
-                          (.073, .042, .045), nose, "Head")
+                          (.065, .038, .037), nose, "Head")
     nose_mesh.shape_key_add(name="Basis")
     sniff = nose_mesh.shape_key_add(name="Sniff")
     for source, vertex in zip(nose_mesh.data.shape_keys.key_blocks["Basis"].data, sniff.data):
@@ -601,10 +602,18 @@ def model():
     shape_target(tongue, "Lick", 1.60)
     for side in (-1, 1):
         pos = "L" if side < 0 else "R"
-        # Distinct eyes instead of permanently painted arcs. The eyeballs
-        # deform with Blink shape keys; the raised smile lids preserve art style.
-        eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.025, 1.74),
-                        (.071, .021, .070), dark, "Head", 24, 16)
+        # An amber iris under a slim dark feline pupil replaces button eyes.
+        # Both layers blink with the original keyed expressions.
+        iris = make_mesh("%s amber iris" % pos, (side*.29, .990, 1.74),
+                         (.073, .027, .066), gold, "Head", 32, 20)
+        shape_target(iris, "Blink_" + pos, .12)
+        wide_iris = iris.shape_key_add(name="Eye_Wide")
+        iris_basis = iris.data.shape_keys.key_blocks["Basis"].data
+        for source, target in zip(iris_basis, wide_iris.data):
+            target.co = (source.co.x, source.co.y,
+                         1.74 + (source.co.z - 1.74) * 1.12)
+        eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.013, 1.74),
+                        (.031, .015, .058), dark, "Head", 32, 20)
         shape_target(eye, "Blink_" + pos, .12)
         # Additional shape key for exaggerated curiosity.
         key = eye.shape_key_add(name="Eye_Wide")
@@ -683,7 +692,7 @@ def model():
     # This rig is intentionally visually recognisable but is not a scanned pet.
 
 
-def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
+def set_pose(frame, *, root_y=0, root_z=0, root_x=0, body_z=0, body_pitch=0,
              head_pitch=0, head_yaw=0, head_drop=0, head_reach=0, jaw=0, tongue=0, tail=0,
              ears=0, legs=None):
     for pb in RIG.pose.bones:
@@ -695,7 +704,7 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
     # coordinates. Upright Root/Body/Head bones have local +Y along world +Z,
     # while local +Z points roughly toward -world Y. This is why adjusting
     # Root.location.z previously never lifted planted feet off the floor.
-    RIG.pose.bones["Root"].location = (0, root_z - .048, -root_y)
+    RIG.pose.bones["Root"].location = (root_x, root_z - .048, -root_y)
     RIG.pose.bones["Body"].location.y = body_z
     RIG.pose.bones["Body"].rotation_euler.x = body_pitch
     RIG.pose.bones["Head"].rotation_euler.x = head_pitch
@@ -932,11 +941,12 @@ def build_actions():
                     for side in (-1,1):
                         label = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
                         legs[label] = walk_leg_pose(t, fore, side)[0]
-                # Hold a mathematical shin-tip target over stance and lift it
-                # over swing. The root bobs but does not translate in world
-                # space; actual floor/mesh collisions still need refinement.
+                # In-place gait with restrained lateral trunk weight shift.
+                # This is not force feedback or world-locked foot planting.
+                sway, pitch = walk_weight_shift(t)
                 set_pose(frame, root_z=root_height(t)+.048,
-                         head_pitch=-.035*math.sin(cycle*2),
+                         root_x=sway, body_pitch=pitch,
+                         head_pitch=-.035*math.sin(cycle*2)-.5*pitch,
                          tail=.16*math.sin(cycle), legs=legs)
                 fit_walk_stance(frame, t)
             elif clip == "Eat":

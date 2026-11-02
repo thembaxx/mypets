@@ -59,3 +59,21 @@ Visual acceptance on actual devices remains essential. The above automated tests
 - The original 17 supplied WebPs are unchanged. The 3D demo does not replace existing pet photos.
 - Never expose Tripo keys in client bundles, and don't automatically incur paid AI-generation credits.
 - In reduced-motion mode the 3D pose freezes and recording is disabled; the original animation toggle also hides the optional viewer.
+
+## Experimental cat fidelity pass — 2 November 2026
+
+Branch: `feat/calico-fidelity-gait-20261102`. The Blender sources now refine the integrated nose
+bridge/cheeks, slim the muzzle and decorated cheeks, add amber irises behind
+slit-like pupils, and upgrade the repeat-wrapped short-fur normal map to
+256×256. The walk cycle adds 1.6 cm of lateral trunk sway and a bounded
+counter-pitch while preserving seven named behaviours and all legacy art.
+These are **candidate-source changes**, not a validated production model.
+
+The cat still relies on Blender-authored geometry and analytical IK. It is
+not photogrammetry, anatomically scanned fur, force-based foot contact, or
+a mobile-tested physical simulation. Do not promote the GLB or merge this
+fidelity PR unless its source-matched Blender export, live evaluated paw-ground
+audit, facial morph and fur image checks, front/side/three-quarter reviews,
+and fresh Chromium/WebKit desktop/mobile regression all complete on the final
+PR head. The QA workflow also now listens for main-branch asset pushes so a
+future merged binary can receive an exact-revision browser run.

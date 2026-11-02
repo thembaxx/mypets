@@ -22,6 +22,14 @@ class CalicoSculptTest(unittest.TestCase):
         self.assertGreaterEqual(brow[2], 1.94)
         self.assertLess(brow[2] - 1.94, .01)
 
+    def test_face_bridge_cheeks_and_eyeline(self):
+        bridge = skull_position(.045, 1., 1.69)
+        cheek = skull_position(.33, .94, 1.56)
+        eye = skull_position(.29, 1., 1.75)
+        self.assertGreater(bridge[1], 1.01)
+        self.assertGreater(cheek[1], .945)
+        self.assertAlmostEqual(eye[1], 1., places=6)
+
     def test_toe_shape_preserves_ground_and_weight_coordinate(self):
         x, y, z = .47, .63, .18
         toe = toe_position(x, y, z, .46, .33, 1.02)
