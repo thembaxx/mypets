@@ -133,6 +133,32 @@ for (const [species, kind] of Object.entries(candidates)) {
       );
     }
   }
+  if (['dog', 'rabbit', 'fish', 'angelfish'].includes(species)) {
+    for (const fragment of [
+      'left rosy cheek',
+      'right rosy cheek',
+      'left sparkling eye highlight',
+      'right sparkling eye highlight',
+      'joyful open tongue',
+    ]) {
+      assert.ok(
+        nodes.some((name) => name.includes(species + ' ') && name.endsWith(fragment)),
+        species + ' missing reference-inspired facial geometry: ' + fragment,
+      );
+    }
+    const mouth = entries.find((node) => node.name === species + ' eating mouth');
+    assert.ok(mouth, species + ' missing original animated mouth');
+    assert.ok(
+      (gltf.meshes[mouth.mesh]?.extras?.targetNames ?? []).includes('Smile'),
+      species + ' missing actual morph-target cheerful expression',
+    );
+    if (species === 'fish' || species === 'angelfish') {
+      assert.ok(
+        nodes.some((name) => name === species + ' round contrasting smiling face'),
+        species + ' missing bright cream fish face',
+      );
+    }
+  }
   const preview = join(output, species + '-review.png');
   assert.ok(
     existsSync(preview) && statSync(preview).size > 2000,
