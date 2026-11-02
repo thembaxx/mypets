@@ -98,7 +98,7 @@ function PlayBall({ active, paused }: { active: boolean; paused: boolean }) {
   );
 }
 
-function FeedingBowl() {
+export function FeedingBowl() {
   return (
     <group position={[0, 0.12, 1.3]}>
       <mesh receiveShadow castShadow>
