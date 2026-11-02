@@ -13,6 +13,9 @@ from pathlib import Path
 
 import bpy
 from mathutils import Vector
+
+# Blender --python does not reliably add the script folder to sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from species_realism import (
     articulated_gait,
     bake_coat_normal,
