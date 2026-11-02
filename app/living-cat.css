@@ -316,6 +316,11 @@
   color: #68766b;
 }
 @media (max-width: 540px) {
-  .cat-lab-page { padding: 12px; }
-  .cat-lab-content { gap: 14px; border-radius: 24px; }
+  .cat-lab-page {
+    padding: 12px;
+  }
+  .cat-lab-content {
+    gap: 14px;
+    border-radius: 24px;
+  }
 }

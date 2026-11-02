@@ -25,18 +25,17 @@ export default function ThreeDLabPage() {
         <p className="cat-lab-eyebrow">Experimental 3D character laboratory</p>
         <h1 id="cat-lab-title">A living calico, not a moving picture.</h1>
         <p>
-          Review a real skinned Blender model against the original MyPets cat illustration.
-          Test walking, eating, facial expressions, play and zoom. This candidate is still
-          being refined and is not approved for the main pet collection.
+          Review a real skinned Blender model against the original MyPets cat illustration. Test
+          walking, eating, facial expressions, play and zoom. This candidate is still being refined
+          and is not approved for the main pet collection.
         </p>
         <button className="cat-lab-launch" onClick={() => setOpen(true)}>
           <PawPrintIcon size={22} aria-hidden="true" />
           Open interactive 3D cat studio
         </button>
         <p className="cat-lab-disclaimer">
-          The procedural cat and rigged Blender candidate are original 3D geometry.
-          Their movements are simulated, not photoreal animal motion capture.
-          No personal pet photos are uploaded.
+          The procedural cat and rigged Blender candidate are original 3D geometry. Their movements
+          are simulated, not photoreal animal motion capture. No personal pet photos are uploaded.
         </p>
       </section>
       {open && <ThreeDCatStudio name="Calico cat" onClose={() => setOpen(false)} />}

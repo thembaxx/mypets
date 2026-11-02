@@ -9,7 +9,9 @@ test.describe('real WebGL cat lab', () => {
     const dialog = page.getByRole('dialog', { name: /calico cat interactive 3d studio/i });
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Preview rigged Blender cat (experimental)' }).click();
-    await expect(dialog.getByRole('button', { name: 'Return to original procedural 3D cat' })).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: 'Return to original procedural 3D cat' }),
+    ).toBeVisible();
     await expect(dialog.getByRole('status')).toContainText('authored 3D animation', {
       timeout: 15000,
     });
