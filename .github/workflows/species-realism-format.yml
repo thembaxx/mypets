@@ -1,0 +1,23 @@
+name: Species realism formatter diagnostic
+on:
+  push:
+    branches:
+      - feat/species-realism-phase1-20261102
+    paths:
+      - .github/workflows/species-realism-format.yml
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Show exact Oxfmt corrections
+        run: |
+          npx oxfmt scripts/verify-species-realism.mjs tests/species-realism-browser.spec.mjs
+          git diff -- scripts/verify-species-realism.mjs tests/species-realism-browser.spec.mjs
