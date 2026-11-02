@@ -15,7 +15,7 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from calico_gait import root_height, walk_leg_pose, groom_paw_pose, smoothstep
+from calico_gait import root_height, walk_leg_pose, groom_paw_pose
 
 FPS = 24
 LAST = 49
@@ -338,7 +338,7 @@ def build_actions():
             elif clip == "Eat":
                 bite = max(0, math.sin(cycle*5))
                 # Two-stage feeding action: lower head and reach, then chew/lick.
-                approach = smoothstep(min(1,max(0,(frame-1)/12),max(0,(LAST-frame)/12)))
+                approach = smoothstep(0, 1, min(1,max(0,(frame-1)/12),max(0,(LAST-frame)/12)))
                 set_pose(frame, head_pitch=-.54*approach,
                          head_drop=.74*approach, head_reach=.17*approach,
                          body_pitch=-.12*approach,
