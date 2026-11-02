@@ -1,0 +1,23 @@
+name: Avian aquatic source formatting
+on:
+  push:
+    branches:
+      - feat/avian-aquatic-realism-20261102
+    paths:
+      - .github/workflows/avian-format-diagnostic.yml
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Show repository-specific formatting diff
+        run: |
+          npx oxfmt scripts/verify-avian-aquatic.mjs
+          git diff -- scripts/verify-avian-aquatic.mjs
