@@ -106,7 +106,9 @@ def audit():
         paw = evaluated_bounds("Front_L lower paw")["centre"]
         muzzle = evaluated_bounds("Left muzzle")["centre"]
         grooming.append({"frame":frame,
-                         "paw_to_muzzle":round(distance(paw,muzzle),5)})
+                         "paw_to_muzzle":round(distance(paw,muzzle),5),
+                         "paw":tuple(round(v,5) for v in paw),
+                         "muzzle":tuple(round(v,5) for v in muzzle)})
     report = {
         "basis":"Blender 4 evaluated skinned mesh vertices; world metres",
         "version":1,
