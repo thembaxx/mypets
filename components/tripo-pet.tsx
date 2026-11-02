@@ -68,6 +68,13 @@ class ModelErrorBoundary extends Component<
   }
 }
 
+// Engine-owned morph weights are deliberately mutated outside React's state model.
+function updateMeshMorph(mesh: Mesh | SkinnedMesh, index: number, target: number, dt: number) {
+  const influences = mesh.morphTargetInfluences;
+  if (!influences) return;
+  influences[index] += (target - influences[index]) * Math.min(1, dt * 12);
+}
+
 function AnimalModel({
   url,
   activity,
@@ -176,7 +183,7 @@ function AnimalModel({
             : /ears?.?back|fear|angry/i.test(name)
               ? 0
               : null;
-      if (target !== null) influences[index] += (target - influences[index]) * Math.min(1, dt * 12);
+      if (target !== null) updateMeshMorph(mesh, index, target, dt);
     }
   });
   return <primitive object={model} dispose={null} />;
