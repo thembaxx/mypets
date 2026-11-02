@@ -51,8 +51,12 @@ test('offline navigation keeps home and visited 3D lab cached independently', as
 
   assert.match(await (await navigate('/')).text(), /Home/);
   assert.match(await (await navigate('/3d-lab/')).text(), /3D Lab/);
-  assert.match(await (await caches.match('/'))?.text(), /Home/);
-  assert.match(await (await caches.match('/3d-lab/'))?.text(), /3D Lab/);
+  const home = await caches.match('/');
+  const lab = await caches.match('/3d-lab/');
+  assert.ok(home, 'Cached home page must exist after visiting the lab');
+  assert.ok(lab, 'Cached lab page must exist after visiting the lab');
+  assert.match(await home.text(), /Home/);
+  assert.match(await lab.text(), /3D Lab/);
 
   offline = true;
   assert.match(await (await navigate('/')).text(), /Home/);
