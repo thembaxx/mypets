@@ -10,9 +10,23 @@ const kinds = [
 test('all illustrated animal candidates are real individual GLB files', async ({ request }) => {
   test.setTimeout(120_000);
   const ids = [
-    'cat', 'dog', 'rabbit', 'chicken', 'fish', 'hamster', 'bird',
-    'guinea-pig', 'snake', 'hedgehog', 'ferret', 'salamander',
-    'iguana', 'gecko', 'angelfish', 'budgie', 'canary',
+    'cat',
+    'dog',
+    'rabbit',
+    'chicken',
+    'fish',
+    'hamster',
+    'bird',
+    'guinea-pig',
+    'snake',
+    'hedgehog',
+    'ferret',
+    'salamander',
+    'iguana',
+    'gecko',
+    'angelfish',
+    'budgie',
+    'canary',
   ];
   for (const id of ids) {
     const url =
@@ -35,16 +49,24 @@ for (const { id, kind } of kinds) {
     await page.goto('http://127.0.0.1:3000/3d-lab');
     await page.getByLabel('Choose an animal to review').selectOption(id);
     await page.getByRole('button', { name: 'Open the Blender animal studio' }).click();
-    const dialog = page.getByRole('dialog', { name: new RegExp(id + ' interactive 3d studio', 'i') });
+    const dialog = page.getByRole('dialog', {
+      name: new RegExp(id + ' interactive 3d studio', 'i'),
+    });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('status')).toContainText('authored 3D animation', {
       timeout: 20000,
     });
     await dialog.getByRole('button', { name: 'Walk', exact: true }).click();
-    await expect(dialog.getByRole('button', { name: 'Walk', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(dialog.getByRole('button', { name: 'Walk', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await expect(dialog.locator('canvas')).toBeVisible();
     await dialog.getByRole('button', { name: 'Eat', exact: true }).click();
-    await expect(dialog.getByRole('button', { name: 'Eat', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(dialog.getByRole('button', { name: 'Eat', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await dialog.getByRole('button', { name: 'Close 3D studio' }).click();
     await expect(dialog).not.toBeVisible();
   });
