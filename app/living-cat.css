@@ -19,7 +19,13 @@
   touch-action: none;
 }
 .tripo-living-controls {
-  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  /* Small-screen WebGL should not cover or clip the last controls. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 14px 17px max(15px, env(safe-area-inset-bottom));
   background: var(--surface);
 }
