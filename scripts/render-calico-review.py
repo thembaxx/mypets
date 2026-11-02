@@ -91,6 +91,12 @@ def main():
         bite.name = "Review kibble %02d" % index
         bite.scale = (.085,.08,.04)
         bite.data.materials.append(food_material)
+    # With the actual bowl present, review the cat/bowl contact at mid-bite
+    # instead of relying on a pose-only PNG with no prop.
+    camera_at("Eating bowl contact", (2.2,4.9,2.15), (0,.54,1.05))
+    clip("Eat", 21)
+    scene.render.filepath = str(out / "calico-feeding-bowl.png")
+    bpy.ops.render.render(write_still=True)
     camera_at("Eating video review", (2.2,4.9,2.15), (0,.54,1.05))
     clip("Eat", 1)
     scene.render.resolution_x = 560
