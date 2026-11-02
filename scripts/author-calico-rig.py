@@ -140,8 +140,11 @@ def plant_feet(frame, paw_meshes, target_z=.012):
     root = RIG.pose.bones["Root"]
     root.location.z += correction
     root.keyframe_insert("location", frame=frame, group="Root")
-    # Re-evaluate the changed pose directly. Recalling frame_set on the same
-    # frame can restore stale NLA pose data before the new FCurve is evaluated.
+    # Force Blender's armature modifier to rebuild at a neighbouring time,
+    # then sample the authored key again; a same-frame refresh can use the
+    # previously cached deformed mesh in Blender 4.0 headless evaluation.
+    bpy.context.scene.frame_set(frame + 1)
+    bpy.context.scene.frame_set(frame)
     bpy.context.view_layer.update()
     actual = vertex_contact(paw_meshes)
     if frame in (1, 17, 49):
