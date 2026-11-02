@@ -35,16 +35,25 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin)
     return;
   if (event.request.mode === 'navigate') {
+    // Keep each successfully visited route under its own pathname. Caching
+    // /3d-lab/ as "/" replaced the offline home screen with the lab's HTML.
+    // Query parameters change the app state, not the static page asset.
+    const pathname = new URL(event.request.url).pathname;
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
+        .then(async (response) => {
           if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE).then((c) => c.put('/', copy));
+            // Storage may be full (notably on iOS Safari); the online page
+            // must still work even if an optional route cannot be cached.
+            await caches
+              .open(CACHE)
+              .then((cache) => cache.put(pathname, copy))
+              .catch(() => {});
           }
           return response;
         })
-        .catch(() => caches.match('/')),
+        .catch(async () => (await caches.match(pathname)) || caches.match('/')),
     );
     return;
   }
