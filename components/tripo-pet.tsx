@@ -163,7 +163,7 @@ function AnimalModel({
     return () => {
       next.fadeOut(0.2);
     };
-  }, [activity, animated, gltf.animations, mixer]);
+  }, [activity, gltf.animations, mixer]);
   useEffect(
     () => () => {
       mixer.stopAllAction();
@@ -256,10 +256,12 @@ export default function TripoPet({
   url,
   name,
   onClose,
+  defaultCandidate = false,
 }: {
   url?: string;
   name: string;
   onClose: () => void;
+  defaultCandidate?: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const animationEnabled = useContext(AnimalAnimationContext);
@@ -276,10 +278,20 @@ export default function TripoPet({
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const localPreviewRef = useRef<string | null>(null);
   const [previewError, setPreviewError] = useState('');
-  const [candidateMode, setCandidateMode] = useState(false);
+  const [candidateMode, setCandidateMode] = useState(defaultCandidate);
+  const [pageVisible, setPageVisible] = useState(true);
+  useEffect(() => {
+    const syncVisibility = () => setPageVisible(document.visibilityState === 'visible');
+    document.addEventListener('visibilitychange', syncVisibility);
+    syncVisibility();
+    return () => document.removeEventListener('visibilitychange', syncVisibility);
+  }, []);
   const activeUrl =
     localPreview ?? (candidateMode ? '/models/candidates/nuzzle-calico-rig.glb' : url);
-  const reduced = systemReduced || !animationEnabled || paused;
+  // Sleeping background WebGL views saves GPU/battery on iPhone. Resume the
+  // existing mixer position instead of restarting an action on visibility.
+  const motionBlocked = systemReduced || !animationEnabled;
+  const reduced = motionBlocked || paused || !pageVisible;
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
@@ -420,7 +432,7 @@ export default function TripoPet({
           <ModelErrorBoundary onClose={onClose} key={activeUrl || 'procedural'}>
             <Canvas
               frameloop={reduced ? 'demand' : 'always'}
-              dpr={[1, 1.6]}
+              dpr={[1, 1.5]}
               camera={{ position: [0, 1.25, 4.8], fov: 39 }}
               gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
               shadows
@@ -435,6 +447,11 @@ export default function TripoPet({
                 intensity={2.4}
                 castShadow
                 shadow-mapSize={[1024, 1024]}
+                shadow-camera-left={-2.6}
+                shadow-camera-right={2.6}
+                shadow-camera-top={3}
+                shadow-camera-bottom={-2}
+                shadow-normalBias={0.015}
               />
               <directionalLight position={[3, 3, -4]} intensity={1.3} color="#d6e6ff" />
               {activeUrl && (
@@ -550,11 +567,15 @@ export default function TripoPet({
               type="button"
               className="tripo-motion-toggle"
               onClick={() => setPaused((previous) => !previous)}
-              disabled={systemReduced || !animationEnabled || recording}
+              disabled={motionBlocked || recording}
               aria-pressed={paused}
             >
-              {reduced ? <PlayIcon size={18} /> : <PauseIcon size={18} />}
-              {reduced ? 'Paused' : 'Pause motion'}
+              {paused || motionBlocked ? <PlayIcon size={18} /> : <PauseIcon size={18} />}
+              {motionBlocked
+                ? 'Motion limited by preferences'
+                : paused
+                  ? 'Resume motion'
+                  : 'Pause motion'}
             </button>
           </div>
           <div className="tripo-record-row">
