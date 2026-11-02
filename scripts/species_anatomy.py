@@ -107,12 +107,12 @@ def anatomical_skull(slug, face_y, head_z, radius, material, armature, bind):
         for k in range(segments):
             a=row*segments+k
             b=row*segments+(k+1)%segments
-            faces.append((a,b,b+segments,a+segments))
+            faces.append((a,a+segments,b+segments,b))
     for k in range(segments):
-        faces.append((rear_cap, (k+1)%segments, k))
+        faces.append((rear_cap, k, (k+1)%segments))
         a=(rows-1)*segments+k
         b=(rows-1)*segments+(k+1)%segments
-        faces.append((front_cap,a,b))
+        faces.append((front_cap,b,a))
 
     mesh=bpy.data.meshes.new("Continuous "+slug+" skull, cheek, rostrum")
     mesh.from_pydata(verts,[],faces)
