@@ -16,6 +16,7 @@ from mathutils import Vector
 
 # Blender --python does not reliably add the script folder to sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from species_avian_aquatic import wing_membrane, specimen_fins
 from species_realism import (
     articulated_gait,
     bake_coat_normal,
@@ -185,7 +186,9 @@ def rig_for(slug, spec):
     if kind=="bird":
         for side in (-1,1):
             name="Wing_L" if side<0 else "Wing_R"
-            bones[name]=("Body",(side*w*.65,-.02,cz+.10),(side*(w+.34),-.12,cz+.1))
+            bones[name]=("Body",(side*w*.65,-.02,cz+.10),(side*(w+.24),-.12,cz+.12))
+            bones[name+"_Tip"]=(name,(side*(w+.24),-.12,cz+.12),
+                                      (side*(w+.50),-.24,cz+.06))
             leg="Leg_L" if side<0 else "Leg_R"
             bones[leg]=("Body",(side*.19,0,cz-.26),(side*.19,.06,.07))
     if kind=="fish":
@@ -322,9 +325,7 @@ def make_animal(slug, spec, rig, output_dir):
     elif kind=="bird":
         for side in (-1,1):
             wing="Wing_L" if side<0 else "Wing_R"
-            ellipsoid(slug+" wing "+str(side),
-                      (side*w*.85,-.13,cz+.04),
-                      (w*.29,l*.57,depth*.62),light,rig,wing,32,20)
+            wing_membrane(slug,side,w,l,cz+.04,rig,light)
             leg="Leg_L" if side<0 else "Leg_R"
             curve_tube(slug+" shin "+str(side),
                        [(side*.19,0,cz-.30),(side*.19,.02,.11),
@@ -336,15 +337,8 @@ def make_animal(slug, spec, rig, output_dir):
             curve_tube(slug+" tail feather "+str(i),[(.09*(i-1),-l*.84,cz),
                         (.15*(i-1),-l*1.20,cz+.03)],.045,coat,rig,"Tail_1")
     elif kind=="fish":
-        # Flat tapered fins remain three-dimensional thickness-bearing meshes.
-        for side in (-1,1):
-            fin="Fin_L" if side<0 else "Fin_R"
-            ellipsoid(slug+" pectoral fin "+str(side),
-                (side*w*.88,-.24,cz-.03),(.08,.32,.18),light,rig,fin)
-        ellipsoid(slug+" caudal fin",(0,-l*1.12,cz),
-                  (w*.80,.12,depth*.70),light,rig,"Tail_2")
-        ellipsoid(slug+" dorsal fin",(0,-.18,cz+depth*.91),
-                  (.08,l*.44,depth*.43),light,rig,"Body")
+        # Closed, skinned membranes follow a fish's caudal/dorsal fin silhouette.
+        specimen_fins(slug,w,l,depth,cz,rig,light)
         for side in (-1,1):
             curve_tube(slug+" gill "+str(side),
                        [(side*w*.72,face_y*.66,cz+.13),
@@ -392,7 +386,16 @@ def animate(slug, spec, rig):
                 body.rotation_euler.z=.032*math.sin(cycle*speed)
                 tail1.rotation_euler.z=.18*math.sin(cycle*speed)
                 tail2.rotation_euler.z=.25*math.sin(cycle*speed+.5)
+                if kind=="fish":
+                    # Traveling lateral swimming wave from the torso toward the tail.
+                    body.rotation_euler.z=.055*math.sin(cycle*3)
+                    tail1.rotation_euler.z=.28*math.sin(cycle*3-.65)
+                    tail2.rotation_euler.z=.42*math.sin(cycle*3-1.15)
                 for bone in rig.pose.bones:
+                    if kind=="bird" and bone.name.startswith("Wing_"):
+                        bone.rotation_euler.y=.09*math.sin(cycle*2)
+                        bone.rotation_euler.x=.08*math.sin(cycle*2) if bone.name.endswith("_Tip") else 0
+                        continue
                     if bone.name.endswith("_Upper"):
                         phase=math.pi if bone.name.endswith("_L_Upper") else 0
                         if bone.name.startswith("Rear"):
@@ -419,6 +422,12 @@ def animate(slug, spec, rig):
                 body.rotation_euler.z=.09*math.sin(cycle*2)
                 head.rotation_euler.z=.13*math.sin(cycle*2)
                 tail1.rotation_euler.z=.21*math.sin(cycle*2)
+                if kind=="bird":
+                    for pb in rig.pose.bones:
+                        if pb.name.startswith("Wing_"):
+                            pb.rotation_euler.y=.32*math.sin(cycle*2)
+                            if pb.name.endswith("_Tip"):
+                                pb.rotation_euler.x=.16*math.sin(cycle*2+.3)
             elif label=="Rest":
                 body.location.y=-.05
                 head.rotation_euler.x=.09
