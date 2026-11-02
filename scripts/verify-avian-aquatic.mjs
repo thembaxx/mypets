@@ -19,10 +19,11 @@ function meshNode(doc, expected, slug) {
   const mesh = doc.meshes[entry.mesh];
   assert.ok(mesh?.primitives?.length, slug + ': no primitives for ' + expected);
   assert.ok(
-    mesh.primitives.some((part) =>
-      part.attributes?.JOINTS_0 !== undefined &&
-      part.attributes?.WEIGHTS_0 !== undefined &&
-      (doc.accessors?.[part.attributes?.POSITION]?.count ?? 0) >= 100,
+    mesh.primitives.some(
+      (part) =>
+        part.attributes?.JOINTS_0 !== undefined &&
+        part.attributes?.WEIGHTS_0 !== undefined &&
+        (doc.accessors?.[part.attributes?.POSITION]?.count ?? 0) >= 100,
     ),
     slug + ': mesh ' + expected + ' must have substantial animated geometry',
   );
@@ -37,40 +38,56 @@ for (const species of [...birds, ...fish]) {
   assert.equal(bytes.readUInt32LE(8), bytes.length);
   assert.ok(bytes.length < 8 * 1024 * 1024);
   const jsonLength = bytes.readUInt32LE(12);
-  const doc = JSON.parse(bytes.subarray(20, 20 + jsonLength).toString('utf8').trim());
+  const doc = JSON.parse(
+    bytes
+      .subarray(20, 20 + jsonLength)
+      .toString('utf8')
+      .trim(),
+  );
   const names = (doc.nodes ?? []).map((node) => node.name ?? '');
   const allJoints = new Set(
     (doc.skins ?? []).flatMap((skin) => skin.joints ?? []).map((index) => names[index]),
   );
-  const walk = (doc.animations ?? []).find((animation) =>
-    /walk/i.test(animation.name ?? ''),
-  );
+  const walk = (doc.animations ?? []).find((animation) => /walk/i.test(animation.name ?? ''));
   assert.ok(walk, species + ': no locomotion animation');
   const animated = new Set((walk.channels ?? []).map((channel) => channel.target?.node));
   const review = join(directory, species + '-review.png');
-  assert.ok(existsSync(review) && statSync(review).size > 3000,
-    species + ': no genuine Blender review render');
+  assert.ok(
+    existsSync(review) && statSync(review).size > 3000,
+    species + ': no genuine Blender review render',
+  );
   if (birds.includes(species)) {
     for (const side of ['left', 'right']) {
       meshNode(doc, 'continuous feathered wing ' + side, species);
     }
     for (const joint of ['Wing_L_Tip', 'Wing_R_Tip']) {
       assert.ok(allJoints.has(joint), species + ': missing wing-tip joint ' + joint);
-      assert.ok(names.some((name, i) => name === joint && animated.has(i)),
-        species + ': articulated wing joint never animated ' + joint);
+      assert.ok(
+        names.some((name, i) => name === joint && animated.has(i)),
+        species + ': articulated wing joint never animated ' + joint,
+      );
     }
-    assert.ok(!names.some((name) => /wing -1|wing 1/.test(name)),
-      species + ': old ellipsoid wing remains');
+    assert.ok(
+      !names.some((name) => /wing -1|wing 1/.test(name)),
+      species + ': old ellipsoid wing remains',
+    );
   } else {
     for (const name of [
-      'sculpted caudal fin', 'sculpted dorsal fin',
-      'sculpted pectoral fin -1', 'sculpted pectoral fin 1',
-    ]) meshNode(doc, name, species);
+      'sculpted caudal fin',
+      'sculpted dorsal fin',
+      'sculpted pectoral fin -1',
+      'sculpted pectoral fin 1',
+    ])
+      meshNode(doc, name, species);
     assert.ok(allJoints.has('Tail_2'), species + ': no skinned caudal fin joint');
-    assert.ok(names.some((name, i) => name === 'Tail_2' && animated.has(i)),
-      species + ': tail is not keyed for swimming');
-    assert.ok(!names.some((name) => name === species + ' caudal fin'),
-      species + ': round ellipsoid caudal fin remains');
+    assert.ok(
+      names.some((name, i) => name === 'Tail_2' && animated.has(i)),
+      species + ': tail is not keyed for swimming',
+    );
+    assert.ok(
+      !names.some((name) => name === species + ' caudal fin'),
+      species + ': round ellipsoid caudal fin remains',
+    );
   }
   console.log('AVIAN_AQUATIC_EXPORT_PASS', species, {
     meshCount: doc.meshes?.length,
