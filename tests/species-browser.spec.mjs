@@ -70,7 +70,7 @@ for (const { id, kind } of kinds) {
     await page.getByLabel('Choose an animal to review').selectOption(id);
     await page.getByRole('button', { name: 'Open the Blender animal studio' }).click();
     const dialog = page.getByRole('dialog', {
-      name: new RegExp(id + ' interactive 3d studio', 'i'),
+      name: new RegExp(id.replaceAll('-', ' ') + ' interactive 3d studio', 'i'),
     });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('status')).toContainText('authored 3D animation', {
