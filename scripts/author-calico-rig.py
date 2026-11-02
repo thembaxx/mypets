@@ -147,12 +147,18 @@ def model():
     nose = material("Little coral nose", (.98, .28, .32))
     dark = material("Eye and mouth cocoa", (.19, .10, .095), .62)
     mouth_red = material("Open mouth ruby", (.65, .13, .16))
-    make_mesh("Full chibi torso", (0, -.26, .96), (.64, .83, .59), cream, "Body", 40, 28)
+    body = make_mesh("Continuous chibi torso", (0, -.26, .96), (.64, .83, .59), cream, "Body", 64, 40)
+    body.data.materials.append(gold)
+    for polygon in body.data.polygons:
+        points = [body.data.vertices[i].co for i in polygon.vertices]
+        avg = sum(points, Vector()) / len(points)
+        if avg.x > .43 and -.72 < avg.y < .15 and avg.z < 1.23:
+            polygon.material_index = 1
     make_mesh("Cream fluffy ruff", (0, .14, 1.12), (.57, .45, .48), white, "Neck", 32, 20)
     # Painted calico forehead and ears carry the distinct original markings.
     make_mesh("Soft belly", (0, .36, .82), (.43, .29, .37), white, "Body")
     face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
-                     (.76, .59, .64), white, "Head", 64, 40)
+                     (.76, .59, .64), white, "Head", 128, 88)
     # Real surface paint zones rather than floating sphere patches. Geometry
     # remains continuous so forehead markings follow all head rotations.
     face.data.materials.append(gold)
@@ -224,7 +230,7 @@ def model():
 
 
 def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
-             head_pitch=0, head_yaw=0, jaw=0, tongue=0, tail=0,
+             head_pitch=0, head_yaw=0, head_drop=0, head_reach=0, jaw=0, tongue=0, tail=0,
              ears=0, legs=None):
     for pb in RIG.pose.bones:
         pb.location = (0, 0, 0)
@@ -233,6 +239,8 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
     RIG.pose.bones["Body"].location.z = body_z
     RIG.pose.bones["Body"].rotation_euler.x = body_pitch
     RIG.pose.bones["Head"].rotation_euler.x = head_pitch
+    RIG.pose.bones["Head"].location.z = -head_drop
+    RIG.pose.bones["Head"].location.y = head_reach
     RIG.pose.bones["Head"].rotation_euler.z = head_yaw
     RIG.pose.bones["Jaw"].rotation_euler.x = jaw
     RIG.pose.bones["Tongue"].location.y = tongue
@@ -286,9 +294,12 @@ def build_actions():
             elif clip == "Eat":
                 bite = max(0, math.sin(cycle*5))
                 # Two-stage feeding action: lower head and reach, then chew/lick.
-                approach = min(1, (frame-1)/9)
-                set_pose(frame, head_pitch=-.38*approach, body_pitch=-.07*approach,
-                         jaw=.32*bite, tongue=.09*max(0,math.sin(cycle*4)),
+                approach = min(1, max(0,(frame-1)/10), max(0,(LAST-frame)/10))
+                set_pose(frame, head_pitch=-.42*approach,
+                         head_drop=.50*approach, head_reach=.10*approach,
+                         body_pitch=-.12*approach,
+                         jaw=.32*bite*approach,
+                         tongue=.14*max(0,math.sin(cycle*4))*approach,
                          tail=.05*math.sin(cycle))
             elif clip == "Play":
                 set_pose(frame, root_z=.07*abs(math.sin(cycle*2)),
