@@ -56,7 +56,9 @@ test('all illustrated animal candidates are real individual GLB files', async ({
     expect(bytes.length).toBeLessThan(8 * 1024 * 1024);
     // Parse the real served asset, not the Blender source manifest.
     const jsonLength = bytes.readUInt32LE(12);
-    const gltf = JSON.parse(bytes.subarray(20, 20 + jsonLength).toString('utf8').trim());
+    const gltf = JSON.parse(
+      bytes.subarray(20, 20 + jsonLength).toString('utf8').trim(),
+    );
     expect(gltf.skins?.length, 'Missing skinned skeleton for ' + id).toBeGreaterThan(0);
     const clipNames = (gltf.animations ?? []).map((clip) => clip.name.toLowerCase());
     for (const action of ['idle', 'walk', 'eat', 'play', 'rest', 'groom', 'sniff']) {
