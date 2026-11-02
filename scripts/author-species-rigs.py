@@ -573,6 +573,18 @@ def build(slug, out):
     rig=rig_for(slug,spec)
     make_animal(slug,spec,rig,out)
     animate(slug,spec,rig)
+    if slug in ("dog","rabbit","fish","angelfish"):
+        for track in rig.animation_data.nla_tracks:
+            track.mute=track.name!="Play"
+        samples=[]
+        for frame in (1,13,25,37,49):
+            bpy.context.scene.frame_set(frame)
+            bpy.context.view_layer.update()
+            samples.append(rig.pose.bones["Root"].location.y)
+        if max(samples)-min(samples)<.12:
+            raise RuntimeError("No real vertical airborne celebration on "+slug)
+        print("PLAYFUL_AIRBORNE_MOTION",slug,
+              "vertical_amplitude=%.3f" % (max(samples)-min(samples)),flush=True)
     bpy.context.scene.frame_set(1)
     bpy.ops.object.select_all(action="DESELECT")
     for ob in bpy.context.scene.objects:
