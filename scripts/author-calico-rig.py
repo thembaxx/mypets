@@ -380,6 +380,82 @@ def fit_walk_stance(frame, t):
                       (name, frame, before, actual), flush=True)
 
 
+def evaluated_mesh_centre(name):
+    """Axis-aligned centre of an armature-deformed mesh in world space."""
+    ob = bpy.data.objects[name]
+    bpy.context.view_layer.update()
+    graph = bpy.context.evaluated_depsgraph_get()
+    active = ob.evaluated_get(graph)
+    mesh = active.to_mesh(preserve_all_data_layers=False, depsgraph=graph)
+    try:
+        points = [active.matrix_world @ vertex.co for vertex in mesh.vertices]
+        return Vector(tuple(
+            .5*(min(p[axis] for p in points)+max(p[axis] for p in points))
+            for axis in range(3)
+        ))
+    finally:
+        active.to_mesh_clear()
+
+
+def aim_grooming_forepaw(frame, reach):
+    """Damped Blender-space contact fitting for the raised grooming paw.
+
+    Armature local axes differ from world axes. Solve their real 3D Jacobian
+    numerically on the evaluated skin rather than assuming Blender bone .z
+    means up. Split movement between the shoulder and forearm to avoid an
+    extreme elbow offset. Still kinematic, not collision-aware physics.
+    """
+    if reach < .02:
+        return
+    paw_name = "Front_L lower paw"
+    muzzle_name = "Left muzzle"
+    current = evaluated_mesh_centre(paw_name)
+    muzzle = evaluated_mesh_centre(muzzle_name)
+    delta = (muzzle-current)*reach
+
+    # Do most of the reachable movement at the shoulder, then finish using
+    # the forearm. Keep corrections bounded to preserve anatomy in the
+    # stylized character and fail rather than silently emit a bad key pose.
+    for bone_name, fraction, limit in (
+        ("Front_L_Upper", .54, .21),
+        ("Front_L_Lower", 1., .24),
+    ):
+        pb = RIG.pose.bones[bone_name]
+        before = evaluated_mesh_centre(paw_name)
+        residual = muzzle-before
+        if bone_name.endswith("_Upper"):
+            residual *= fraction*reach
+        else:
+            residual *= reach
+        columns = []
+        step = .012
+        for axis in range(3):
+            original = tuple(pb.location)
+            coords = list(original)
+            coords[axis] += step
+            pb.location = coords
+            after = evaluated_mesh_centre(paw_name)
+            columns.append((after-before)/step)
+            pb.location = original
+        jac = __import__("mathutils").Matrix((
+            (columns[0].x, columns[1].x, columns[2].x),
+            (columns[0].y, columns[1].y, columns[2].y),
+            (columns[0].z, columns[1].z, columns[2].z),
+        ))
+        if abs(jac.determinant()) < .05:
+            raise RuntimeError("Grooming paw Jacobian is singular at frame %d" % frame)
+        move = jac.inverted() @ residual
+        pb.location = tuple(max(-limit,min(limit,float(value))) for value in move)
+        pb.keyframe_insert("location", frame=frame, group=pb.name)
+    after = evaluated_mesh_centre(paw_name)
+    gap = (after-muzzle).length
+    if reach >= .92 and gap > .15:
+        raise RuntimeError("Grooming paw missed muzzle by %.3f m at %d" % (gap,frame))
+    if frame in (13, 19, 25, 31, 37):
+        print("GROOM_CONTACT frame=%d reach=%.2f before=%.3f after=%.3f" %
+              (frame, reach, (current-muzzle).length, gap),flush=True)
+
+
 def build_actions():
     RIG.animation_data_create()
     for clip in ("Idle","Walk","Eat","Play","Rest","Groom","Sniff"):
@@ -429,6 +505,7 @@ def build_actions():
                          jaw=.16*lick*reach, tongue=.13*lick*reach,
                          tail=.09*math.sin(cycle),
                          legs={"Front_L":groom_paw_pose(reach)})
+                aim_grooming_forepaw(frame, reach)
             elif clip == "Sniff":
                 # Gentle nose-first inspection with small ear/head movement.
                 reach = math.sin(math.pi*t)**2
@@ -498,7 +575,7 @@ def main():
         blender=bpy.app.version_string,
         clips=["Idle","Walk","Eat","Play","Rest","Groom","Sniff"],
         rig="Skin-weighted neck, torso, head and limbs; two-link kinematic gait",
-        physics="Two-link IK plus evaluated mesh stance-floor correction; no dynamic collision or muscle simulation",
+        physics="Two-link IK, evaluated paw-ground and grooming-target fitting; no dynamic collision or muscle simulation",
         sha256=hashlib.sha256(glb.read_bytes()).hexdigest(),
         bytes=glb.stat().st_size,
     )
