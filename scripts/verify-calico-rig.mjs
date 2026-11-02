@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { inflateSync } from 'node:zlib';
 
 const filename = process.argv[2];
 if (!filename) throw new Error('Pass an actual .glb file from Blender');
@@ -108,69 +107,6 @@ while (chunk + 8 <= bytes.length) {
   chunk += 8 + byteLength;
 }
 assert.ok(binaryStart >= 0, 'GLB should embed its actual vertex buffers');
-
-// A material can reference a PNG that is all black: inspect the encoded pixels.
-function auditFurNormalPixels() {
-  const image = (doc.images ?? []).find((item) =>
-    item.name?.includes('calico-short-fur-normal'),
-  );
-  assert.ok(image?.bufferView !== undefined, 'Missing embedded fur normal image');
-  const view = doc.bufferViews[image.bufferView];
-  assert.ok(view.byteLength >= 2500, 'Blank or tiny fur normal PNG');
-  const png = bytes.subarray(binaryStart + (view.byteOffset ?? 0),
-    binaryStart + (view.byteOffset ?? 0) + view.byteLength);
-  assert.equal(png.subarray(1, 4).toString('ascii'), 'PNG');
-  const idat = [];
-  let width = 0, height = 0, channels = 0, offset = 8;
-  while (offset + 12 <= png.length) {
-    const length = png.readUInt32BE(offset);
-    const tag = png.toString('ascii', offset + 4, offset + 8);
-    const payload = png.subarray(offset + 8, offset + 8 + length);
-    if (tag === 'IHDR') {
-      width = payload.readUInt32BE(0);
-      height = payload.readUInt32BE(4);
-      assert.equal(payload[8], 8);
-      channels = payload[9] === 6 ? 4 : payload[9] === 2 ? 3 : 0;
-    }
-    if (tag === 'IDAT') idat.push(payload);
-    offset += length + 12;
-    if (tag === 'IEND') break;
-  }
-  assert.ok(width >= 64 && height >= 64 && channels >= 3 && idat.length);
-  const pixels = inflateSync(Buffer.concat(idat));
-  const stride = width * channels;
-  const values = Buffer.alloc(stride * height);
-  let pos = 0;
-  for (let y = 0; y < height; y++) {
-    const filter = pixels[pos++];
-    for (let x = 0; x < stride; x++) {
-      const value = pixels[pos++];
-      const left = x >= channels ? values[y*stride + x-channels] : 0;
-      const up = y ? values[(y-1)*stride + x] : 0;
-      const upLeft = y && x >= channels ? values[(y-1)*stride + x-channels] : 0;
-      let pred = 0;
-      if (filter === 1) pred = left;
-      else if (filter === 2) pred = up;
-      else if (filter === 3) pred = (left+up) >> 1;
-      else if (filter === 4) {
-        const p = left + up - upLeft;
-        const a = Math.abs(p-left), b = Math.abs(p-up), c = Math.abs(p-upLeft);
-        pred = a <= b && a <= c ? left : b <= c ? up : upLeft;
-      } else assert.equal(filter, 0, 'Unsupported PNG filter');
-      values[y*stride+x] = (value + pred) & 255;
-    }
-  }
-  let r0=255,r1=0,g0=255,g1=0,b0=255;
-  for(let i=0;i<values.length;i+=channels){
-    r0=Math.min(r0,values[i]);r1=Math.max(r1,values[i]);
-    g0=Math.min(g0,values[i+1]);g1=Math.max(g1,values[i+1]);
-    b0=Math.min(b0,values[i+2]);
-  }
-  assert.ok(r1-r0>=10 && g1-g0>=10 && b0>=210,
-    'Blank fur normal map: red '+r0+'-'+r1+' green '+g0+'-'+g1+' blue min '+b0);
-  return { width, height, redSpan:r1-r0, greenSpan:g1-g0 };
-}
-const furPixelAudit = auditFurNormalPixels();
 // Test the *exported binary morph deltas*. Requiring named targets alone used
 // to accept Eye_Wide/Blink targets that translated pupils several metres
 // because the authoring shape keys scaled absolute world positions.
@@ -265,7 +201,6 @@ console.log(
       blendedVertices,
       maxInfluenceCount,
       checkedFacialTargets,
-      furPixelAudit,
     },
     null,
     2,

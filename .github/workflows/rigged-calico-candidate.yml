@@ -10,6 +10,7 @@ on:
       - scripts/test_calico_gait.py
       - scripts/check_calico_contact.py
       - scripts/verify-calico-rig.mjs
+      - scripts/verify-calico-fur.py
       - scripts/render-calico-review.py
       - scripts/audit-calico-contact.py
       - .github/workflows/rigged-calico-candidate.yml
@@ -38,7 +39,7 @@ jobs:
           blender --version | head -3
       - name: Check Blender authoring scripts
         run: |
-          python3 -m py_compile scripts/author-calico-rig.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py
+          python3 -m py_compile scripts/verify-calico-fur.py scripts/author-calico-rig.py scripts/verify-calico-anatomy.py scripts/verify-calico-fur.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py
           python3 scripts/test_calico_gait.py -v
           python3 -m py_compile scripts/render-calico-review.py
           python3 -m py_compile scripts/audit-calico-contact.py
@@ -56,6 +57,7 @@ jobs:
         run: |
           node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/calico" --require-assets
           node scripts/verify-calico-rig.mjs "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb"
+          python3 scripts/verify-calico-fur.py "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb"
       - name: Audit evaluated paw-ground, grooming and feeding geometry
         run: |
           blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/audit-calico-contact.py -- --output-dir "$RUNNER_TEMP/calico"

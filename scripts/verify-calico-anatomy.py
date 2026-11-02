@@ -47,7 +47,7 @@ assert len([obj for obj in bpy.data.objects if obj.type == "MESH"
             and (" cupped cartilage" in obj.data.name)]) >= 4, (
     "All original outer/inner pinnae should have rounded, curved cartilage"
 )
-assert bpy.data.images.get("Calico short-fur normal") is not None, (
+assert any(img.name.startswith("calico-short-fur-normal") or img.name == "Calico short-fur normal" for img in bpy.data.images), (
     "Baked glTF normal map is required for mobile PBR coat shading"
 )
 fur = [ob for ob in bpy.data.objects if ob.type == "MESH" and ob.name.startswith("Fur ")]
