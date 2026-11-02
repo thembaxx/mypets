@@ -1,0 +1,37 @@
+name: One-time lab interaction formatting
+on:
+  push:
+    branches: [feat/living-3d-pet-behaviours-20261102]
+    paths:
+      - .github/workflows/temporary-format-3d-lab.yml
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/living-3d-pet-behaviours-20261102
+          persist-credentials: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+        env:
+          ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+      - run: npx oxfmt app/3d-lab/page.tsx components/tripo-pet.tsx tests/calico-browser.spec.mjs app/living-cat.css
+      - name: Commit official formatter output
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/3d-lab/page.tsx components/tripo-pet.tsx tests/calico-browser.spec.mjs app/living-cat.css
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(3d): format lab access and mobile interaction improvements'
+            git fetch origin feat/living-3d-pet-behaviours-20261102
+            git rebase origin/feat/living-3d-pet-behaviours-20261102
+            git push origin HEAD:feat/living-3d-pet-behaviours-20261102
+          fi
