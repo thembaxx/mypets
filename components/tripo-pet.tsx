@@ -125,7 +125,11 @@ function AnimalModel({
     }
     const names = gltf.animations.map((clip) => clip.name);
     const chosen = findPetClip(names, activity) ?? findPetClip(names, 'idle');
-    const clip = chosen ? gltf.animations.find((candidate) => candidate.name === chosen) : null;
+    const clip = chosen
+      ? gltf.animations.find((candidate) => candidate.name === chosen)
+      : activity === 'idle'
+        ? gltf.animations[0]
+        : null;
     if (!clip) {
       running.current?.stop();
       running.current = null;
@@ -370,6 +374,7 @@ export default function TripoPet({
                 aria-pressed={activity === next}
                 className={activity === next ? 'active' : ''}
                 onClick={() => setActivity(next)}
+                disabled={recording}
               >
                 <Icon size={19} aria-hidden="true" />
                 {label}
@@ -383,6 +388,7 @@ export default function TripoPet({
               <select
                 value={mood}
                 onChange={(event) => setMood(event.target.value as CatMood)}
+              disabled={recording}
                 aria-label="Cat facial expression"
               >
                 {catMoods.map((value) => (
@@ -394,7 +400,7 @@ export default function TripoPet({
               type="button"
               className="tripo-motion-toggle"
               onClick={() => setPaused((previous) => !previous)}
-              disabled={systemReduced || !animationEnabled}
+              disabled={systemReduced || !animationEnabled || recording}
               aria-pressed={paused}
             >
               {reduced ? <PlayIcon size={18} /> : <PauseIcon size={18} />}
