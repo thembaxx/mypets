@@ -41,6 +41,8 @@ const clipNames: Record<CatActivity, RegExp> = {
   eat: /eat|feed|chew|lick|bite/i,
   play: /play|jump|pounce|paw|run/i,
   rest: /rest|sleep|lie|lay|curl/i,
+  groom: /groom|wash|clean|lick.?paw/i,
+  sniff: /sniff|scent|smell/i,
 };
 
 export function findPetClip(names: string[], activity: CatActivity): string | null {
@@ -168,7 +170,8 @@ function AnimalModel({
     // Only animate morphs that actually exist on the authored model.
     // Body motion cannot be invented from an unrigged, static photograph.
     const blink = state.clock.elapsedTime % 4.1 < 0.14 ? 1 : 0;
-    const chew = activity === 'eat' ? Math.max(0, Math.sin(state.clock.elapsedTime * 10)) : 0;
+    const chew = activity === 'eat' || activity === 'groom' ? Math.max(0, Math.sin(state.clock.elapsedTime * 10)) : 0;
+    const sniff = activity === 'sniff' ? 0.35 + Math.sin(state.clock.elapsedTime * 9) * 0.2 : 0;
     for (const { mesh, index, name } of morphTargetsRef.current) {
       const influences = mesh.morphTargetInfluences;
       if (!influences) continue;
@@ -178,7 +181,11 @@ function AnimalModel({
           : blink
         : /jaw.?open|mouth.?open/i.test(name)
           ? chew * 0.8
-          : /eye.?wide/i.test(name)
+          : /sniff|nose.?flare/i.test(name)
+          ? sniff
+          : /cheek.?puff/i.test(name)
+            ? activity === 'groom' ? 0.25 : mood === 'happy' ? 0.18 : 0
+        : /eye.?wide/i.test(name)
             ? mood === 'curious'
               ? 0.9
               : 0
@@ -226,6 +233,8 @@ const actions = [
   { activity: 'eat', label: 'Eat', Icon: ForkKnifeIcon },
   { activity: 'play', label: 'Play', Icon: HeartIcon },
   { activity: 'rest', label: 'Rest', Icon: MoonIcon },
+  { activity: 'groom', label: 'Groom', Icon: HeartIcon },
+  { activity: 'sniff', label: 'Sniff', Icon: EyeIcon },
 ] as const;
 
 export default function TripoPet({
