@@ -10,7 +10,12 @@ for (const species of ['dog', 'rabbit']) {
   const bytes = readFileSync(path);
   assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
   const length = bytes.readUInt32LE(12);
-  const doc = JSON.parse(bytes.subarray(20, 20 + length).toString('utf8').trim());
+  const doc = JSON.parse(
+    bytes
+      .subarray(20, 20 + length)
+      .toString('utf8')
+      .trim(),
+  );
   const nodes = (doc.nodes ?? []).map((node) => node.name ?? '');
   assert.equal(nodes.filter((name) => name.includes(species + ' cupped ear')).length, 2);
   assert.equal(nodes.filter((name) => name.endsWith('connected limb')).length, 4);
@@ -31,9 +36,7 @@ for (const species of ['dog', 'rabbit']) {
   }
   const walk = (doc.animations ?? []).find((animation) => /walk/i.test(animation.name ?? ''));
   assert.ok(walk, species + ': missing authored walking clip');
-  const animatedNodes = new Set((walk.channels ?? []).map((channel) =>
-    channel.target?.node,
-  ));
+  const animatedNodes = new Set((walk.channels ?? []).map((channel) => channel.target?.node));
   for (const joint of ['Front_L_Lower', 'Rear_L_Lower']) {
     assert.ok(
       (doc.nodes ?? []).some((node, index) => node.name === joint && animatedNodes.has(index)),
@@ -46,7 +49,10 @@ for (const species of ['dog', 'rabbit']) {
   assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.ok(png.length >= 1400, species + ': coat bake is suspiciously flat');
   console.log('SPECIES_REALISM_STRUCTURAL_PASS', species, {
-    cuppedEars: 2, limbs: 4, pbrMaterials: 2, animatedDistalBones: 4,
+    cuppedEars: 2,
+    limbs: 4,
+    pbrMaterials: 2,
+    animatedDistalBones: 4,
     pngBytes: png.length,
   });
 }
