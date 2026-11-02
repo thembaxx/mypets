@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('real WebGL cat lab', () => {
   test('desktop: GLB loads, facial actions and feeding actually animate', async ({ page }) => {
-    const errors: string[] = [];
+    const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('http://127.0.0.1:3000/3d-lab');
     await page.getByRole('button', { name: 'Open interactive 3D cat studio' }).click();
