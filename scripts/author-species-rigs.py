@@ -16,7 +16,9 @@ from mathutils import Vector
 
 # Blender --python does not reliably add the script folder to sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from species_avian_aquatic import wing_membrane, specimen_fins
+from species_avian_aquatic import (
+    wing_membrane, specimen_fins, fish_body_shell, shape_avian_torso,
+)
 from species_realism import (
     articulated_gait,
     bake_coat_normal,
@@ -35,10 +37,10 @@ CONFIG = {
     "guinea-pig":  ("quadruped", .49, .72, .40, .62, .33, .91, (.68,.45,.30), (.98,.88,.68)),
     "ferret":      ("quadruped", .36, 1.03, .34, .68, .30, 1.04, (.66,.52,.40), (.89,.78,.63)),
     "hedgehog":    ("quadruped", .43, .61, .41, .61, .28, .91, (.57,.40,.31), (.88,.78,.62)),
-    "chicken":     ("bird", .52, .62, .59, 1.04, .31, 1.50, (.83,.65,.42), (.98,.84,.58)),
-    "bird":        ("bird", .35, .48, .50, 1.17, .27, 1.59, (.26,.57,.76), (.43,.75,.88)),
-    "budgie":      ("bird", .35, .48, .50, 1.17, .27, 1.59, (.39,.73,.35), (.82,.89,.41)),
-    "canary":      ("bird", .35, .48, .50, 1.17, .27, 1.59, (.96,.77,.19), (.99,.88,.38)),
+    "chicken":     ("bird", .53, .71, .53, .99, .26, 1.42, (.83,.65,.42), (.98,.84,.58)),
+    "bird":        ("bird", .37, .62, .40, .94, .22, 1.29, (.26,.57,.76), (.43,.75,.88)),
+    "budgie":      ("bird", .37, .62, .40, .94, .22, 1.29, (.39,.73,.35), (.82,.89,.41)),
+    "canary":      ("bird", .37, .60, .40, .94, .22, 1.29, (.96,.77,.19), (.99,.88,.38)),
     "fish":        ("fish", .30, .66, .38, 1.04, .26, 1.10, (.27,.57,.78), (.66,.85,.93)),
     "angelfish":   ("fish", .30, .49, .60, 1.04, .24, 1.10, (.86,.67,.31), (.97,.89,.61)),
     "snake":       ("snake", .27, 1.18, .27, .54, .28, .76, (.39,.57,.32), (.67,.78,.45)),
@@ -216,8 +218,12 @@ def make_animal(slug, spec, rig, output_dir):
     light=shade_coat(mat(slug+" pale markings",accent),normal_map)
     dark=mat(slug+" eyes",(.075,.055,.05),.29)
     ear_pink=mat(slug+" ear cartilage",(.80,.49,.49))
-    body=ellipsoid("Anatomical "+slug+" torso",(0,-.16,cz),(w,l,depth),coat,rig,"Body",48,32)
+    body=(fish_body_shell(slug,w,l,depth,cz,rig,coat) if kind=="fish"
+          else ellipsoid("Anatomical "+slug+" torso",(0,-.16,cz),
+                         (w,l,depth),coat,rig,"Body",48,32))
     sculpt_profile(body,slug,"torso",l,hr)
+    if kind=="bird":
+        shape_avian_torso(body,slug,l,cz)
     if kind in ("quadruped","reptile"):
         body.data.materials.append(light)
         for polygon in body.data.polygons:
@@ -225,10 +231,16 @@ def make_animal(slug, spec, rig, output_dir):
             if p.z<cz-.04 and p.y>-.65*l:
                 polygon.material_index=1
     face_y=l*.63
-    face=ellipsoid("Skinned "+slug+" skull",(0,face_y,hz),(hr,hr*.88,hr*.83),
-                   coat if kind in ("reptile","fish","snake") else light,rig,"Head",48,32)
-    sculpt_profile(face,slug,"skull",l,hr)
-    muzzle_y=face_y+hr*.69
+    if kind=="fish":
+        # Fish have one tapered living body, not a detached ball-shaped head.
+        face=None
+    else:
+        face=ellipsoid("Skinned "+slug+" skull",(0,face_y,hz),
+                       (hr,hr*.88,hr*.83),
+                       coat if kind in ("reptile","snake") else light,
+                       rig,"Head",48,32)
+        sculpt_profile(face,slug,"skull",l,hr)
+    muzzle_y=(-.16+l*.80 if kind=="fish" else face_y+hr*.69)
     if kind in ("quadruped","reptile"):
         muzzle_scale=1.40 if slug=="dog" else .75 if slug=="rabbit" else 1
         ellipsoid(slug+" muzzle",(0,muzzle_y+hr*.13*(muzzle_scale-1),hz-hr*.23),
@@ -238,9 +250,12 @@ def make_animal(slug, spec, rig, output_dir):
     else:
         nose=None
     for side in (-1,1):
-        x=side*hr*.53
+        x=(side*w*(.39 if slug=="angelfish" else .60) if kind=="fish"
+           else side*hr*.53)
+        eye_centre=((x,.12,cz+depth*.19) if kind=="fish"
+                    else (x,face_y+hr*.68,hz+hr*.20))
         eye=ellipsoid(slug+(" left" if side<0 else " right")+" living eye",
-                      (x,face_y+hr*.68,hz+hr*.20),
+                      eye_centre,
                       (hr*.13,hr*.075,hr*.15),dark,rig,"Head",24,16)
         eye.shape_key_add(name="Basis")
         blink=eye.shape_key_add(name="Blink_L" if side<0 else "Blink_R")
@@ -248,7 +263,9 @@ def make_animal(slug, spec, rig, output_dir):
         centre=sum(v.co.z for v in basis)/len(basis)
         for source,target in zip(basis,blink.data):
             target.co.z=centre+(source.co.z-centre)*.18
-    mouth=ellipsoid(slug+" eating mouth",(0,muzzle_y+hr*.30,hz-hr*.48),
+    mouth_pos=((0,muzzle_y+hr*.08,cz-.045) if kind=="fish"
+               else (0,muzzle_y+hr*.30,hz-hr*.48))
+    mouth=ellipsoid(slug+" eating mouth",mouth_pos,
                     (hr*.20,hr*.06,hr*.10),dark,rig,"Jaw",20,12)
     mouth.shape_key_add(name="Basis")
     jaw=mouth.shape_key_add(name="Jaw_Open")
@@ -330,12 +347,21 @@ def make_animal(slug, spec, rig, output_dir):
             curve_tube(slug+" shin "+str(side),
                        [(side*.19,0,cz-.30),(side*.19,.02,.11),
                         (side*.19,.24,.09)],.044,coat,rig,leg)
+            for digit in (-1,0,1):
+                curve_tube(slug+" toe "+str(side)+" "+str(digit),
+                           [(side*.19,.12,.09),
+                            (side*.19+digit*.075,.29,.055)],
+                           .021,coat,rig,leg)
         beak=mat(slug+" beak",(.96,.62,.21))
         ellipsoid(slug+" curved beak",(0,face_y+hr*.82,hz-hr*.26),
                   (hr*.25,hr*.40,hr*.20),beak,rig,"Head")
+        # Budgerigars are long-tailed; chickens retain short tail coverts.
+        tail_span=l*(1.10 if slug=="budgie" else .58 if slug=="chicken" else .72)
         for i in range(3):
-            curve_tube(slug+" tail feather "+str(i),[(.09*(i-1),-l*.84,cz),
-                        (.15*(i-1),-l*1.20,cz+.03)],.045,coat,rig,"Tail_1")
+            curve_tube(slug+" tail feather "+str(i),
+                       [(.07*(i-1),-l*.76,cz),
+                        (.10*(i-1),-l*.76-tail_span,cz-.06)],
+                       .028,coat,rig,"Tail_1")
     elif kind=="fish":
         # Closed, skinned membranes follow a fish's caudal/dorsal fin silhouette.
         specimen_fins(slug,w,l,depth,cz,rig,light)
