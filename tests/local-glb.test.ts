@@ -13,7 +13,7 @@ function makeGlb(doc: Record<string, unknown>) {
   bytes.writeUInt32LE(body.byteLength, 12);
   bytes.writeUInt32LE(0x4e4f534a, 16);
   body.copy(bytes, 20);
-  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  return Uint8Array.from(bytes).buffer;
 }
 
 const valid = { asset: { version: '2.0' }, scenes: [{}], buffers: [{ byteLength: 0 }] };
