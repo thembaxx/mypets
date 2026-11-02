@@ -37,11 +37,27 @@ test('pet model viewer honours animation settings and keeps reduced-motion orbit
   for (const fragment of [
     'AnimalAnimationContext',
     'useReducedMotion',
-    "frameloop={reducedMotion ? 'demand' : 'always'}",
+    "frameloop={reduced ? 'demand' : 'always'}",
     "controls.addEventListener('change', repaint)",
     "controls.removeEventListener('change', repaint)",
-    'if (animated) mixer.update',
+    'mixer.update(dt)',
     'mixer.uncacheRoot(model)',
   ])
     assert.ok(source.includes(fragment), fragment);
+});
+
+
+test('3D playroom remains an opt-in viewer, preserves artwork and has local video capture', () => {
+  const shared = readFileSync(new URL('../components/shared.tsx', import.meta.url), 'utf8');
+  const viewer = readFileSync(new URL('../components/tripo-pet.tsx', import.meta.url), 'utf8');
+  const model = readFileSync(new URL('../components/living-cat.tsx', import.meta.url), 'utf8');
+  assert.match(shared, /photo \\|\\| '\\/animals\\/'/);
+  assert.match(shared, /species === 'cat'/);
+  assert.match(viewer, /findPetClip/);
+  assert.match(viewer, /MediaRecorder/);
+  assert.match(viewer, /captureStream/);
+  assert.match(viewer, /onClose/);
+  assert.match(model, /FeedingBowl/);
+  assert.match(model, /tailVelocity/);
+  assert.match(model, /velocity.current.y -= 9.81/);
 });
