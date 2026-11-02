@@ -201,6 +201,13 @@ def feline_style_eyelid(slug, side, eye_centre, radius, surface, rig, bind):
     mesh.materials.append(surface)
     for face in mesh.polygons:
         face.use_smooth = True
+    # The furred species use a PBR normal material here; explicitly supply
+    # UVs so skin-deforming eyelids have valid glTF texture coordinates.
+    uv = mesh.uv_layers.new(name="Eyelid skin UV")
+    for polygon in mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            index = mesh.loops[loop_index].vertex_index
+            uv.data[loop_index].uv = (index // 2 / (columns - 1), index % 2)
     obj.shape_key_add(name="Basis")
     closed = obj.shape_key_add(name="Blink_L" if side<0 else "Blink_R")
     wide = obj.shape_key_add(name="Eye_Wide")
