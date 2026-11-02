@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 
 const kinds = [
@@ -40,6 +41,7 @@ test('all illustrated animal candidates are real individual GLB files', async ({
     'budgie',
     'canary',
   ];
+  const modelDigests = new Set();
   for (const id of ids) {
     const url =
       id === 'cat'
@@ -51,7 +53,13 @@ test('all illustrated animal candidates are real individual GLB files', async ({
     expect(bytes.toString('ascii', 0, 4)).toBe('glTF');
     expect(bytes.readUInt32LE(8)).toBe(bytes.length);
     expect(bytes.length).toBeLessThan(8 * 1024 * 1024);
+    // Prevent a fallback or stale CDN response from silently serving one
+    // generic animal model for different illustrated pet species.
+    const digest = createHash('sha256').update(bytes).digest('hex');
+    expect(modelDigests.has(digest), 'Duplicate 3D model for ' + id).toBe(false);
+    modelDigests.add(digest);
   }
+  expect(modelDigests.size).toBe(ids.length);
 });
 
 for (const { id, kind } of kinds) {
