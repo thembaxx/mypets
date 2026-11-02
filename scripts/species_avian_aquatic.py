@@ -33,6 +33,66 @@ def closed_surface(name, verts, faces, rig, material, weights):
     return obj
 
 
+
+def fish_body_shell(slug, width, length, depth, height, rig, material):
+    """A single fusiform or compressed angelfish body with a genuine tapered tail.
+
+    Rings close around the long axis, rather than placing a sphere-head in front
+    of an unrelated sphere-body. Skinned Body/Head/Tail roots allow swimming bend.
+    """
+    angel = slug == "angelfish"
+    rows, sides = 28, 32
+    verts, faces = [], []
+    for row in range(rows):
+        t = row / (rows - 1)
+        y = -.16 + length * (-.98 + 1.78 * t)
+        profile = math.sin(math.pi * t) ** (.56 if angel else .72)
+        radius_x = width * (.07 + .93 * profile) * (.54 if angel else 1)
+        radius_z = depth * (.05 + .95 * profile) * (1.30 if angel else .85)
+        for j in range(sides):
+            angle = math.tau * j / sides
+            # A deep, laterally compressed disc in angelfish; a streamlined
+            # fusiform shell for ordinary fish. Belly remains convex.
+            x = radius_x * math.cos(angle)
+            z = height + radius_z * math.sin(angle)
+            z += .023 * (t - .5)
+            verts.append((x, y, z))
+    start_cap = len(verts)
+    verts.append((0, -.16 - length * .98, height))
+    end_cap = len(verts)
+    verts.append((0, -.16 + length * .80, height))
+    for row in range(rows - 1):
+        for k in range(sides):
+            a = row * sides + k
+            b = row * sides + (k + 1) % sides
+            faces.append((a, b, b + sides, a + sides))
+    for k in range(sides):
+        faces.append((start_cap, (k+1) % sides, k))
+        a = (rows-1) * sides + k
+        b = (rows-1) * sides + (k+1) % sides
+        faces.append((end_cap, a, b))
+    influences = {"Body": {}, "Head": {}, "Tail_1": {}}
+    for i in range(len(verts)):
+        t = min(i // sides, rows - 1) / (rows - 1)
+        tail = .65 * max(0, min(1, (.28-t)/.28))
+        head = .25 * max(0, min(1, (t-.82)/.18))
+        influences["Body"][i] = 1-tail-head
+        influences["Head"][i] = head
+        influences["Tail_1"][i] = tail
+    return closed_surface("Anatomical " + slug + " torso", verts, faces,
+                          rig, material, influences)
+
+
+def shape_avian_torso(obj, slug, length, centre_height):
+    """Trim the chest, taper the rump and give the back a smooth slope."""
+    for vertex in obj.data.vertices:
+        p = vertex.co
+        y = max(-1.0, min(1.0, (p.y + .16) / length))
+        p.x *= 1 - .14 * max(y, 0)**2 - .08 * max(-y, 0)
+        p.z += .065 * max(y, 0) - .033 * max(-y, 0)
+    obj.data.update()
+
+
 def wing_membrane(slug, side, half_width, body_length, height,
                   rig, material):
     """Curved, connected folding wing, with skinned outer primaries.
@@ -42,22 +102,24 @@ def wing_membrane(slug, side, half_width, body_length, height,
     Lateral bending is split over root and outer wing-tip bones.
     """
     is_chicken = slug == "chicken"
-    span = half_width * (0.85 if is_chicken else 1.16) + .16
+    span = half_width * (.54 if is_chicken else .78) + .07
     root_x = side * half_width * .73
-    root_y = -.15
+    root_y = -.07
     rows, chords = 14, 12
     vertices, faces = [], []
     for surface in (-1, 1):
         for i in range(rows):
             t = i / (rows - 1)
             sx = root_x + side * span * t
-            # Feather vanes taper continuously toward the wingtip.
-            chord = body_length * (.44 - .32 * t) * math.sin(math.pi * (.16 + .78 * t))**.7
-            rear_scallop = .013 * math.sin(math.pi * 6 * t)**2 * t
+            # Folded flight feathers sweep back alongside the torso, rather
+            # than extending sideways like an extra pair of thin arms.
+            chord = body_length * (.37 - .21 * t) * math.sin(math.pi * (.16 + .78 * t))**.7
+            rear_scallop = .012 * math.sin(math.pi * 6 * t)**2 * t
             for j in range(chords):
                 u = j / (chords - 1)
-                y = root_y + (u - .45) * chord - rear_scallop * u
-                z = height + .085 * math.sin(math.pi * t) - .09 * t
+                y = root_y - body_length * (.72 if is_chicken else .98) * t
+                y += (u - .45) * chord - rear_scallop * u
+                z = height + .07 * math.sin(math.pi * t) - .10 * t
                 z += surface * (.015 + .018 * math.sin(math.pi * u)) * (1 - .76 * t)
                 vertices.append((sx, y, z))
     layer = rows * chords
