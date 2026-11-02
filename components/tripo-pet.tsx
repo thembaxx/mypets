@@ -253,7 +253,8 @@ export default function TripoPet({
   const localPreviewRef = useRef<string | null>(null);
   const [previewError, setPreviewError] = useState('');
   const [candidateMode, setCandidateMode] = useState(false);
-  const activeUrl = localPreview ?? (candidateMode ? '/models/candidates/nuzzle-calico-rig.glb' : url);
+  const activeUrl =
+    localPreview ?? (candidateMode ? '/models/candidates/nuzzle-calico-rig.glb' : url);
   const reduced = systemReduced || !animationEnabled || paused;
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
@@ -448,7 +449,9 @@ export default function TripoPet({
                 setLocalPreview(null);
               }}
             >
-              {candidateMode ? 'Return to original procedural 3D cat' : 'Preview rigged Blender cat (experimental)'}
+              {candidateMode
+                ? 'Return to original procedural 3D cat'
+                : 'Preview rigged Blender cat (experimental)'}
             </button>
           )}
           <label className="tripo-local-file">
@@ -528,7 +531,10 @@ export default function TripoPet({
             {recordError || status}
           </p>
           {candidateMode && !localPreview && (
-            <p className="tripo-living-note">Experimental Blender rig. Unapproved appearance; compare against the original before adoption.</p>
+            <p className="tripo-living-note">
+              Experimental Blender rig. Unapproved appearance; compare against the original before
+              adoption.
+            </p>
           )}
           {!activeUrl && (
             <p className="tripo-living-note">

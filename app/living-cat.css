@@ -232,4 +232,7 @@
   outline: 3px solid #d59757;
   outline-offset: 2px;
 }
-.tripo-candidate-toggle:disabled { opacity: .6; cursor: not-allowed; }
+.tripo-candidate-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
