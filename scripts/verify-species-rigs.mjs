@@ -32,19 +32,30 @@ for (const [species, kind] of Object.entries(candidates)) {
   assert.equal(bytes.readUInt32LE(8), bytes.length);
   assert.ok(bytes.length < 8 * 1024 * 1024, species + ' exceeds 8 MiB');
   const size = bytes.readUInt32LE(12);
-  const gltf = JSON.parse(bytes.subarray(20, 20 + size).toString('utf8').trim());
+  const gltf = JSON.parse(
+    bytes
+      .subarray(20, 20 + size)
+      .toString('utf8')
+      .trim(),
+  );
   const names = (gltf.animations ?? []).map((a) => a.name.toLowerCase());
   for (const action of ['idle', 'walk', 'eat', 'play', 'rest', 'groom', 'sniff']) {
-    assert.ok(names.some((name) => name.includes(action)),
-      species + ' missing authored ' + action + ' clip');
+    assert.ok(
+      names.some((name) => name.includes(action)),
+      species + ' missing authored ' + action + ' clip',
+    );
   }
   assert.ok((gltf.skins ?? []).length > 0, species + ' missing real skeleton');
-  assert.ok((gltf.skins ?? []).some((s) => s.joints?.length >= 6),
-    species + ' missing articulated bones');
+  assert.ok(
+    (gltf.skins ?? []).some((s) => s.joints?.length >= 6),
+    species + ' missing articulated bones',
+  );
   const entries = (gltf.nodes ?? []).filter((node) => Number.isInteger(node.mesh));
   const nodes = entries.map((n) => n.name ?? '');
-  assert.ok(nodes.some((name) => name.includes(species + ' torso')),
-    species + ' has no individually authored torso mesh');
+  assert.ok(
+    nodes.some((name) => name.includes(species + ' torso')),
+    species + ' has no individually authored torso mesh',
+  );
   for (const name of kind === 'quadruped' || kind === 'reptile'
     ? ['Front_L', 'Front_R', 'Rear_L', 'Rear_R']
     : kind === 'bird'
@@ -52,20 +63,32 @@ for (const [species, kind] of Object.entries(candidates)) {
       : kind === 'fish'
         ? ['caudal fin', 'dorsal fin']
         : ['unbroken spine', 'tapered tail']) {
-    assert.ok(nodes.some((node) => node.includes(name)),
-      species + ' missing distinguishing anatomy ' + name);
+    assert.ok(
+      nodes.some((node) => node.includes(name)),
+      species + ' missing distinguishing anatomy ' + name,
+    );
   }
   assert.ok(
-    (gltf.meshes ?? []).flatMap((mesh) => mesh.primitives ?? []).some((part) =>
-      part.attributes?.JOINTS_0 !== undefined &&
-      part.attributes?.WEIGHTS_0 !== undefined,
-    ),
+    (gltf.meshes ?? [])
+      .flatMap((mesh) => mesh.primitives ?? [])
+      .some(
+        (part) =>
+          part.attributes?.JOINTS_0 !== undefined && part.attributes?.WEIGHTS_0 !== undefined,
+      ),
     species + ' is a static mesh, not a skinned rig',
   );
   const preview = join(output, species + '-review.png');
-  assert.ok(existsSync(preview) && statSync(preview).size > 2000,
-    species + ' has no genuine Blender review image');
-  result.push({ species, kind, bytes: bytes.length, clips: names.length, joints: gltf.skins[0].joints.length });
+  assert.ok(
+    existsSync(preview) && statSync(preview).size > 2000,
+    species + ' has no genuine Blender review image',
+  );
+  result.push({
+    species,
+    kind,
+    bytes: bytes.length,
+    clips: names.length,
+    joints: gltf.skins[0].joints.length,
+  });
 }
 assert.equal(result.length, 16);
 console.log(JSON.stringify({ status: 'EXPERIMENTAL_RIGS_VERIFIED', candidates: result }, null, 2));

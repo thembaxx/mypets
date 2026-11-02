@@ -35,9 +35,9 @@ export default function ThreeDLabPage() {
           {cat ? 'A living calico, not a moving picture.' : 'A 3D study of every pet.'}
         </h1>
         <p>
-          Review experimental Blender 3D models against the original animal illustrations.
-          Try each species’ anatomy, movement, eating, expression and touch controls. Every
-          candidate requires individual visual approval before replacing any artwork.
+          Review experimental Blender 3D models against the original animal illustrations. Try each
+          species’ anatomy, movement, eating, expression and touch controls. Every candidate
+          requires individual visual approval before replacing any artwork.
         </p>
         <label htmlFor="animal-study-select">Choose an animal to review</label>
         <select
@@ -56,8 +56,8 @@ export default function ThreeDLabPage() {
           {cat ? 'Open the Blender cat studio' : 'Open the Blender animal studio'}
         </button>
         <p className="cat-lab-disclaimer">
-          These are original, separately authored 3D prototype assets, not photoreal
-          reconstructions or animal motion capture. Original illustrated pets stay unchanged.
+          These are original, separately authored 3D prototype assets, not photoreal reconstructions
+          or animal motion capture. Original illustrated pets stay unchanged.
         </p>
       </section>
       {open && (

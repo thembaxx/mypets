@@ -1,11 +1,6 @@
 import { speciesList, speciesNames, type Species } from './species';
 
-export const animalCandidateIds = [
-  ...speciesList,
-  'angelfish',
-  'budgie',
-  'canary',
-] as const;
+export const animalCandidateIds = [...speciesList, 'angelfish', 'budgie', 'canary'] as const;
 export type AnimalCandidateId = (typeof animalCandidateIds)[number];
 
 /** A distinct, source-controlled GLB candidate for every illustrated pet. */

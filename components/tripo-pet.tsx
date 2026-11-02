@@ -290,8 +290,7 @@ export default function TripoPet({
     syncVisibility();
     return () => document.removeEventListener('visibilitychange', syncVisibility);
   }, []);
-  const activeUrl =
-    localPreview ?? (candidateMode ? candidateUrl : url);
+  const activeUrl = localPreview ?? (candidateMode ? candidateUrl : url);
   // Sleeping background WebGL views saves GPU/battery on iPhone. Resume the
   // existing mixer position instead of restarting an action on visibility.
   const motionBlocked = systemReduced || !animationEnabled;
@@ -376,7 +375,8 @@ export default function TripoPet({
         const objectUrl = URL.createObjectURL(file);
         const link = document.createElement('a');
         link.href = objectUrl;
-        link.download = 'mypets-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-feeding.' + extension;
+        link.download =
+          'mypets-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-feeding.' + extension;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -558,7 +558,9 @@ export default function TripoPet({
                 value={mood}
                 onChange={(event) => setMood(event.target.value as CatMood)}
                 disabled={recording}
-                aria-label={allowProceduralCat ? 'Cat facial expression' : 'Animal facial expression'}
+                aria-label={
+                  allowProceduralCat ? 'Cat facial expression' : 'Animal facial expression'
+                }
               >
                 {catMoods.map((value) => (
                   <option key={value} value={value}>
@@ -598,8 +600,8 @@ export default function TripoPet({
           </p>
           {candidateMode && !localPreview && (
             <p className="tripo-living-note">
-              Experimental species-specific Blender rig. Compare its anatomy, appearance and
-              motion with the original illustration before considering adoption.
+              Experimental species-specific Blender rig. Compare its anatomy, appearance and motion
+              with the original illustration before considering adoption.
             </p>
           )}
           {!activeUrl && (
