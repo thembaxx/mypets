@@ -433,6 +433,52 @@ def fur_tuft_group(name, strokes, mat, bone):
     return ob
 
 
+
+def feline_upper_lid(name, side, mat):
+    """A deforming upper-eyelid ribbon, replacing the static smile-line arc.
+
+    Eyelids slide down over the cornea on Blink; the original iris and pupil
+    still compress via their own morphs. This is constrained skin animation,
+    not a claim of eye muscles or anatomical eyelid simulation.
+    """
+    cx, cy, cz = side * .29, 1.044, 1.74
+    columns = 21
+    vertices, faces = [], []
+    for i in range(columns):
+        u = 2 * i / (columns - 1) - 1
+        coverage = max(0, 1 - u * u) ** .5
+        x = cx + .096 * u
+        front_y = cy - .007 * u * u
+        upper_z = cz + .045 + .026 * coverage
+        vertices.extend(((x, front_y, upper_z),
+                         (x, front_y, upper_z - .021)))
+    for i in range(columns - 1):
+        a = 2 * i
+        faces.append((a, a + 2, a + 3, a + 1))
+    mesh = bpy.data.meshes.new(name + " skinned eyelid geometry")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    ob = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(ob)
+    mesh.materials.append(mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    ob.shape_key_add(name="Basis")
+    basis = ob.data.shape_keys.key_blocks["Basis"].data
+    blink = ob.shape_key_add(name="Blink_" + ("L" if side < 0 else "R"))
+    wide = ob.shape_key_add(name="Eye_Wide")
+    for i in range(columns):
+        u = 2 * i / (columns - 1) - 1
+        coverage = max(0, 1 - u * u) ** .5
+        for offset in (0, 1):
+            k = 2 * i + offset
+            src = basis[k].co
+            blink.data[k].co = (src.x, src.y, src.z - .062 * coverage)
+            wide.data[k].co = (src.x, src.y, src.z + .016 * coverage)
+    bind(ob, "Head")
+    return ob
+
+
 def shape_target(ob, name, scale_z):
     """Animate expression thickness around the local mesh centre, not world Z.
 
@@ -526,6 +572,17 @@ def model():
     pink = material("Ear and paw pink", (.98, .56, .58))
     nose = material("Little coral nose", (.98, .28, .32))
     dark = material("Eye and mouth cocoa", (.19, .10, .095), .62)
+    iris_gold = material("Feline amber iris", (.57, .37, .16), .28)
+    pupil_black = material("Feline dark pupil", (.045, .031, .025), .16)
+    # Restrained glTF-compatible corneal clearcoat, only on eye materials.
+    for optic in (iris_gold, pupil_black):
+        bsdf = optic.node_tree.nodes.get("Principled BSDF")
+        coat = bsdf.inputs.get("Coat Weight")
+        if coat is not None:
+            coat.default_value = .23
+        rough = bsdf.inputs.get("Coat Roughness")
+        if rough is not None:
+            rough.default_value = .16
     mouth_red = material("Open mouth ruby", (.65, .13, .16))
     body = make_mesh("Longer natural calico torso", (0, -.27, .94), (.59, .94, .54), cream, "Body", 64, 40)
     apply_sculpt(body, torso_position)
@@ -605,7 +662,7 @@ def model():
         # An amber iris under a slim dark feline pupil replaces button eyes.
         # Both layers blink with the original keyed expressions.
         iris = make_mesh("%s amber iris" % pos, (side*.29, .990, 1.74),
-                         (.073, .027, .066), gold, "Head", 32, 20)
+                         (.073, .027, .066), iris_gold, "Head", 32, 20)
         shape_target(iris, "Blink_" + pos, .12)
         wide_iris = iris.shape_key_add(name="Eye_Wide")
         iris_basis = iris.data.shape_keys.key_blocks["Basis"].data
@@ -613,24 +670,20 @@ def model():
             target.co = (source.co.x, source.co.y,
                          1.74 + (source.co.z - 1.74) * 1.12)
         eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.013, 1.74),
-                        (.031, .015, .058), dark, "Head", 32, 20)
+                        (.031, .015, .058), pupil_black, "Head", 32, 20)
         shape_target(eye, "Blink_" + pos, .12)
         # Additional shape key for exaggerated curiosity.
         key = eye.shape_key_add(name="Eye_Wide")
         for src, dst in zip(eye.data.shape_keys.key_blocks["Basis"].data, key.data):
             dst.co = (src.co.x, src.co.y, 1.74+(src.co.z-1.74)*1.85)
-        # Upper smiling eyelid arc
-        points = []
-        for i in range(11):
-            angle = math.pi * i / 10
-            points.append((side*.29 + .125*math.cos(angle),
-                           1.044, 1.790 + .058*math.sin(angle)))
-        make_curve("%s smiling lid" % pos, points, cocoa, "Head", .022)
+        # Both upper lids now physically change geometry with Blink/Eye_Wide,
+        # rather than remaining fixed, oversized eyebrow-like smile curves.
+        feline_upper_lid("%s upper eyelid" % pos, side, white)
         # Tiny catchlight follows the skull; leave eye blink/curious shapes
         # on the underlying eye mesh, not the reflection.
         make_mesh("%s eye catchlight" % pos,
                   (side*.29-.022, 1.045, 1.775),
-                  (.019, .008, .018), white, "Head", 16, 12)
+                  (.010, .005, .010), white, "Head", 16, 12)
         for whisker in range(3):
             z = 1.34 + (whisker-1)*.12
             make_curve("%s whisker %s" % (pos, whisker),
