@@ -51,8 +51,25 @@ test('all illustrated animal candidates are real individual GLB files', async ({
     expect(response.ok(), 'Missing ' + id + ' candidate').toBeTruthy();
     const bytes = Buffer.from(await response.body());
     expect(bytes.toString('ascii', 0, 4)).toBe('glTF');
+    expect(bytes.readUInt32LE(4)).toBe(2);
     expect(bytes.readUInt32LE(8)).toBe(bytes.length);
     expect(bytes.length).toBeLessThan(8 * 1024 * 1024);
+    // Parse the real served asset, not the Blender source manifest.
+    const jsonLength = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(
+      bytes
+        .subarray(20, 20 + jsonLength)
+        .toString('utf8')
+        .trim(),
+    );
+    expect(gltf.skins?.length, 'Missing skinned skeleton for ' + id).toBeGreaterThan(0);
+    const clipNames = (gltf.animations ?? []).map((clip) => clip.name.toLowerCase());
+    for (const action of ['idle', 'walk', 'eat', 'play', 'rest', 'groom', 'sniff']) {
+      expect(
+        clipNames.some((name) => name.includes(action)),
+        'Missing ' + action + ' clip in served ' + id + ' rig',
+      ).toBe(true);
+    }
     // Prevent a fallback or stale CDN response from silently serving one
     // generic animal model for different illustrated pet species.
     const digest = createHash('sha256').update(bytes).digest('hex');

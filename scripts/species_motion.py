@@ -14,21 +14,37 @@ SMALL_MAMMALS = {"hamster", "guinea-pig", "ferret", "hedgehog"}
 REPTILES = {"iguana", "gecko", "salamander"}
 
 
+def gait_phase(slug, name):
+    """Same stance/swing phase used by the authored limb rotations.
+
+    This permits Blender to audit a specific stance interval instead of
+    guessing from whether a toe happens to be close to the ground.
+    """
+    if slug not in FOUR_LEGGED:
+        raise ValueError("No terrestrial gait for " + slug)
+    if not name.startswith(("Front_L_", "Front_R_", "Rear_L_", "Rear_R_")):
+        raise ValueError("Invalid limb name: " + name)
+    rear = name.startswith("Rear_")
+    left = name.startswith(("Front_L_", "Rear_L_"))
+    return (math.pi if rear else 0.0) if slug == "rabbit" else (
+        (math.pi if left else 0.0) + (math.pi if rear else 0.0)
+    )
+
+
+def planted_phase(slug, name, t):
+    """Approximate authored support half-cycle; NOT physical foot contact."""
+    return math.sin(4 * math.pi * t + gait_phase(slug, name)) <= -0.05
+
+
 def limb_angles(slug, name, t):
     """Upper/lower X rotations; diagonals, hopping and sprawling vary by species."""
     if slug not in FOUR_LEGGED:
         raise ValueError("No four-foot gait for " + slug)
     if not name.endswith(("_Upper", "_Lower")):
         raise ValueError("Not a limb bone: " + name)
+    # Rabbits pair their rear legs while other animals use diagonal phases.
     rear = name.startswith("Rear_")
-    left = name.startswith(("Front_L_", "Rear_L_"))
-    if not name.startswith(("Front_", "Rear_")):
-        raise ValueError("Not a four-foot limb: " + name)
-    # Rabbits pair their rear legs during short hops, with forelegs following.
-    # Other animals travel on diagonal pairs; low reptiles use smaller arcs.
-    phase = (math.pi if rear else 0.0) if slug == "rabbit" else (
-        math.pi if left else 0.0
-    ) + (math.pi if rear else 0.0)
+    phase = gait_phase(slug, name)
     angle = 4 * math.pi * t + phase
     stride = math.sin(angle)
     lift = max(0.0, math.sin(angle))

@@ -2,11 +2,13 @@ name: Species realism prototype build
 on:
   push:
     branches:
-      - feat/all-species-realism-motion-20261102
+      - feat/all-species-anatomy-contact-20261102
     paths:
       - scripts/author-species-rigs.py
       - scripts/species_realism.py
       - scripts/species_motion.py
+      - scripts/audit_species_contact.py
+      - scripts/verify-species-contact.mjs
       - scripts/test_species_motion.py
       - scripts/species_avian_aquatic.py
       - scripts/verify-avian-aquatic.mjs
@@ -21,7 +23,7 @@ concurrency:
 jobs:
   species-candidates:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v7
         with:
@@ -34,17 +36,19 @@ jobs:
           blender --version | head -3
       - name: Verify source syntax
         run: |
-          python3 -m py_compile scripts/author-species-rigs.py scripts/species_realism.py scripts/species_motion.py scripts/test_species_motion.py scripts/species_avian_aquatic.py
+          python3 -m py_compile scripts/author-species-rigs.py scripts/species_realism.py scripts/species_motion.py scripts/test_species_motion.py scripts/audit_species_contact.py scripts/species_avian_aquatic.py
           python3 -m unittest discover -s scripts -p 'test_species_motion.py' -v
           node --check scripts/verify-species-realism.mjs
           node --check scripts/verify-avian-aquatic.mjs
           node --check scripts/verify-species-rigs.mjs
+          node --check scripts/verify-species-contact.mjs
       - name: Generate 16 genuine skinned 3D animal candidates
         run: |
           LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-species-rigs.py -- --output-dir "$RUNNER_TEMP/species"
       - name: Audit each GLB skeleton and real Blender review render
         run: |
           node scripts/verify-species-rigs.mjs "$RUNNER_TEMP/species"
+          node scripts/verify-species-contact.mjs "$RUNNER_TEMP/species"
           node scripts/verify-species-realism.mjs "$RUNNER_TEMP/species"
           node scripts/verify-avian-aquatic.mjs "$RUNNER_TEMP/species"
           node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/species" --require-assets
@@ -68,12 +72,12 @@ jobs:
       - name: Publish only candidate models to feature branch
         run: |
           set -euo pipefail
-          branch=feat/all-species-realism-motion-20261102
+          branch=feat/all-species-anatomy-contact-20261102
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3; do
             git fetch origin "$branch"
-            if ! git diff --quiet "$GITHUB_SHA" "origin/$branch" -- scripts/author-species-rigs.py scripts/species_realism.py scripts/species_motion.py scripts/test_species_motion.py scripts/species_avian_aquatic.py scripts/verify-species-rigs.mjs scripts/verify-species-realism.mjs scripts/verify-avian-aquatic.mjs .github/workflows/species-3d-candidates.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" "origin/$branch" -- scripts/author-species-rigs.py scripts/species_realism.py scripts/species_motion.py scripts/test_species_motion.py scripts/audit_species_contact.py scripts/species_avian_aquatic.py scripts/verify-species-rigs.mjs scripts/verify-species-contact.mjs scripts/verify-species-realism.mjs scripts/verify-avian-aquatic.mjs .github/workflows/species-3d-candidates.yml; then
               echo "A newer animal-authoring revision exists. Do not publish stale rigs."
               exit 0
             fi

@@ -1,7 +1,10 @@
 """Validate loop seams and species-dependent animated posing without Blender."""
 import math
 import unittest
-from species_motion import FOUR_LEGGED, limb_angles, tail_wave, walk_torso, wing_stroke
+from species_motion import (
+    FOUR_LEGGED, gait_phase, planted_phase, limb_angles,
+    tail_wave, walk_torso, wing_stroke,
+)
 
 
 class SpeciesMotionTests(unittest.TestCase):
@@ -44,6 +47,24 @@ class SpeciesMotionTests(unittest.TestCase):
             for tip in (True, False):
                 self.assertAlmostEqual(wing_stroke(0, tip, moving),
                                        wing_stroke(1, tip, moving), places=9)
+
+    def test_planted_phase_matches_loop_and_rabbit_hopping(self):
+        for slug in FOUR_LEGGED:
+            for leg in ("Front_L", "Front_R", "Rear_L", "Rear_R"):
+                bone = leg + "_Lower"
+                self.assertAlmostEqual(gait_phase(slug, bone),
+                                       gait_phase(slug, leg + "_Upper"))
+                for i in range(101):
+                    t = i / 100
+                    self.assertEqual(planted_phase(slug, bone, t),
+                                     math.sin(4 * math.pi * t +
+                                              gait_phase(slug, bone)) <= -0.05)
+                self.assertEqual(planted_phase(slug, bone, .31),
+                                 planted_phase(slug, bone, .81))
+        self.assertEqual(gait_phase("rabbit", "Rear_L_Lower"),
+                         gait_phase("rabbit", "Rear_R_Lower"))
+        with self.assertRaises(ValueError):
+            planted_phase("fish", "Front_L_Lower", .5)
 
     def test_bad_bone_is_not_silently_accepted(self):
         with self.assertRaises(ValueError):

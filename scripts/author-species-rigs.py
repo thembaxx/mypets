@@ -22,8 +22,10 @@ from species_avian_aquatic import (
 from species_realism import (
     bake_coat_normal, cupped_pinna, joined_limb_profile,
     sculpt_profile, shade_coat, feline_style_eyelid,
+    sculpt_muzzle, sculpt_beak,
 )
 from species_motion import limb_angles, tail_wave, walk_torso, wing_stroke
+from audit_species_contact import audit as audit_species_motion
 
 # 13 species beyond the independently authored cat, plus breed/colour variants.
 # body width,length,depth; center height; head radius; head height; colours.
@@ -252,8 +254,10 @@ def make_animal(slug, spec, rig, output_dir):
     muzzle_y=(-.16+l*.80 if kind=="fish" else face_y+hr*.69)
     if kind in ("quadruped","reptile"):
         muzzle_scale=1.40 if slug=="dog" else .75 if slug=="rabbit" else 1
-        ellipsoid(slug+" muzzle",(0,muzzle_y+hr*.13*(muzzle_scale-1),hz-hr*.23),
+        muzzle = ellipsoid(slug+" muzzle",
+                  (0,muzzle_y+hr*.13*(muzzle_scale-1),hz-hr*.23),
                   (hr*.59,hr*.48*muzzle_scale,hr*.34),light,rig,"Head")
+        sculpt_muzzle(muzzle, slug)
         nose=ellipsoid(slug+" breathing nose",(0,muzzle_y+hr*.39,hz-hr*.20),
                        (hr*.21,hr*.10,hr*.14),dark,rig,"Head",20,12)
     else:
@@ -372,8 +376,10 @@ def make_animal(slug, spec, rig, output_dir):
                             (side*.19+digit*.075,.29,.055)],
                            .021,coat,rig,leg)
         beak=mat(slug+" beak",(.96,.62,.21))
-        ellipsoid(slug+" curved beak",(0,face_y+hr*.82,hz-hr*.26),
+        bill = ellipsoid(slug+" curved beak",
+                  (0,face_y+hr*.82,hz-hr*.26),
                   (hr*.25,hr*.40,hr*.20),beak,rig,"Head")
+        sculpt_beak(bill, slug)
         # Budgerigars are long-tailed; chickens retain short tail coverts.
         tail_span=l*(1.10 if slug=="budgie" else .58 if slug=="chicken" else .72)
         for i in range(3):
@@ -565,6 +571,9 @@ def build(slug, out):
     for track in rig.animation_data.nla_tracks:
         track.mute=track.name!="Idle"
     render_review(out/(slug+"-review.png"))
+    # Report the *deformed*, world-space stance drift in the authored clip.
+    # This is diagnostic only; curves are not a real foot-locking solver.
+    audit_species_motion(slug, spec[0], rig, out)
     return {"species":slug,"kind":spec[0],"bytes":path.stat().st_size,
             "sha256":hashlib.sha256(path.read_bytes()).hexdigest(),
             "status":"EXPERIMENTAL_REVIEW_ONLY","clips":list(ACTIONS)}

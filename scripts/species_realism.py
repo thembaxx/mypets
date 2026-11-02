@@ -222,3 +222,57 @@ def feline_style_eyelid(slug, side, eye_centre, radius, surface, rig, bind):
             wide.data[k].co = (src.x,src.y,src.z+radius*.047*envelope)
     bind(obj,rig,{"Head":{i:1.0 for i in range(len(verts))}})
     return obj
+
+
+def sculpt_muzzle(ob, slug):
+    """Taper the front of each terrestrial skull's muzzle (not another ball).
+
+    Subtle proportions keep the owner's existing look, while distinguishing
+    canine jaws, rabbit noses, small-mammal snouts and reptilian rostra.
+    The topology and armature weights stay continuous and UVs unchanged.
+    """
+    vs = ob.data.vertices
+    cy = (min(v.co.y for v in vs) + max(v.co.y for v in vs)) / 2
+    cz = (min(v.co.z for v in vs) + max(v.co.z for v in vs)) / 2
+    reach = max(v.co.y for v in vs) - cy
+    if reach <= 0:
+        raise ValueError("Invalid muzzle bind-pose range")
+    for vertex in vs:
+        p = vertex.co
+        forward = max(0., min(1., (p.y - cy) / reach))
+        if slug == "dog":
+            width = 1.0 - .24 * forward ** 1.5
+            height = .94 - .10 * forward
+        elif slug == "rabbit":
+            width = 1.0 - .38 * forward ** 1.3
+            height = .92 - .18 * forward
+        elif slug in {"hamster", "guinea-pig", "hedgehog"}:
+            width = 1.0 - .29 * forward ** 1.4
+            height = .91 - .12 * forward
+        elif slug == "ferret":
+            width = 1.0 - .33 * forward ** 1.4
+            height = .87 - .10 * forward
+        else:  # reptile/amphibian: flatter, broader rostrum
+            width = 1.0 - .15 * forward ** 1.3
+            height = .81 - .09 * forward
+        p.x *= width
+        p.z = cz + (p.z - cz) * height
+    ob.data.update()
+
+
+def sculpt_beak(ob, slug):
+    """Create tapered hard beak outline with a real forward point and thickness."""
+    vs = ob.data.vertices
+    cy = (min(v.co.y for v in vs) + max(v.co.y for v in vs)) / 2
+    cz = (min(v.co.z for v in vs) + max(v.co.z for v in vs)) / 2
+    reach = max(v.co.y for v in vs) - cy
+    if reach <= 0:
+        raise ValueError("Beak has no forward extent")
+    for vertex in vs:
+        p = vertex.co
+        forward = max(0., min(1., (p.y - cy) / reach))
+        taper = (.37 if slug == "chicken" else .52) * forward ** 1.3
+        p.x *= 1.0 - taper
+        p.z = cz + (p.z - cz) * (1.0 - .28 * forward)
+        p.y += (.025 if slug == "chicken" else .055) * forward ** 1.6
+    ob.data.update()
