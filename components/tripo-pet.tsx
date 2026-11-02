@@ -414,7 +414,7 @@ export default function TripoPet({
               <directionalLight position={[3, 3, -4]} intensity={1.3} color="#d6e6ff" />
               <Suspense fallback={null}>
                 {activeUrl ? (
-                  <group rotation={[0, localPreview ? Math.PI : 0, 0]}>
+                  <group rotation={[0, localPreview || candidateMode ? Math.PI : 0, 0]}>
                     <AnimalModel
                       url={activeUrl}
                       activity={activity}
