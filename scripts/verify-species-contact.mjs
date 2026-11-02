@@ -59,8 +59,10 @@ for (const [species, kind] of Object.entries(kinds)) {
     const surface = report.moving_surface;
     assert.ok(surface?.name, species + ' needs moving fin/body geometry');
     for (const metric of ['sampled_xy_path_m', 'lateral_range_m', 'vertical_range_m']) {
-      assert.ok(Number.isFinite(surface[metric]) && surface[metric] >= 0,
-        species + ': invalid ' + metric);
+      assert.ok(
+        Number.isFinite(surface[metric]) && surface[metric] >= 0,
+        species + ': invalid ' + metric,
+      );
     }
   }
   console.log('SPECIES_EVALUATED_MOTION_REPORT', species, kind);
