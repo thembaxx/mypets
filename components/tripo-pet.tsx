@@ -109,6 +109,10 @@ function AnimalModel({
     });
     return targets;
   }, [model]);
+  const morphTargetsRef = useRef(morphTargets);
+  useEffect(() => {
+    morphTargetsRef.current = morphTargets;
+  }, [morphTargets]);
   useEffect(() => {
     onReport({
       clips: gltf.animations.map((clip) => clip.name),
@@ -156,7 +160,7 @@ function AnimalModel({
     // Body motion cannot be invented from an unrigged, static photograph.
     const blink = state.clock.elapsedTime % 4.1 < 0.14 ? 1 : 0;
     const chew = activity === 'eat' ? Math.max(0, Math.sin(state.clock.elapsedTime * 10)) : 0;
-    for (const { mesh, index, name } of morphTargets) {
+    for (const { mesh, index, name } of morphTargetsRef.current) {
       const influences = mesh.morphTargetInfluences;
       if (!influences) continue;
       const target = /blink|eye.?close/i.test(name)
