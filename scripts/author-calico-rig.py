@@ -156,6 +156,23 @@ def coat_microrelief(ob, strength=.0045):
     return ob
 
 
+def smooth_limb_sections(sections):
+    """Curve through hock and elbow profiles without moving the sole endpoints."""
+    result = []
+    for i in range(len(sections)-1):
+        p0 = sections[max(i-1, 0)]
+        p1 = sections[i]
+        p2 = sections[i+1]
+        p3 = sections[min(i+2, len(sections)-1)]
+        for j in range(4):
+            t = j/4
+            result.append(tuple(.5*(2*p1[k] + (-p0[k]+p2[k])*t +
+                (2*p0[k]-5*p1[k]+4*p2[k]-p3[k])*t*t +
+                (-p0[k]+3*p1[k]-3*p2[k]+p3[k])*t*t*t)
+                for k in range(4)))
+    return result+[sections[-1]]
+
+
 def joined_limb(name, side, fore, hip_y, hip_z, mat, gold):
     """One manifold anatomical limb instead of separate floating thigh and paw balls.
 
@@ -181,13 +198,17 @@ def joined_limb(name, side, fore, hip_y, hip_z, mat, gold):
             (-.75, .067, .119, .135), (-.83, .121, .167, .185),
             (-.895, .133, .169, .179), (-.955, .108, .090, .108),
         ]
+    sections = smooth_limb_sections(sections)
     sides = 32
     vertices = []
     for z, y, rx, ry in sections:
         for step in range(sides):
             a = 2*math.pi*step/sides
-            vertices.append((x + rx*math.cos(a),
-                             hip_y + y + ry*math.sin(a), hip_z + z))
+            # Three gently defined toes remain in the single deforming limb.
+            toe = max(0, 1-abs(z+.855)/.105)
+            knuckle = toe*.006*math.cos(3*a)
+            vertices.append((x + (rx+knuckle)*math.cos(a),
+                             hip_y + y + (ry+knuckle)*math.sin(a), hip_z + z))
     faces = []
     for ring in range(len(sections)-1):
         for step in range(sides):
@@ -359,10 +380,10 @@ def skeleton():
 
 
 def model():
-    cream = material("Calico ivory fur", (.93, .87, .75))
-    white = material("Face cream", (1, .956, .87))
-    gold = material("Calico amber", (.94, .60, .26))
-    cocoa = material("Calico chocolate", (.39, .22, .17))
+    cream = material("Calico ivory fur", (.93, .87, .75), .94)
+    white = material("Face cream", (1, .956, .87), .93)
+    gold = material("Calico amber", (.87, .53, .23), .94)
+    cocoa = material("Calico chocolate", (.33, .20, .17), .92)
     blush = material("Calico cheeks", (1, .69, .66))
     pink = material("Ear and paw pink", (.98, .56, .58))
     nose = material("Little coral nose", (.98, .28, .32))
@@ -373,11 +394,17 @@ def model():
     soften_skin(body, "Body", "Neck", lambda v:
                 .48 * smoothstep(.02,.58,v.y) * smoothstep(.78,1.39,v.z))
     body.data.materials.append(gold)
+    body.data.materials.append(cocoa)
     for polygon in body.data.polygons:
         points = [body.data.vertices[i].co for i in polygon.vertices]
         avg = sum(points, Vector()) / len(points)
-        if avg.x > .43 and -.72 < avg.y < .15 and avg.z < 1.23:
+        # Organic coat borders, not a rectangular painted thigh.
+        wave = .052*math.sin(avg.y*11.3+avg.z*7.7)
+        wave += .026*math.sin(avg.y*21.1-avg.x*6.9)
+        if avg.x > .31+wave and -.86-wave < avg.y < .25+wave and avg.z < 1.30+wave:
             polygon.material_index = 1
+        if avg.x < -.32+wave and -.68 < avg.y < -.22 and avg.z > 1.16+wave:
+            polygon.material_index = 2
     ruff = make_mesh("Cream fluffy ruff", (0, .14, 1.12),
                      (.52, .42, .43), white, "Neck", 40, 28)
     coat_microrelief(ruff, .006)
@@ -386,7 +413,7 @@ def model():
     # Painted calico forehead and ears carry the distinct original markings.
     make_mesh("Soft belly", (0, .36, .82), (.39, .28, .34), white, "Body")
     face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
-                     (.625, .55, .545), white, "Head", 128, 88)
+                     (.58, .53, .52), white, "Head", 128, 88)
     coat_microrelief(face, .003)
     soften_skin(face, "Head", "Neck", lambda v:
                 .40 * (1-smoothstep(.97,1.42,v.z))
@@ -405,40 +432,40 @@ def model():
                 polygon.material_index = 1
             elif avg.x < -.05:
                 polygon.material_index = 2
-    make_cone("Screen-left amber ear", (.50, .45, 2.18), .30, .61, gold, "Ear_R")
-    make_cone("Screen-right chocolate ear", (-.50, .45, 2.18), .30, .61, cocoa, "Ear_L")
-    make_cone("Screen-left rose ear inset", (.50, .52, 2.20), .15, .36, pink, "Ear_R")
-    make_cone("Screen-right rose ear inset", (-.50, .52, 2.20), .15, .36, pink, "Ear_L")
+    make_cone("Screen-left amber ear", (.46, .45, 2.15), .245, .51, gold, "Ear_R")
+    make_cone("Screen-right chocolate ear", (-.46, .45, 2.15), .245, .51, cocoa, "Ear_L")
+    make_cone("Screen-left rose ear inset", (.46, .52, 2.17), .12, .30, pink, "Ear_R")
+    make_cone("Screen-right rose ear inset", (-.46, .52, 2.17), .12, .30, pink, "Ear_L")
     for side, label in ((-1, "Left"), (1, "Right")):
-        cheek = make_mesh(label+" rose cheek", (side*.44, 1.032, 1.45),
-                          (.155, .035, .09), blush, "Head")
+        cheek = make_mesh(label+" rose cheek", (side*.40, .945, 1.45),
+                          (.09, .015, .052), blush, "Head")
         cheek.shape_key_add(name="Basis")
         puff = cheek.shape_key_add(name="Cheek_Puff")
         for source, vertex in zip(cheek.data.shape_keys.key_blocks["Basis"].data, puff.data):
             vertex.co = (source.co.x + side*.034,
                          source.co.y + .022, source.co.z + .012)
-    make_mesh("Left muzzle", (-.15, 1.08, 1.31), (.205, .12, .145), white, "Head")
-    make_mesh("Right muzzle", (.15, 1.08, 1.31), (.205, .12, .145), white, "Head")
-    nose_mesh = make_mesh("Heart shaped coral nose", (0, 1.23, 1.46),
-                          (.10, .06, .065), nose, "Head")
+    make_mesh("Left muzzle", (-.135, 1.05, 1.34), (.16, .073, .095), white, "Head")
+    make_mesh("Right muzzle", (.135, 1.05, 1.34), (.16, .073, .095), white, "Head")
+    nose_mesh = make_mesh("Heart shaped coral nose", (0, 1.115, 1.46),
+                          (.073, .042, .045), nose, "Head")
     nose_mesh.shape_key_add(name="Basis")
     sniff = nose_mesh.shape_key_add(name="Sniff")
     for source, vertex in zip(nose_mesh.data.shape_keys.key_blocks["Basis"].data, sniff.data):
         vertex.co = (source.co.x*1.18, source.co.y+.018, 1.46+(source.co.z-1.46)*1.09)
-    mouth = make_mesh("Dark living mouth", (0, 1.10, 1.18), (.22, .055, .17), mouth_red, "Jaw")
+    mouth = make_mesh("Dark living mouth", (0, 1.10, 1.18), (.155, .038, .102), mouth_red, "Jaw")
     shape_target(mouth, "Jaw_Open", 1.43)
     smile = mouth.shape_key_add(name="Smile")
     for source, vertex in zip(mouth.data.shape_keys.key_blocks["Basis"].data, smile.data):
         bend = min(1.0, abs(source.co.x)/.21)
         vertex.co = (source.co.x*1.09, source.co.y, source.co.z+.052*bend)
-    tongue = make_mesh("Licking pink tongue", (0, 1.166, 1.14), (.145, .035, .072), pink, "Tongue")
+    tongue = make_mesh("Licking pink tongue", (0, 1.145, 1.14), (.110, .029, .052), pink, "Tongue")
     shape_target(tongue, "Lick", 1.60)
     for side in (-1, 1):
         pos = "L" if side < 0 else "R"
         # Distinct eyes instead of permanently painted arcs. The eyeballs
         # deform with Blink shape keys; the raised smile lids preserve art style.
-        eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.105, 1.74),
-                        (.087, .048, .079), dark, "Head", 24, 16)
+        eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.025, 1.74),
+                        (.071, .021, .070), dark, "Head", 24, 16)
         shape_target(eye, "Blink_" + pos, .12)
         # Additional shape key for exaggerated curiosity.
         key = eye.shape_key_add(name="Eye_Wide")
@@ -449,19 +476,19 @@ def model():
         for i in range(11):
             angle = math.pi * i / 10
             points.append((side*.29 + .125*math.cos(angle),
-                           1.165, 1.795 + .07*math.sin(angle)))
+                           1.044, 1.790 + .058*math.sin(angle)))
         make_curve("%s smiling lid" % pos, points, cocoa, "Head", .022)
         # Tiny catchlight follows the skull; leave eye blink/curious shapes
         # on the underlying eye mesh, not the reflection.
         make_mesh("%s eye catchlight" % pos,
-                  (side*.29-.029, 1.16, 1.775),
-                  (.026, .009, .025), white, "Head", 16, 12)
+                  (side*.29-.022, 1.045, 1.775),
+                  (.019, .008, .018), white, "Head", 16, 12)
         for whisker in range(3):
             z = 1.34 + (whisker-1)*.12
             make_curve("%s whisker %s" % (pos, whisker),
-                       [(side*.47, 1.115, 1.34),
-                        (side*.67, 1.14, 1.34+(whisker-1)*.04),
-                        (side*(.94 + whisker*.03), 1.08, z)],
+                       [(side*.42, 1.068, 1.36),
+                        (side*.57, 1.085, 1.36+(whisker-1)*.04),
+                        (side*(.78 + whisker*.03), 1.04, z)],
                        cocoa, "Head", .007)
     for fore in (True, False):
         y = .33 if fore else -.69
@@ -498,10 +525,16 @@ def model():
              (side*(.55 + i*.014), .14+i*.038, .89+i*.082), .023)
             for i in range(7)
         ], white, "Neck")
+    for side in (-1, 1):
+        fur_tuft_group("Fur outer flank %s" % side, [
+            ((side*.54, -.85+i*.075, 1.14+.045*math.sin(i*.65)),
+             (side*.585, -.82+i*.075, 1.145+.045*math.sin(i*.65)), .008)
+            for i in range(17)
+        ], cream, "Body")
     fur_tuft_group("Fur dorsal coat", [
-        ((.42*math.sin(i*2.399), -.95+i*.065, 1.42),
-         (.44*math.sin(i*2.399), -.97+i*.065, 1.46), .012)
-        for i in range(22)
+        ((.32*math.sin(i*2.399), -.94+i*.064, 1.44),
+         (.33*math.sin(i*2.399), -.91+i*.064, 1.463), .008)
+        for i in range(23)
     ], cream, "Body")
     # A continuous-looking curled tail profile, not two disconnected spheres.
     make_curve("Amber tail base", [(0,-.96,.92), (0,-1.11,1.01),

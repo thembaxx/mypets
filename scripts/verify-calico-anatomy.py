@@ -46,6 +46,7 @@ for label in LABELS:
 fur = [ob for ob in bpy.data.objects if ob.type == "MESH" and ob.name.startswith("Fur ")]
 assert len(fur) >= 5, f"Need batched tuft groups, got {len(fur)}"
 assert all(len(ob.data.polygons) >= 20 for ob in fur)
+assert len(fur) >= 7, "Coat should cover cheeks, ruff, flanks and back"
 body = bpy.data.objects["Longer natural calico torso"]
 face = bpy.data.objects["One-piece calico rounded face"]
 assert face.dimensions.x / body.dimensions.x <= 1.12, (
