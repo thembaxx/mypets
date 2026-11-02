@@ -69,7 +69,7 @@ def main():
     finally:
         evaluated.to_mesh_clear()
     nose_height = nose_centre.z
-    bowl_distance_xy = ((nose_centre.x)**2+(nose_centre.y-1.39)**2)**.5
+    bowl_distance_xy = ((nose_centre.x)**2+(nose_centre.y-1.13)**2)**.5
     report={"model":"Nuzzle calico gait QA","status":"unapproved",
             "frames":25,"bone_samples":100,"max_y_error":round(max_y_error,4),
             "max_z_error":round(max_z_error,4),
