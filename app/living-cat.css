@@ -212,3 +212,24 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.tripo-candidate-toggle {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border, #b6ae9d88);
+  border-radius: 14px;
+  font-weight: 650;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: center;
+}
+.tripo-candidate-toggle:focus-visible {
+  outline: 3px solid #d59757;
+  outline-offset: 2px;
+}
+.tripo-candidate-toggle:disabled { opacity: .6; cursor: not-allowed; }
