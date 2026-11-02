@@ -110,48 +110,6 @@ def soften_skin(ob, primary, secondary, secondary_fraction):
     return ob
 
 
-def vertex_contact(meshes):
-    """Minimum world-space paw sole height with all armature deformers applied."""
-    bpy.context.view_layer.update()
-    depsgraph = bpy.context.evaluated_depsgraph_get()
-    lows = []
-    for ob in meshes:
-        evaluated = ob.evaluated_get(depsgraph)
-        evaluated_mesh = evaluated.to_mesh()
-        try:
-            world = evaluated.matrix_world
-            lows.append(min((world @ v.co).z for v in evaluated_mesh.vertices))
-        finally:
-            evaluated.to_mesh_clear()
-    return min(lows)
-
-
-def plant_feet(frame, paw_meshes, target_z=.012):
-    """Correct body root height from *evaluated skinned paw geometry*.
-
-    This corrects actual contact, not an abstract sine curve. Paw swing
-    remains authored by the gait and is not an active collision solver.
-    """
-    # Read the just-authored pose directly. frame_set() here re-evaluates
-    # a different keyed time and can restore the previous pose instead of
-    # evaluating the manual pose being keyed in this iteration.
-    bpy.context.view_layer.update()
-    low = vertex_contact(paw_meshes)
-    # A fully posed leg can shift by more than 34 cm at an extreme
-    # gait pose; use the measured sole discrepancy rather than truncating it.
-    correction = max(-.85, min(.85, target_z-low))
-    root = RIG.pose.bones["Root"]
-    root.location.z += correction
-    root.keyframe_insert("location", frame=frame, group="Root")
-    bpy.context.view_layer.update()
-    actual = vertex_contact(paw_meshes)
-    if frame in (1, 17, 49):
-        print("PAW_CONTACT frame=%d before=%.4f correction=%.4f after=%.4f root=%.4f" %
-              (frame, low, correction, actual, root.location.z), flush=True)
-    if abs(actual-target_z) > .028:
-        raise RuntimeError("Foot contact correction failed at %s: %.3fm" % (frame, actual))
-
-
 def shape_target(ob, name, scale_z):
     ob.shape_key_add(name="Basis")
     key = ob.shape_key_add(name=name)
@@ -315,8 +273,9 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
     for pb in RIG.pose.bones:
         pb.location = (0, 0, 0)
         pb.rotation_euler = (0, 0, 0)
-    # Set the resting sole just above the ground instead of hovering.
-    RIG.pose.bones["Root"].location = (0, root_y, root_z - .12)
+    # Calibrated resting height from evaluated Blender paw soles at Idle.
+    # Collision-aware IK and dynamic foot planting are not yet implemented.
+    RIG.pose.bones["Root"].location = (0, root_y, root_z - .048)
     RIG.pose.bones["Body"].location.z = body_z
     RIG.pose.bones["Body"].rotation_euler.x = body_pitch
     RIG.pose.bones["Head"].rotation_euler.x = head_pitch
@@ -326,7 +285,7 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
     RIG.pose.bones["Jaw"].rotation_euler.x = jaw
     RIG.pose.bones["Tongue"].location.y = tongue
     RIG.pose.bones["Tail_1"].rotation_euler.z = tail
-    RIG.pose.bones["Tail_2"].rotation_euler.x = .20 * math.sin(frame*.12)
+    RIG.pose.bones["Tail_2"].rotation_euler.x = .20 * math.sin(2*math.pi*(frame-1)/(LAST-1))
     RIG.pose.bones["Ear_L"].rotation_euler.y = ears
     RIG.pose.bones["Ear_R"].rotation_euler.y = -ears
     if legs:
@@ -354,10 +313,6 @@ def gait_ik(phase, is_front):
 
 
 def build_actions():
-    paw_meshes = [ob for ob in bpy.context.scene.objects
-                  if ob.type=="MESH" and " lower paw" in ob.name]
-    if len(paw_meshes) != 4:
-        raise RuntimeError("Exactly four deformable paws required for contact QA")
     RIG.animation_data_create()
     for clip in ("Idle","Walk","Eat","Play","Rest"):
         action = bpy.data.actions.new(clip)
@@ -398,7 +353,6 @@ def build_actions():
                 set_pose(frame, body_z=.016*math.sin(cycle),
                          head_yaw=.07*math.sin(cycle), head_pitch=.03*math.sin(cycle),
                          tail=.14*math.sin(cycle), ears=.035*math.sin(cycle))
-            plant_feet(frame, paw_meshes)
         # Frame LAST is already authored in the above loop at the same
         # walk-cycle phase as frame 1. Never overwrite it with neutral limbs:
         # that introduces a visible gait/feeding snap at the loop seam.
@@ -456,8 +410,8 @@ def main():
         source="public/animals/cat.webp (style reference only)",
         blender=bpy.app.version_string,
         clips=["Idle","Walk","Eat","Play","Rest"],
-        rig="Skin-weighted neck, torso, head and limbs; two-link foot gait with evaluated paw contact",
-        physics="Per-keyframe evaluated paw sole corrections; secondary motion approximate; no rigid-body muscle simulation",
+        rig="Skin-weighted neck, torso, head and limbs; two-link kinematic gait",
+        physics="Static paw ground-height calibration; no collision-aware IK or rigid-body muscle simulation",
         sha256=hashlib.sha256(glb.read_bytes()).hexdigest(),
         bytes=glb.stat().st_size,
     )
