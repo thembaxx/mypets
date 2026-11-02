@@ -13,8 +13,13 @@ This is a review of the **unapproved** Blender calico candidate on
   +18.13 to +149.56 mm before separate hind-paw calibration.
 - Feeding mouth to food-centre minimum: **76.34 mm**, improved from
   356.6 mm through a revised head approach and prop alignment.
-- Grooming paw to muzzle-centre minimum: 354.74 mm in the verified build.
-  A Jacobian-fitted paw reach is currently experimental and not yet verified.
+- Verified grooming geometry: [Blender workflow #41471780983](https://github.com/thembaxx/mypets/actions/runs/41471780983).
+  The deformed paw-to-muzzle **centre** distance at peak grooming dropped from
+  354.74 mm to **4.31 mm**. The nearest measured mesh vertices are **6.32 mm**
+  apart, and the maximum paw-to-forearm surface separation across sampled
+  grooming frames is **11.50 mm**.
+- The grooming pose is still stylized and manually authored; near-contact alone
+  does not establish realistic limb bending or physical collision response.
 
 These are evaluated **deformed mesh** measurements. They are not bone-tip
 estimates. The recorded frame sample includes the loop seam; it does not
