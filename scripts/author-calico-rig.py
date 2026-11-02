@@ -132,7 +132,10 @@ def plant_feet(frame, paw_meshes, target_z=.012):
     This corrects actual contact, not an abstract sine curve. Paw swing
     remains authored by the gait and is not an active collision solver.
     """
-    bpy.context.scene.frame_set(frame)
+    # Read the just-authored pose directly. frame_set() here re-evaluates
+    # a different keyed time and can restore the previous pose instead of
+    # evaluating the manual pose being keyed in this iteration.
+    bpy.context.view_layer.update()
     low = vertex_contact(paw_meshes)
     # A fully posed leg can shift by more than 34 cm at an extreme
     # gait pose; use the measured sole discrepancy rather than truncating it.
@@ -140,11 +143,6 @@ def plant_feet(frame, paw_meshes, target_z=.012):
     root = RIG.pose.bones["Root"]
     root.location.z += correction
     root.keyframe_insert("location", frame=frame, group="Root")
-    # Force Blender's armature modifier to rebuild at a neighbouring time,
-    # then sample the authored key again; a same-frame refresh can use the
-    # previously cached deformed mesh in Blender 4.0 headless evaluation.
-    bpy.context.scene.frame_set(frame + 1)
-    bpy.context.scene.frame_set(frame)
     bpy.context.view_layer.update()
     actual = vertex_contact(paw_meshes)
     if frame in (1, 17, 49):
