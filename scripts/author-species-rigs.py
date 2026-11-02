@@ -265,7 +265,7 @@ def make_animal(slug, spec, rig):
             # Hundreds of spikes in one batched geometry would be too costly;
             # grouped low-count dorsal quills instead of flat texture sprites.
             for n in range(14):
-                x=.31*math.sin(n*2.399),y=-.65+n*.083
+                x, y = .31*math.sin(n*2.399), -.65+n*.083
                 curve_tube(slug+" dorsal quill "+str(n),
                            [(x,y,cz+depth*.81),(x*1.15,y-.06,cz+depth*1.24)],
                            .021,dark,rig,"Body")
