@@ -373,7 +373,7 @@ export default function TripoPet({
       <button
         type="button"
         className="tripo-backdrop"
-        aria-label="Close 3D studio"
+        aria-label="Dismiss 3D studio backdrop"
         onClick={onClose}
       />
       <div className="tripo-dialog tripo-living-dialog">
