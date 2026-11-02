@@ -27,7 +27,7 @@ for (const clip of expected)
     `Rigged model must expose separate authored clip ${clip}; found ${actualNames.join(', ')}`,
   );
 const morphs = (doc.meshes ?? []).flatMap((mesh) => mesh.extras?.targetNames ?? []);
-for (const key of ['Blink_L', 'Blink_R', 'Jaw_Open', 'Lick', 'Smile', 'Cheek_Puff', 'Sniff'])
+for (const key of ['Blink_L', 'Blink_R', 'Eye_Wide', 'Jaw_Open', 'Lick', 'Smile', 'Cheek_Puff', 'Sniff'])
   assert.ok(
     morphs.includes(key),
     `Expected animated facial geometry ${key}; available: ${morphs.join(', ')}`,
@@ -56,6 +56,40 @@ while (chunk + 8 <= bytes.length) {
   chunk += 8 + byteLength;
 }
 assert.ok(binaryStart >= 0, 'GLB should embed its actual vertex buffers');
+// Test the *exported binary morph deltas*. Requiring named targets alone used
+// to accept Eye_Wide/Blink targets that translated pupils several metres
+// because the authoring shape keys scaled absolute world positions.
+let checkedFacialTargets = 0;
+for (const mesh of doc.meshes ?? []) {
+  const targetNames = mesh.extras?.targetNames ?? [];
+  for (const part of mesh.primitives ?? []) {
+    for (const [index, target] of (part.targets ?? []).entries()) {
+      const label = targetNames[index];
+      if (!label || target.POSITION === undefined) continue;
+      const accessor = doc.accessors?.[target.POSITION];
+      const view = doc.bufferViews?.[accessor?.bufferView];
+      assert.ok(accessor && view, `Morph target ${label} requires a binary accessor`);
+      assert.equal(accessor.type, 'VEC3', `Morph target ${label} must export 3D offsets`);
+      assert.equal(accessor.componentType, 5126, `Morph target ${label} requires float coordinates`);
+      const stride = view.byteStride ?? 12;
+      const start = binaryStart + (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
+      for (let n = 0; n < accessor.count; n++) {
+        const position = start + n * stride;
+        const delta = Math.hypot(
+          bytes.readFloatLE(position),
+          bytes.readFloatLE(position + 4),
+          bytes.readFloatLE(position + 8),
+        );
+        assert.ok(
+          Number.isFinite(delta) && delta <= 0.21,
+          `Morph ${label} has an escaped vertex offset ${delta.toFixed(3)}m on ${mesh.name}`,
+        );
+      }
+      checkedFacialTargets++;
+    }
+  }
+}
+assert.ok(checkedFacialTargets >= 8, 'Validate every exported facial expression delta');
 let blendedVertices = 0;
 let maxInfluenceCount = 0;
 for (const mesh of doc.meshes ?? []) {
@@ -111,6 +145,7 @@ console.log(
       meshes: doc.meshes.length,
       blendedVertices,
       maxInfluenceCount,
+      checkedFacialTargets,
     },
     null,
     2,
