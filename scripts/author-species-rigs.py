@@ -13,12 +13,20 @@ from pathlib import Path
 
 import bpy
 from mathutils import Vector
+from species_realism import (
+    articulated_gait,
+    bake_coat_normal,
+    cupped_pinna,
+    joined_limb_profile,
+    sculpt_profile,
+    shade_coat,
+)
 
 # 13 species beyond the independently authored cat, plus breed/colour variants.
 # body width,length,depth; center height; head radius; head height; colours.
 CONFIG = {
-    "dog":         ("quadruped", .53, .92, .43, 1.02, .39, 1.42, (.70,.49,.30), (.91,.76,.53)),
-    "rabbit":      ("quadruped", .43, .65, .45, .78, .34, 1.13, (.80,.74,.67), (.91,.85,.78)),
+    "dog":         ("quadruped", .49, .96, .41, 1.01, .34, 1.38, (.70,.49,.30), (.91,.76,.53)),
+    "rabbit":      ("quadruped", .40, .72, .40, .76, .29, 1.10, (.80,.74,.67), (.91,.85,.78)),
     "hamster":     ("quadruped", .52, .57, .43, .65, .34, .94, (.85,.55,.28), (.98,.84,.62)),
     "guinea-pig":  ("quadruped", .49, .72, .40, .62, .33, .91, (.68,.45,.30), (.98,.88,.68)),
     "ferret":      ("quadruped", .36, 1.03, .34, .68, .30, 1.04, (.66,.52,.40), (.89,.78,.63)),
@@ -195,13 +203,15 @@ def rig_for(slug, spec):
     return rig
 
 
-def make_animal(slug, spec, rig):
+def make_animal(slug, spec, rig, output_dir):
     kind,w,l,depth,cz,hr,hz,main,accent=spec
-    coat=mat(slug+" coat",main)
-    light=mat(slug+" pale markings",accent)
+    normal_map=bake_coat_normal(slug,output_dir)
+    coat=shade_coat(mat(slug+" coat",main),normal_map)
+    light=shade_coat(mat(slug+" pale markings",accent),normal_map)
     dark=mat(slug+" eyes",(.075,.055,.05),.29)
     ear_pink=mat(slug+" ear cartilage",(.80,.49,.49))
     body=ellipsoid("Anatomical "+slug+" torso",(0,-.16,cz),(w,l,depth),coat,rig,"Body",48,32)
+    sculpt_profile(body,slug,"torso",l,hr)
     if kind in ("quadruped","reptile"):
         body.data.materials.append(light)
         for polygon in body.data.polygons:
@@ -211,10 +221,12 @@ def make_animal(slug, spec, rig):
     face_y=l*.63
     face=ellipsoid("Skinned "+slug+" skull",(0,face_y,hz),(hr,hr*.88,hr*.83),
                    coat if kind in ("reptile","fish","snake") else light,rig,"Head",48,32)
+    sculpt_profile(face,slug,"skull",l,hr)
     muzzle_y=face_y+hr*.69
     if kind in ("quadruped","reptile"):
-        ellipsoid(slug+" muzzle",(0,muzzle_y,hz-hr*.23),
-                  (hr*.64,hr*.48,hr*.38),light,rig,"Head")
+        muzzle_scale=1.40 if slug=="dog" else .75 if slug=="rabbit" else 1
+        ellipsoid(slug+" muzzle",(0,muzzle_y+hr*.13*(muzzle_scale-1),hz-hr*.23),
+                  (hr*.59,hr*.48*muzzle_scale,hr*.34),light,rig,"Head")
         nose=ellipsoid(slug+" breathing nose",(0,muzzle_y+hr*.39,hz-hr*.20),
                        (hr*.21,hr*.10,hr*.14),dark,rig,"Head",20,12)
     else:
@@ -254,13 +266,14 @@ def make_animal(slug, spec, rig):
                 radii=[(radius*.90,radius),(radius,radius),
                        (radius*.77,radius*.83),(radius*.61,radius*.67),
                        (radius*.92,radius*1.07),(radius*.75,radius*.95)]
+                sculpted=joined_limb_profile(slug,fore,side,x,y,hip,knee,radius,ankle)
+                if sculpted is not None:
+                    points,radii=sculpted
                 tapered_mesh(name+" connected limb",points,radii,coat,rig,
                              name+"_Upper",name+"_Lower","Body")
         if slug=="rabbit":
             for side in (-1,1):
-                ellipsoid(slug+" long ear "+str(side),
-                          (side*.23,face_y-.09,hz+hr*.76),
-                          (.115,.15,.44),coat,rig,"Head")
+                cupped_pinna(slug,side,face_y,hz,hr,coat,rig,weighted)
         elif slug=="hedgehog":
             # Hundreds of spikes in one batched geometry would be too costly;
             # grouped low-count dorsal quills instead of flat texture sprites.
@@ -273,9 +286,12 @@ def make_animal(slug, spec, rig):
             for side in (-1,1):
                 ear_w=.14 if slug=="dog" else .115
                 ear_h=.25 if slug=="dog" else .13
-                ellipsoid(slug+" ear "+str(side),
-                          (side*hr*.79,face_y-.09,hz+hr*.67),
-                          (ear_w,.12,ear_h),coat,rig,"Head")
+                if slug=="dog":
+                    cupped_pinna(slug,side,face_y,hz,hr,coat,rig,weighted)
+                else:
+                    ellipsoid(slug+" ear "+str(side),
+                              (side*hr*.79,face_y-.09,hz+hr*.67),
+                              (ear_w,.12,ear_h),coat,rig,"Head")
         if slug not in ("hamster","guinea-pig","hedgehog"):
             curve_tube(slug+" tail",[(0,-l*.89,cz),(0,-l*1.13,cz+.10),
                                     (0,-l*1.45,cz+.21)],.075,coat,rig,"Tail_1")
@@ -378,7 +394,15 @@ def animate(slug, spec, rig):
                         phase=math.pi if bone.name.endswith("_L_Upper") else 0
                         if bone.name.startswith("Rear"):
                             phase+=math.pi
-                        bone.rotation_euler.x=.25*math.sin(cycle*2+phase)
+                        if slug in ("dog","rabbit"):
+                            articulated_gait(slug,bone,phase,cycle)
+                        else:
+                            bone.rotation_euler.x=.25*math.sin(cycle*2+phase)
+                    if bone.name.endswith("_Lower") and slug in ("dog","rabbit"):
+                        phase=math.pi if bone.name.endswith("_L_Lower") else 0
+                        if bone.name.startswith("Rear"):
+                            phase+=math.pi
+                        articulated_gait(slug,bone,phase,cycle)
                     if bone.name.startswith(("Wing_","Fin_")):
                         bone.rotation_euler.y=.30*math.sin(cycle*3)
                     if bone.name.startswith("Leg_"):
@@ -444,7 +468,7 @@ def build(slug, out):
         bpy.data.actions.remove(act,do_unlink=True)
     spec=CONFIG[slug]
     rig=rig_for(slug,spec)
-    make_animal(slug,spec,rig)
+    make_animal(slug,spec,rig,out)
     animate(slug,spec,rig)
     bpy.context.scene.frame_set(1)
     bpy.ops.object.select_all(action="DESELECT")
