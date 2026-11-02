@@ -18,6 +18,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from calico_gait import root_height, walk_leg_pose, groom_paw_pose
+from calico_feline_sculpt import apply_sculpt, torso_position, skull_position, toe_position
 
 FPS = 24
 LAST = 49
@@ -344,6 +345,9 @@ def joined_limb(name, side, fore, hip_y, hip_z, mat, gold):
         a=(len(sections)-1)*sides+step
         b=(len(sections)-1)*sides+(step+1)%sides
         faces.append((bottom,a,b))
+    # A tiny four-lobe sculpt is applied to the connected paw *before*
+    # armature weights and the glTF normal-map UVs are generated.
+    vertices = [toe_position(*position, x, hip_y, hip_z) for position in vertices]
     mesh = bpy.data.meshes.new(label+" seamless limb geometry")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
@@ -523,6 +527,7 @@ def model():
     dark = material("Eye and mouth cocoa", (.19, .10, .095), .62)
     mouth_red = material("Open mouth ruby", (.65, .13, .16))
     body = make_mesh("Longer natural calico torso", (0, -.27, .94), (.59, .94, .54), cream, "Body", 64, 40)
+    apply_sculpt(body, torso_position)
     coat_microrelief(body)
     soften_skin(body, "Body", "Neck", lambda v:
                 .48 * smoothstep(.02,.58,v.y) * smoothstep(.78,1.39,v.z))
@@ -547,6 +552,7 @@ def model():
     make_mesh("Soft belly", (0, .36, .82), (.39, .28, .34), white, "Body")
     face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
                      (.58, .53, .52), white, "Head", 128, 88)
+    apply_sculpt(face, skull_position)
     coat_microrelief(face, .003)
     soften_skin(face, "Head", "Neck", lambda v:
                 .40 * (1-smoothstep(.97,1.42,v.z))
