@@ -27,6 +27,22 @@ for (const clip of expected)
     `Rigged model must expose separate authored clip ${clip}; found ${actualNames.join(', ')}`,
   );
 const morphs = (doc.meshes ?? []).flatMap((mesh) => mesh.extras?.targetNames ?? []);
+// The shipping candidate must contain each one-piece limb and must not
+// regress to individually skinned floating shoulder/paw spheres.
+for (const label of ['Front_L', 'Front_R', 'Rear_L', 'Rear_R']) {
+  assert.ok(
+    (doc.meshes ?? []).some((mesh) => mesh.name?.includes(label + ' lower paw')),
+    `Missing connected anatomical limb ${label}`,
+  );
+  assert.ok(
+    !(doc.meshes ?? []).some((mesh) => mesh.name?.includes(label + ' shoulder')),
+    `The separated shoulder mesh returned for ${label}`,
+  );
+}
+assert.ok(
+  (doc.meshes ?? []).filter((mesh) => mesh.name?.startsWith('Fur ')).length >= 5,
+  'Review candidate must include batched sculpted silhouette fur',
+);
 for (const key of [
   'Blink_L',
   'Blink_R',

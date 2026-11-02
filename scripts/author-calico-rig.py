@@ -134,6 +134,146 @@ def soften_skin(ob, primary, secondary, secondary_fraction):
     return ob
 
 
+
+def coat_microrelief(ob, strength=.0045):
+    """Small deterministic geometry detail survives glTF, unlike Blender-only noise nodes.
+
+    It is a low-frequency fur *hint*, not strand-based hair or true coat shading.
+    The amplitude is limited to avoid an expensive duplicate shell and remains
+    far below the eye/facial morph and gait-contact budgets.
+    """
+    verts = ob.data.vertices
+    centre = sum((v.co for v in verts), Vector()) / len(verts)
+    for vertex in verts:
+        p = vertex.co
+        direction = p-centre
+        if direction.length < 1e-5:
+            continue
+        noise = (math.sin(p.x*49.1 + p.y*21.3) *
+                 math.sin(p.z*41.7 - p.x*18.9))
+        vertex.co += direction.normalized() * (noise * strength)
+    ob.data.update()
+    return ob
+
+
+def joined_limb(name, side, fore, hip_y, hip_z, mat, gold):
+    """One manifold anatomical limb instead of separate floating thigh and paw balls.
+
+    Elliptical cross-sections trace shoulder/thigh, elbow/hock, shin and the
+    widened toe. Three overlapping weights keep the whole surface deforming
+    through Body -> Upper -> Lower without visible between-mesh leg seams.
+    """
+    label = name
+    x = side*.46
+    if fore:
+        sections = [
+            (.13, -.045, .195, .205), (-.02, -.028, .200, .205),
+            (-.18, -.022, .175, .185), (-.34, -.008, .138, .148),
+            (-.48, -.004, .122, .124), (-.62, .012, .113, .123),
+            (-.74, .049, .114, .132), (-.82, .105, .158, .182),
+            (-.895, .120, .161, .178), (-.945, .102, .090, .112),
+        ]
+    else:
+        sections = [
+            (.13, -.048, .235, .237), (-.03, -.078, .238, .224),
+            (-.20, -.100, .215, .203), (-.36, -.085, .163, .161),
+            (-.48, -.052, .133, .132), (-.62, .009, .114, .122),
+            (-.75, .067, .119, .135), (-.83, .121, .167, .185),
+            (-.895, .133, .169, .179), (-.955, .108, .090, .108),
+        ]
+    sides = 32
+    vertices = []
+    for z, y, rx, ry in sections:
+        for step in range(sides):
+            a = 2*math.pi*step/sides
+            vertices.append((x + rx*math.cos(a),
+                             hip_y + y + ry*math.sin(a), hip_z + z))
+    faces = []
+    for ring in range(len(sections)-1):
+        for step in range(sides):
+            a = ring*sides+step
+            b = ring*sides+(step+1)%sides
+            c = (ring+1)*sides+(step+1)%sides
+            d = (ring+1)*sides+step
+            faces.append((a,b,c,d))
+    top = len(vertices)
+    vertices.append((x,hip_y+sections[0][1],hip_z+sections[0][0]))
+    bottom = len(vertices)
+    vertices.append((x,hip_y+sections[-1][1],hip_z+sections[-1][0]))
+    for step in range(sides):
+        faces.append((top,(step+1)%sides,step))
+        a=(len(sections)-1)*sides+step
+        b=(len(sections)-1)*sides+(step+1)%sides
+        faces.append((bottom,a,b))
+    mesh = bpy.data.meshes.new(label+" seamless limb geometry")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    ob = bpy.data.objects.new(label+" lower paw", mesh)
+    bpy.context.collection.objects.link(ob)
+    mesh.materials.append(mat)
+    mesh.materials.append(gold)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+        midpoint = sum((mesh.vertices[i].co for i in polygon.vertices), Vector())/len(polygon.vertices)
+        if not fore and side>0 and midpoint.z>hip_z-.31 and midpoint.x>.32:
+            polygon.material_index = 1
+    ob["distal_cutoff_z"] = hip_z-.61
+    coat_microrelief(ob, .0035)
+    bind(ob, label+"_Upper")
+    upper = ob.vertex_groups.get(label+"_Upper")
+    lower = ob.vertex_groups.new(name=label+"_Lower")
+    body = ob.vertex_groups.new(name="Body")
+    for v in ob.data.vertices:
+        body_w = .52*smoothstep(hip_z-.20,hip_z+.12,v.co.z)
+        lower_w = .93*(1-smoothstep(hip_z-.69,hip_z-.28,v.co.z))
+        upper_w = 1.0-body_w-lower_w
+        if upper_w < .005:
+            raise RuntimeError("Limb weight budget went negative: "+label)
+        upper.add([v.index],upper_w,"REPLACE")
+        if lower_w > .0001:
+            lower.add([v.index],lower_w,"REPLACE")
+        if body_w > .0001:
+            body.add([v.index],body_w,"REPLACE")
+    return ob
+
+
+def fur_tuft_group(name, strokes, mat, bone):
+    """Batch many tapered, volumetric coat tips into ONE small skinned draw mesh.
+
+    These follow the existing illustration's silhouette; they are not
+    thousands of transparent hair cards that would overdraw on mobile GPUs.
+    """
+    verts, faces = [], []
+    for start, end, radius in strokes:
+        origin, tip = Vector(start), Vector(end)
+        direction = (tip-origin).normalized()
+        tangent = direction.cross(Vector((0,1,0)))
+        if tangent.length < .0001:
+            tangent = direction.cross(Vector((1,0,0)))
+        tangent.normalize()
+        bitangent = direction.cross(tangent).normalized()
+        offset = len(verts)
+        for j in range(5):
+            a = 2*math.pi*j/5
+            p = origin + radius*(tangent*math.cos(a)+bitangent*math.sin(a))
+            verts.append(tuple(p))
+        verts.append(tuple(tip))
+        for j in range(5):
+            faces.append((offset+j,offset+(j+1)%5,offset+5))
+    if not strokes:
+        return None
+    mesh=bpy.data.meshes.new(name+" geometry")
+    mesh.from_pydata(verts,[],faces)
+    mesh.update()
+    ob=bpy.data.objects.new(name,mesh)
+    bpy.context.collection.objects.link(ob)
+    mesh.materials.append(mat)
+    for p in mesh.polygons:
+        p.use_smooth=True
+    bind(ob,bone)
+    return ob
+
+
 def shape_target(ob, name, scale_z):
     """Animate expression thickness around the local mesh centre, not world Z.
 
@@ -228,7 +368,8 @@ def model():
     nose = material("Little coral nose", (.98, .28, .32))
     dark = material("Eye and mouth cocoa", (.19, .10, .095), .62)
     mouth_red = material("Open mouth ruby", (.65, .13, .16))
-    body = make_mesh("Continuous chibi torso", (0, -.26, .96), (.64, .83, .59), cream, "Body", 64, 40)
+    body = make_mesh("Longer natural calico torso", (0, -.27, .94), (.59, .94, .54), cream, "Body", 64, 40)
+    coat_microrelief(body)
     soften_skin(body, "Body", "Neck", lambda v:
                 .48 * smoothstep(.02,.58,v.y) * smoothstep(.78,1.39,v.z))
     body.data.materials.append(gold)
@@ -238,13 +379,15 @@ def model():
         if avg.x > .43 and -.72 < avg.y < .15 and avg.z < 1.23:
             polygon.material_index = 1
     ruff = make_mesh("Cream fluffy ruff", (0, .14, 1.12),
-                     (.57, .45, .48), white, "Neck", 40, 28)
+                     (.52, .42, .43), white, "Neck", 40, 28)
+    coat_microrelief(ruff, .006)
     soften_skin(ruff, "Neck", "Body", lambda v:
                 .72 * (1-smoothstep(.81,1.27,v.z)))
     # Painted calico forehead and ears carry the distinct original markings.
-    make_mesh("Soft belly", (0, .36, .82), (.43, .29, .37), white, "Body")
+    make_mesh("Soft belly", (0, .36, .82), (.39, .28, .34), white, "Body")
     face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
-                     (.71, .57, .60), white, "Head", 128, 88)
+                     (.625, .55, .545), white, "Head", 128, 88)
+    coat_microrelief(face, .003)
     soften_skin(face, "Head", "Neck", lambda v:
                 .40 * (1-smoothstep(.97,1.42,v.z))
                 * (1-smoothstep(.58,1.10,v.y)))
@@ -295,7 +438,7 @@ def model():
         # Distinct eyes instead of permanently painted arcs. The eyeballs
         # deform with Blink shape keys; the raised smile lids preserve art style.
         eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.105, 1.74),
-                        (.105, .055, .090), dark, "Head", 24, 16)
+                        (.087, .048, .079), dark, "Head", 24, 16)
         shape_target(eye, "Blink_" + pos, .12)
         # Additional shape key for exaggerated curiosity.
         key = eye.shape_key_add(name="Eye_Wide")
@@ -326,15 +469,9 @@ def model():
         for side in (-1, 1):
             label = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
             x = side*.46
-            shoulder = make_mesh(label + " shoulder", (x,y,z-.25),
-                                 (.195,.235,.38), cream, label + "_Upper", 32,22)
-            soften_skin(shoulder, label+"_Upper", "Body", lambda v, upper_z=z:
-                        .67*smoothstep(upper_z-.32, upper_z+.12, v.z))
-            lower_paw = make_mesh(label + " lower paw", (x,y,z-.68),
-                                  (.166,.215,.27), cream, label + "_Lower", 32,20)
-            soften_skin(lower_paw, label+"_Lower", label+"_Upper",
-                        lambda v, lower_z=z-.68:
-                        .59*smoothstep(lower_z-.12, lower_z+.28, v.z))
+            # The entire upper limb, elbow, shin and toe are one connected
+            # surface; skinning follows the existing articulated skeleton.
+            joined_limb(label, side, fore, y, z, cream, gold)
             # Pads belong to each paw's own underside, not a shared absolute
             # world height. The previous z=.18 made rear pads float about 26 cm
             # above the evaluated stance paw despite correct lower-mesh contact.
@@ -347,6 +484,25 @@ def model():
                                 pink, label + "_Lower", 16,12)
             soften_skin(toe_pad, label+"_Lower", label+"_Upper",
                         lambda v: .13)
+    # A few low-overdraw, batched tapered fur tips interrupt the spherical
+    # silhouette. Microrelief on torso/ruff/head/legs adds genuine highlights
+    # to exported geometry without unstable procedural glTF shader nodes.
+    for side in (-1,1):
+        fur_tuft_group("Fur cheek %s" % side, [
+            ((side*(.575 + i*.007), .79, 1.29+i*.08),
+             (side*(.655 + i*.008), .81, 1.27+i*.09), .018)
+            for i in range(5)
+        ], white, "Head")
+        fur_tuft_group("Fur ruff %s" % side, [
+            ((side*(.45 + i*.012), .12+i*.035, .95+i*.075),
+             (side*(.55 + i*.014), .14+i*.038, .89+i*.082), .023)
+            for i in range(7)
+        ], white, "Neck")
+    fur_tuft_group("Fur dorsal coat", [
+        ((.42*math.sin(i*2.399), -.95+i*.065, 1.42),
+         (.44*math.sin(i*2.399), -.97+i*.065, 1.46), .012)
+        for i in range(22)
+    ], cream, "Body")
     # A continuous-looking curled tail profile, not two disconnected spheres.
     make_curve("Amber tail base", [(0,-.96,.92), (0,-1.11,1.01),
                                   (0,-1.21,1.18)], gold, "Tail_1", .11)
@@ -442,14 +598,18 @@ def fit_walk_stance(frame, t):
 
 
 def evaluated_mesh_centre(name):
-    """Axis-aligned centre of an armature-deformed mesh in world space."""
+    """Axis-aligned centre of the deforming paw TIP (or full facial mesh)."""
     ob = bpy.data.objects[name]
     bpy.context.view_layer.update()
     graph = bpy.context.evaluated_depsgraph_get()
     active = ob.evaluated_get(graph)
     mesh = active.to_mesh(preserve_all_data_layers=False, depsgraph=graph)
     try:
-        points = [active.matrix_world @ vertex.co for vertex in mesh.vertices]
+        cutoff = ob.get("distal_cutoff_z")
+        points = [active.matrix_world @ vertex.co for vertex in mesh.vertices
+                  if cutoff is None or ob.data.vertices[vertex.index].co.z <= cutoff]
+        if not points:
+            raise RuntimeError("No distal paw vertices for "+name)
         return Vector(tuple(
             .5*(min(p[axis] for p in points)+max(p[axis] for p in points))
             for axis in range(3)
@@ -636,7 +796,8 @@ def main():
         source="public/animals/cat.webp (style reference only)",
         blender=bpy.app.version_string,
         clips=["Idle","Walk","Eat","Play","Rest","Groom","Sniff"],
-        rig="Skin-weighted neck, torso, head and limbs; two-link kinematic gait",
+        rig="Connected single-surface limbs with Body/Upper/Lower skin weights; two-link kinematic gait",
+        appearance="Rebalanced torso/face silhouette, geometric coat relief and batched sculpted fur tips",
         physics="Two-link IK, evaluated paw-ground and grooming-target fitting; no dynamic collision or muscle simulation",
         sha256=hashlib.sha256(glb.read_bytes()).hexdigest(),
         bytes=glb.stat().st_size,

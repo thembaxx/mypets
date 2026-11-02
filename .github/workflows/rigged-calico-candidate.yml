@@ -5,6 +5,7 @@ on:
       - feat/living-3d-pet-behaviours-20261102
     paths:
       - scripts/author-calico-rig.py
+      - scripts/verify-calico-anatomy.py
       - scripts/calico_gait.py
       - scripts/test_calico_gait.py
       - scripts/check_calico_contact.py
@@ -37,7 +38,7 @@ jobs:
           blender --version | head -3
       - name: Check Blender authoring scripts
         run: |
-          python3 -m py_compile scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py
+          python3 -m py_compile scripts/author-calico-rig.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py
           python3 scripts/test_calico_gait.py -v
           python3 -m py_compile scripts/render-calico-review.py
           python3 -m py_compile scripts/audit-calico-contact.py
@@ -45,6 +46,9 @@ jobs:
       - name: Generate original rigged calico candidate
         run: |
           blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-calico-rig.py -- --output-dir "$RUNNER_TEMP/calico"
+      - name: Reject disconnected limb parts and missing fur geometry
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/verify-calico-anatomy.py
       - name: Verify actual keyed Blender shin targets and stance height
         run: |
           blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/check_calico_contact.py -- --output-dir "$RUNNER_TEMP/calico"
@@ -76,15 +80,15 @@ jobs:
           at_peak = [frame for frame in groom["frames"] if frame["frame"] in (19, 25, 31)]
           assert len(at_peak) == 3 and all(frame["surface_gap"] <= .03 for frame in at_peak), (
               "Grooming paw must actually approach the muzzle during peak grooming", at_peak)
-          assert groom["max_forearm_separation"] <= .05, (
-              "Grooming animation must not pull the paw off its forearm", groom)
+          assert groom["connected_limb"], (
+              "All grooming paw vertices must belong to the continuous anatomical limb", groom)
           assert report["eat"]["nearest_mouth_food"] <= .15, (
               "Feeding mouth must reach the food location", report["eat"])
           assert report["walk"]["stance_pad_z_max"] <= .12, (
               "Decorative toe pads are floating too high above grounded paws", report["walk"])
-          print("REAL_GROOM_AND_FEED_PASS peak_gap=%.4f forearm_gap=%.4f food_gap=%.4f" %
+          print("REAL_GROOM_AND_FEED_PASS peak_gap=%.4f connected_limb=%s food_gap=%.4f" %
                 (max(frame["surface_gap"] for frame in at_peak),
-                 groom["max_forearm_separation"], report["eat"]["nearest_mouth_food"]))
+                 groom["connected_limb"], report["eat"]["nearest_mouth_food"]))
           PY
       - name: Render independent front, side and 3/4 reviews
         run: |
@@ -104,7 +108,7 @@ jobs:
             git fetch origin feat/living-3d-pet-behaviours-20261102
             # An older job must never replace candidate files generated from
             # newer Blender/validation/review scripts.
-            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py .github/workflows/rigged-calico-candidate.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py .github/workflows/rigged-calico-candidate.yml; then
               echo "Newer 3D authoring sources exist. Skip stale candidate publication."
               exit 0
             fi
