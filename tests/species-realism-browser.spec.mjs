@@ -29,12 +29,11 @@ for (const species of ['dog', 'rabbit']) {
       // WebKit can return two identical compositor snapshots if its software
       // WebGL draw is delayed. Sample multiple browser frames and still fail
       // if the 3D animal is genuinely frozen for the whole observation window.
-      await expect
-        .poll(async () => {
-          const next = await canvas.screenshot({ animations: 'allow' });
-          return Buffer.compare(pose1, next) !== 0;
-        }, { timeout: 5000, intervals: [180, 240, 350, 500, 700] })
-        .toBe(true);
+      const poseChanged = async () => {
+        const next = await canvas.screenshot();
+        return Buffer.compare(pose1, next) !== 0;
+      };
+      await expect.poll(poseChanged).toBe(true);
       await dialog.getByRole('button', { name: 'Eat', exact: true }).click();
       await expect(dialog.getByRole('button', { name: 'Eat', exact: true })).toHaveAttribute(
         'aria-pressed',
