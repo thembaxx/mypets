@@ -85,6 +85,65 @@ def bind(ob, bone):
     ob.parent = RIG
 
 
+def smoothstep(edge0, edge1, value):
+    """Clamped smooth blending, no discontinuous weight bands."""
+    t = max(0.0, min(1.0, (value-edge0)/(edge1-edge0)))
+    return t*t*(3.0-2.0*t)
+
+
+def soften_skin(ob, primary, secondary, secondary_fraction):
+    """Deform one contiguous mesh with two connected anatomical bones.
+
+    Rigid submeshes are still used for ears/nose/whiskers, but torso, ruff,
+    face and limb surfaces now have interpolated skin weights. This does not
+    claim that overlapping surfaces are one watertight character sculpt.
+    """
+    first = ob.vertex_groups.get(primary)
+    if first is None:
+        raise RuntimeError("Missing skin bone %s on %s" % (primary, ob.name))
+    second = ob.vertex_groups.new(name=secondary)
+    for vertex in ob.data.vertices:
+        blend = max(0.0, min(0.88, float(secondary_fraction(vertex.co))))
+        if blend > .0001:
+            first.add([vertex.index], max(.0001, 1.0-blend), "REPLACE")
+            second.add([vertex.index], blend, "REPLACE")
+    return ob
+
+
+def vertex_contact(meshes):
+    """Minimum world-space paw sole height with all armature deformers applied."""
+    bpy.context.view_layer.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    lows = []
+    for ob in meshes:
+        evaluated = ob.evaluated_get(depsgraph)
+        evaluated_mesh = evaluated.to_mesh()
+        try:
+            world = evaluated.matrix_world
+            lows.append(min((world @ v.co).z for v in evaluated_mesh.vertices))
+        finally:
+            evaluated.to_mesh_clear()
+    return min(lows)
+
+
+def plant_feet(frame, paw_meshes, target_z=.012):
+    """Correct body root height from *evaluated skinned paw geometry*.
+
+    This corrects actual contact, not an abstract sine curve. Paw swing
+    remains authored by the gait and is not an active collision solver.
+    """
+    bpy.context.scene.frame_set(frame)
+    low = vertex_contact(paw_meshes)
+    correction = max(-.34, min(.34, target_z-low))
+    root = RIG.pose.bones["Root"]
+    root.location.z += correction
+    root.keyframe_insert("location", frame=frame, group="Root")
+    bpy.context.scene.frame_set(frame)
+    actual = vertex_contact(paw_meshes)
+    if abs(actual-target_z) > .065:
+        raise RuntimeError("Foot contact correction failed at %s: %.3fm" % (frame, actual))
+
+
 def shape_target(ob, name, scale_z):
     ob.shape_key_add(name="Basis")
     key = ob.shape_key_add(name=name)
@@ -148,17 +207,25 @@ def model():
     dark = material("Eye and mouth cocoa", (.19, .10, .095), .62)
     mouth_red = material("Open mouth ruby", (.65, .13, .16))
     body = make_mesh("Continuous chibi torso", (0, -.26, .96), (.64, .83, .59), cream, "Body", 64, 40)
+    soften_skin(body, "Body", "Neck", lambda v:
+                .48 * smoothstep(.02,.58,v.y) * smoothstep(.78,1.39,v.z))
     body.data.materials.append(gold)
     for polygon in body.data.polygons:
         points = [body.data.vertices[i].co for i in polygon.vertices]
         avg = sum(points, Vector()) / len(points)
         if avg.x > .43 and -.72 < avg.y < .15 and avg.z < 1.23:
             polygon.material_index = 1
-    make_mesh("Cream fluffy ruff", (0, .14, 1.12), (.57, .45, .48), white, "Neck", 32, 20)
+    ruff = make_mesh("Cream fluffy ruff", (0, .14, 1.12),
+                     (.57, .45, .48), white, "Neck", 40, 28)
+    soften_skin(ruff, "Neck", "Body", lambda v:
+                .72 * (1-smoothstep(.81,1.27,v.z)))
     # Painted calico forehead and ears carry the distinct original markings.
     make_mesh("Soft belly", (0, .36, .82), (.43, .29, .37), white, "Body")
     face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
                      (.76, .59, .64), white, "Head", 128, 88)
+    soften_skin(face, "Head", "Neck", lambda v:
+                .40 * (1-smoothstep(.97,1.42,v.z))
+                * (1-smoothstep(.58,1.10,v.y)))
     # Real surface paint zones rather than floating sphere patches. Geometry
     # remains continuous so forehead markings follow all head rotations.
     face.data.materials.append(gold)
@@ -217,10 +284,15 @@ def model():
         for side in (-1, 1):
             label = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
             x = side*.46
-            make_mesh(label + " shoulder", (x,y,z-.25), (.23,.27,.38),
-                      cream, label + "_Upper", 24,16)
-            make_mesh(label + " lower paw", (x,y,z-.68), (.19,.24,.27),
-                      cream, label + "_Lower", 24,16)
+            shoulder = make_mesh(label + " shoulder", (x,y,z-.25),
+                                 (.23,.27,.38), cream, label + "_Upper", 32,22)
+            soften_skin(shoulder, label+"_Upper", "Body", lambda v, upper_z=z:
+                        .67*smoothstep(upper_z-.32, upper_z+.12, v.z))
+            lower_paw = make_mesh(label + " lower paw", (x,y,z-.68),
+                                  (.19,.24,.27), cream, label + "_Lower", 32,20)
+            soften_skin(lower_paw, label+"_Lower", label+"_Upper",
+                        lambda v, lower_z=z-.68:
+                        .59*smoothstep(lower_z-.12, lower_z+.28, v.z))
             make_mesh(label + " rosy toe pad", (x,y+.20,.18), (.12,.035,.08),
                       pink, label + "_Lower", 16,12)
     make_mesh("Amber tail base", (0,-1.14,.99), (.23,.40,.22), gold, "Tail_1")
@@ -274,6 +346,10 @@ def gait_ik(phase, is_front):
 
 
 def build_actions():
+    paw_meshes = [ob for ob in bpy.context.scene.objects
+                  if ob.type=="MESH" and " lower paw" in ob.name]
+    if len(paw_meshes) != 4:
+        raise RuntimeError("Exactly four deformable paws required for contact QA")
     RIG.animation_data_create()
     for clip in ("Idle","Walk","Eat","Play","Rest"):
         action = bpy.data.actions.new(clip)
@@ -314,6 +390,7 @@ def build_actions():
                 set_pose(frame, body_z=.016*math.sin(cycle),
                          head_yaw=.07*math.sin(cycle), head_pitch=.03*math.sin(cycle),
                          tail=.14*math.sin(cycle), ears=.035*math.sin(cycle))
+            plant_feet(frame, paw_meshes)
         # Frame LAST is already authored in the above loop at the same
         # walk-cycle phase as frame 1. Never overwrite it with neutral limbs:
         # that introduces a visible gait/feeding snap at the loop seam.
@@ -371,8 +448,8 @@ def main():
         source="public/animals/cat.webp (style reference only)",
         blender=bpy.app.version_string,
         clips=["Idle","Walk","Eat","Play","Rest"],
-        rig="Skinned armature with independent 2-link limb chains",
-        physics="Authored foot target approximation; no physical muscle simulation",
+        rig="Skin-weighted neck, torso, head and limbs; two-link foot gait with evaluated paw contact",
+        physics="Per-keyframe evaluated paw sole corrections; secondary motion approximate; no rigid-body muscle simulation",
         sha256=hashlib.sha256(glb.read_bytes()).hexdigest(),
         bytes=glb.stat().st_size,
     )
