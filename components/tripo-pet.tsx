@@ -96,6 +96,14 @@ function AnimalModel({
   const model = useMemo(() => {
     // SkeletonUtils.clone avoids accidental shared animation bone transforms.
     const copy = clone(gltf.scene);
+    // Imported glTF meshes default to not casting shadows. Real contact
+    // shadows expose hovering paws and make the floor interaction reviewable.
+    copy.traverse((object) => {
+      if (object instanceof Mesh || object instanceof SkinnedMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
     const bounds = new Box3().setFromObject(copy);
     const dimensions = bounds.getSize(new Vector3());
     const size = Math.max(dimensions.x, dimensions.y, dimensions.z, 0.001);
@@ -429,6 +437,18 @@ export default function TripoPet({
                 shadow-mapSize={[1024, 1024]}
               />
               <directionalLight position={[3, 3, -4]} intensity={1.3} color="#d6e6ff" />
+              {activeUrl && (
+                <group>
+                  <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.008, 0]}>
+                    <circleGeometry args={[2.1, 64]} />
+                    <meshBasicMaterial color="#a08c7a" transparent opacity={0.08} depthWrite={false} />
+                  </mesh>
+                  <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.004, 0]} receiveShadow>
+                    <circleGeometry args={[2.1, 64]} />
+                    <shadowMaterial transparent opacity={0.28} depthWrite={false} />
+                  </mesh>
+                </group>
+              )}
               <Suspense fallback={null}>
                 {activeUrl ? (
                   <group rotation={[0, localPreview || candidateMode ? Math.PI : 0, 0]}>
