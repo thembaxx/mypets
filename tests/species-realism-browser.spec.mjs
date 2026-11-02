@@ -26,6 +26,7 @@ for (const species of ['dog', 'rabbit']) {
         'true',
       );
       const pose1 = await canvas.screenshot();
+      // Test against the newly exported GLB on the actual final PR head.
       // WebKit can return two identical compositor snapshots if its software
       // WebGL draw is delayed. Sample multiple browser frames and still fail
       // if the 3D animal is genuinely frozen for the whole observation window.
