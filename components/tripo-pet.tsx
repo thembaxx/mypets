@@ -371,8 +371,7 @@ export default function TripoPet({
     }
   };
   const namedClip = report ? findPetClip(report.clips, activity) : null;
-  const supportedAction =
-    !activeUrl || activity === 'idle' || namedClip !== null;
+  const supportedAction = !activeUrl || activity === 'idle' || namedClip !== null;
   const status = activeUrl
     ? !report
       ? 'Loading the rigged 3D model.'
