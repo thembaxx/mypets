@@ -27,21 +27,40 @@ for (const clip of expected)
     `Rigged model must expose separate authored clip ${clip}; found ${actualNames.join(', ')}`,
   );
 const morphs = (doc.meshes ?? []).flatMap((mesh) => mesh.extras?.targetNames ?? []);
-// The shipping candidate must contain each one-piece limb and must not
-// regress to individually skinned floating shoulder/paw spheres.
+// Blender glTF exports the OBJECT name to a node and the datablock name to
+// a mesh. Never infer one from the other: the saved .blend topology audit
+// already establishes that each limb consists of one connected mesh.
+function meshInstances() {
+  return (doc.nodes ?? [])
+    .filter((node) => Number.isInteger(node.mesh))
+    .map((node) => ({
+      node,
+      mesh: doc.meshes?.[node.mesh],
+      name: node.name ?? '',
+    }))
+    .filter((entry) => entry.mesh);
+}
+const instances = meshInstances();
 for (const label of ['Front_L', 'Front_R', 'Rear_L', 'Rear_R']) {
+  const limb = instances.find(({ name }) => name === label + ' lower paw');
   assert.ok(
-    (doc.meshes ?? []).some((mesh) => mesh.name?.includes(label + ' lower paw')),
-    `Missing connected anatomical limb ${label}`,
+    limb,
+    `Missing connected limb node ${label}; exported mesh nodes: ${instances.map(({ name }) => name).join(', ')}`,
   );
   assert.ok(
-    !(doc.meshes ?? []).some((mesh) => mesh.name?.includes(label + ' shoulder')),
-    `The separated shoulder mesh returned for ${label}`,
+    (limb.mesh.primitives ?? []).some((part) =>
+      part.attributes?.JOINTS_0 !== undefined && part.attributes?.WEIGHTS_0 !== undefined,
+    ),
+    `Limb ${label} node must reference actual skin-weighted geometry`,
+  );
+  assert.ok(
+    !instances.some(({ name }) => name === label + ' shoulder'),
+    `Separated shoulder mesh returned for ${label}`,
   );
 }
 assert.ok(
-  (doc.meshes ?? []).filter((mesh) => mesh.name?.startsWith('Fur ')).length >= 5,
-  'Review candidate must include batched sculpted silhouette fur',
+  instances.filter(({ name }) => name.startsWith('Fur ')).length >= 5,
+  'Review candidate must include batched sculpted silhouette fur nodes',
 );
 for (const key of [
   'Blink_L',
