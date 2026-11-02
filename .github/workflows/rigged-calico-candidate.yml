@@ -71,6 +71,20 @@ jobs:
               "Swinging paws must not penetrate the ground", swing)
           print("REAL_MESH_CONTACT_PASS stance=[%.4f, %.4f] swing_min=%.4f" %
                 (min(stance), max(stance), min(swing)))
+          # Require visible grooming contact without separating the forearm.
+          groom = report["groom"]
+          at_peak = [frame for frame in groom["frames"] if frame["frame"] in (19, 25, 31)]
+          assert len(at_peak) == 3 and all(frame["surface_gap"] <= .03 for frame in at_peak), (
+              "Grooming paw must actually approach the muzzle during peak grooming", at_peak)
+          assert groom["max_forearm_separation"] <= .05, (
+              "Grooming animation must not pull the paw off its forearm", groom)
+          assert report["eat"]["nearest_mouth_food"] <= .15, (
+              "Feeding mouth must reach the food location", report["eat"])
+          assert report["walk"]["stance_pad_z_max"] <= .12, (
+              "Decorative toe pads are floating too high above grounded paws", report["walk"])
+          print("REAL_GROOM_AND_FEED_PASS peak_gap=%.4f forearm_gap=%.4f food_gap=%.4f" %
+                (max(frame["surface_gap"] for frame in at_peak),
+                 groom["max_forearm_separation"], report["eat"]["nearest_mouth_food"]))
           PY
       - name: Render independent front, side and 3/4 reviews
         run: |
