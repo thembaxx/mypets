@@ -129,7 +129,7 @@ function AnimalModel({
     });
   }, [gltf.animations, morphTargets, onReport]);
   useEffect(() => {
-    if (!animated || !gltf.animations.length) {
+    if (!gltf.animations.length) {
       running.current?.stop();
       running.current = null;
       return;
