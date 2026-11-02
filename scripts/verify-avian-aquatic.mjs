@@ -71,6 +71,10 @@ for (const species of [...birds, ...fish]) {
       !names.some((name) => /wing -1|wing 1/.test(name)),
       species + ': old ellipsoid wing remains',
     );
+    assert.ok(
+      names.filter((name) => name.startsWith(species + ' toe ')).length >= 6,
+      species + ': three toes per foot are required on the new bird pose',
+    );
   } else {
     for (const name of [
       'sculpted caudal fin',
@@ -88,6 +92,11 @@ for (const species of [...birds, ...fish]) {
       !names.some((name) => name === species + ' caudal fin'),
       species + ': round ellipsoid caudal fin remains',
     );
+    assert.ok(
+      !names.some((name) => name === 'Skinned ' + species + ' skull'),
+      species + ': detached spherical head returned on a fish',
+    );
+    meshNode(doc, 'Anatomical ' + species + ' torso', species);
   }
   console.log('AVIAN_AQUATIC_EXPORT_PASS', species, {
     meshCount: doc.meshes?.length,
