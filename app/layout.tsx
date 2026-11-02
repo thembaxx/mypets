@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import './living-cat.css';
 import { appearanceBootstrap } from '@/lib/appearance';
 import { brand } from '@/lib/brand';
 import { siteOrigin, pageMetadata, structuredData, jsonLd } from '@/lib/site';
