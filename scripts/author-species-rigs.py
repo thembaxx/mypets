@@ -601,8 +601,14 @@ def build(slug, out):
     if not path.is_file() or path.stat().st_size>8*1024*1024:
         raise RuntimeError("Missing or oversized species GLB: "+slug)
     rig.animation_data.action=None
+    if slug in ("dog","rabbit","fish","angelfish"):
+        for track in rig.animation_data.nla_tracks:
+            track.mute=track.name!="Play"
+        bpy.context.scene.frame_set(13)
+        render_review(out/(slug+"-play-review.png"))
     for track in rig.animation_data.nla_tracks:
         track.mute=track.name!="Idle"
+    bpy.context.scene.frame_set(1)
     render_review(out/(slug+"-review.png"))
     # Report the *deformed*, world-space stance drift in the authored clip.
     # This is diagnostic only; curves are not a real foot-locking solver.
