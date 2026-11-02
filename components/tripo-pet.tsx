@@ -27,9 +27,11 @@ import {
   PauseIcon,
   PlayIcon,
   VideoCameraIcon,
+  UploadSimpleIcon,
 } from '@phosphor-icons/react';
 import { AnimalAnimationContext } from './shared';
-import LivingCat from './living-cat';
+import LivingCat, { FeedingBowl } from './living-cat';
+import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
 
 type ModelReport = { clips: string[]; morphs: string[] };
@@ -243,6 +245,10 @@ export default function TripoPet({
   const recordTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [recording, setRecording] = useState(false);
   const [recordError, setRecordError] = useState('');
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const localPreviewRef = useRef<string | null>(null);
+  const [previewError, setPreviewError] = useState('');
+  const activeUrl = localPreview ?? url;
   const reduced = systemReduced || !animationEnabled || paused;
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
@@ -266,6 +272,25 @@ export default function TripoPet({
     },
     [],
   );
+  useEffect(() => () => {
+    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+  }, []);
+  const loadLocalModel = async (file?: File) => {
+    if (!file || recording) return;
+    try {
+      const contents = await file.arrayBuffer();
+      validateLocalGlb(contents);
+      const next = URL.createObjectURL(new Blob([contents], { type: 'model/gltf-binary' }));
+      if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+      localPreviewRef.current = next;
+      setLocalPreview(next);
+      setPreviewError('');
+      setReport(null);
+      setActivity('idle');
+    } catch (error) {
+      setPreviewError(error instanceof Error ? error.message : 'Cannot open this GLB.');
+    }
+  };
   const recordClip = () => {
     if (reduced || recording) return;
     const canvas = canvasRef.current;
@@ -321,10 +346,10 @@ export default function TripoPet({
     }
   };
   const supportedAction =
-    !url || activity === 'idle' || (report !== null && !!findPetClip(report.clips, activity));
-  const status = url
+    !activeUrl || activity === 'idle' || (report !== null && !!findPetClip(report.clips, activity));
+  const status = activeUrl
     ? !report
-      ? 'Loading the approved 3D model.'
+      ? 'Loading the rigged 3D model.'
       : supportedAction
         ? 'Playing an authored 3D animation when available.'
         : 'This model has no ' + activity + ' animation. Showing its idle pose.'
@@ -359,7 +384,7 @@ export default function TripoPet({
           </button>
         </div>
         <div className="tripo-living-stage">
-          <ModelErrorBoundary onClose={onClose}>
+          <ModelErrorBoundary onClose={onClose} key={activeUrl || 'procedural'}>
             <Canvas
               frameloop={reduced ? 'demand' : 'always'}
               dpr={[1, 1.6]}
@@ -380,23 +405,41 @@ export default function TripoPet({
               />
               <directionalLight position={[3, 3, -4]} intensity={1.3} color="#d6e6ff" />
               <Suspense fallback={null}>
-                {url ? (
-                  <AnimalModel
-                    url={url}
+                {activeUrl ? (
+                  <group rotation={localPreview ? [0, Math.PI, 0] : [0, 0, 0]}>
+                    <AnimalModel
+                    url={activeUrl}
                     activity={activity}
                     mood={mood}
                     animated={!reduced}
                     onReport={setReport}
                   />
+                  </group>
                 ) : (
                   <LivingCat activity={activity} mood={mood} paused={reduced} />
                 )}
               </Suspense>
+              {activeUrl && activity === 'eat' && <FeedingBowl />}
               <PetOrbit reducedMotion={reduced} />
             </Canvas>
           </ModelErrorBoundary>
         </div>
         <div className="tripo-living-controls">
+          <label className="tripo-local-file">
+            <UploadSimpleIcon size={18} aria-hidden="true" />
+            <span>Review a downloaded Blender GLB (on-device only)</span>
+            <input
+              type="file"
+              accept=".glb,model/gltf-binary"
+              disabled={recording}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                void loadLocalModel(file);
+                event.target.value = '';
+              }}
+            />
+          </label>
+          {previewError && <p className="tripo-living-status" role="alert">{previewError}</p>}
           <div className="tripo-activity-picker" role="group" aria-label="Animal behaviour">
             {actions.map(({ activity: next, label, Icon }) => (
               <button
@@ -454,7 +497,7 @@ export default function TripoPet({
           <p className="tripo-living-status" role="status">
             {recordError || status}
           </p>
-          {!url && (
+          {!activeUrl && (
             <p className="tripo-living-note">
               This is an articulated 3D character prototype with simulated movement and collisions,
               not a photo-accurate reconstruction, motion capture, or a physically exact animal.
