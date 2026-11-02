@@ -70,6 +70,7 @@ def main():
         ("walking", (2.5, 4.9, 2.15), "Walk", 17),
         ("grooming", (2.5, 4.9, 2.15), "Groom", 21),
         ("sniffing", (2.5, 4.9, 2.15), "Sniff", 21),
+        ("play-jump", (2.5, 4.9, 2.15), "Play", 13),
     ):
         camera_at("Review-"+name, xyz, (0, .18, 1.18))
         clip(which, frame)
