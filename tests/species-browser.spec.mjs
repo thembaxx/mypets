@@ -63,6 +63,11 @@ test('all illustrated animal candidates are real individual GLB files', async ({
         .trim(),
     );
     expect(gltf.skins?.length, 'Missing skinned skeleton for ' + id).toBeGreaterThan(0);
+    const animalKind = kinds.find((item) => item.id === id)?.kind;
+    if (animalKind === 'quadruped' || (animalKind === 'reptile' && id !== 'snake')) {
+      expect(gltf.nodes.some((node) => node.name === 'Skinned ' + id + ' skull')).toBe(true);
+      expect(gltf.nodes.some((node) => node.name === id + ' muzzle')).toBe(false);
+    }
     const clipNames = (gltf.animations ?? []).map((clip) => clip.name.toLowerCase());
     for (const action of ['idle', 'walk', 'eat', 'play', 'rest', 'groom', 'sniff']) {
       expect(
