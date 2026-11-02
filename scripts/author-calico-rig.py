@@ -134,11 +134,43 @@ def soften_skin(ob, primary, secondary, secondary_fraction):
 
 
 def shape_target(ob, name, scale_z):
+    """Animate expression thickness around the local mesh centre, not world Z.
+
+    The old implementation multiplied absolute positions; Blink moved eyes
+    from face height to the cat's feet, and Eye_Wide could fly off the skull.
+    """
     ob.shape_key_add(name="Basis")
     key = ob.shape_key_add(name=name)
-    for src, dst in zip(ob.data.shape_keys.key_blocks["Basis"].data, key.data):
-        dst.co = (src.co.x, src.co.y, src.co.z * scale_z)
+    basis = ob.data.shape_keys.key_blocks["Basis"].data
+    centre_z = .5*(min(v.co.z for v in basis)+max(v.co.z for v in basis))
+    for src, dst in zip(basis, key.data):
+        dst.co = (src.co.x, src.co.y,
+                  centre_z+(src.co.z-centre_z)*scale_z)
     return key
+
+
+def verify_expression_shapes():
+    """Block escaped/teleported blend shapes before exporting mobile GLB."""
+    checked = []
+    for ob in bpy.data.objects:
+        if ob.type != "MESH" or ob.data.shape_keys is None:
+            continue
+        keys = ob.data.shape_keys.key_blocks
+        if len(keys) < 2:
+            continue
+        basis = keys[0].data
+        for key in list(keys)[1:]:
+            motion = max((vertex.co-other.co).length
+                         for other,vertex in zip(basis,key.data))
+            if not math.isfinite(motion) or motion > .20:
+                raise RuntimeError(
+                    "Facial shape %s on %s moves %.3fm from its mesh" %
+                    (key.name, ob.name, motion)
+                )
+            checked.append((ob.name,key.name,round(motion,4)))
+    if len(checked) < 8:
+        raise RuntimeError("Expected all original expressions after sculpt refinement")
+    print("FACE_MORPH_BUDGET: %s" % json.dumps(checked), flush=True)
 
 
 def skeleton():
@@ -267,7 +299,7 @@ def model():
         # Additional shape key for exaggerated curiosity.
         key = eye.shape_key_add(name="Eye_Wide")
         for src, dst in zip(eye.data.shape_keys.key_blocks["Basis"].data, key.data):
-            dst.co = (src.co.x, src.co.y, src.co.z * 4.2)
+            dst.co = (src.co.x, src.co.y, 1.74+(src.co.z-1.74)*1.85)
         # Upper smiling eyelid arc
         points = []
         for i in range(11):
@@ -575,6 +607,7 @@ def main():
     bpy.context.scene.frame_end = LAST
     skeleton()
     model()
+    verify_expression_shapes()
     build_actions()
     bpy.context.scene.frame_set(1)
     bpy.ops.wm.save_as_mainfile(filepath=str(out/"nuzzle-calico-rig.blend"))
