@@ -46,12 +46,32 @@ def make_mesh(name, pos, radius, mat, bone, segments=24, rings=16):
 
 
 def make_cone(name, pos, radius, depth, mat, bone):
-    bpy.ops.mesh.primitive_cone_add(vertices=3, radius1=radius, radius2=0, depth=depth)
-    ob = bpy.context.object
-    ob.name = name
-    ob.location = pos
+    """Build a thin, swept triangular feline ear instead of a round cone.
+
+    The broad base follows the skull and the slanted tip points outward.
+    Front and back faces give this genuinely three-dimensional ear a little
+    thickness without introducing a heavy cartoon traffic-cone silhouette.
+    """
+    x, y, z = pos
+    outward = 1 if x > 0 else -1
+    base_z = z - depth*.39
+    tip_z = z + depth*.56
+    pts = [
+        (x-radius*.90, y+.05, base_z),
+        (x+radius*.90, y+.05, base_z),
+        (x+outward*radius*.18, y-.015, tip_z),
+        (x-radius*.90, y-.10, base_z),
+        (x+radius*.90, y-.10, base_z),
+        (x+outward*radius*.18, y-.11, tip_z),
+    ]
+    faces = [(0,1,2), (5,4,3), (0,3,4,1),
+             (1,4,5,2), (2,5,3,0)]
+    mesh = bpy.data.meshes.new(name + " ear geometry")
+    mesh.from_pydata(pts, [], faces)
+    mesh.update()
+    ob = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(ob)
     ob.data.materials.append(mat)
-    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     bind(ob, bone)
     return ob
 
@@ -191,7 +211,7 @@ def model():
     # Painted calico forehead and ears carry the distinct original markings.
     make_mesh("Soft belly", (0, .36, .82), (.43, .29, .37), white, "Body")
     face = make_mesh("One-piece calico rounded face", (0, .53, 1.60),
-                     (.76, .59, .64), white, "Head", 128, 88)
+                     (.71, .57, .60), white, "Head", 128, 88)
     soften_skin(face, "Head", "Neck", lambda v:
                 .40 * (1-smoothstep(.97,1.42,v.z))
                 * (1-smoothstep(.58,1.10,v.y)))
@@ -211,18 +231,18 @@ def model():
                 polygon.material_index = 2
     make_cone("Screen-left amber ear", (.50, .45, 2.18), .30, .61, gold, "Ear_R")
     make_cone("Screen-right chocolate ear", (-.50, .45, 2.18), .30, .61, cocoa, "Ear_L")
-    make_cone("Screen-left rose ear inset", (.50, .67, 2.17), .16, .38, pink, "Ear_R")
-    make_cone("Screen-right rose ear inset", (-.50, .67, 2.17), .16, .38, pink, "Ear_L")
+    make_cone("Screen-left rose ear inset", (.50, .52, 2.20), .15, .36, pink, "Ear_R")
+    make_cone("Screen-right rose ear inset", (-.50, .52, 2.20), .15, .36, pink, "Ear_L")
     for side, label in ((-1, "Left"), (1, "Right")):
-        cheek = make_mesh(label+" rose cheek", (side*.47, 1.04, 1.44),
-                          (.19, .055, .12), blush, "Head")
+        cheek = make_mesh(label+" rose cheek", (side*.44, 1.032, 1.45),
+                          (.155, .035, .09), blush, "Head")
         cheek.shape_key_add(name="Basis")
         puff = cheek.shape_key_add(name="Cheek_Puff")
         for source, vertex in zip(cheek.data.shape_keys.key_blocks["Basis"].data, puff.data):
             vertex.co = (source.co.x + side*.034,
                          source.co.y + .022, source.co.z + .012)
-    make_mesh("Left muzzle", (-.16, 1.08, 1.30), (.23, .13, .18), white, "Head")
-    make_mesh("Right muzzle", (.16, 1.08, 1.30), (.23, .13, .18), white, "Head")
+    make_mesh("Left muzzle", (-.15, 1.08, 1.31), (.205, .12, .145), white, "Head")
+    make_mesh("Right muzzle", (.15, 1.08, 1.31), (.205, .12, .145), white, "Head")
     nose_mesh = make_mesh("Heart shaped coral nose", (0, 1.23, 1.46),
                           (.10, .06, .065), nose, "Head")
     nose_mesh.shape_key_add(name="Basis")
@@ -241,8 +261,8 @@ def model():
         pos = "L" if side < 0 else "R"
         # Distinct eyes instead of permanently painted arcs. The eyeballs
         # deform with Blink shape keys; the raised smile lids preserve art style.
-        eye = make_mesh("%s deep cocoa eye" % pos, (side*.30, 1.038, 1.75),
-                        (.11, .042, .045), dark, "Head", 24, 16)
+        eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.105, 1.74),
+                        (.105, .055, .090), dark, "Head", 24, 16)
         shape_target(eye, "Blink_" + pos, .12)
         # Additional shape key for exaggerated curiosity.
         key = eye.shape_key_add(name="Eye_Wide")
@@ -252,16 +272,21 @@ def model():
         points = []
         for i in range(11):
             angle = math.pi * i / 10
-            points.append((side*.30 + .145*math.cos(angle),
-                           1.092, 1.76 + .09*math.sin(angle)))
-        make_curve("%s smiling lid" % pos, points, cocoa, "Head", .031)
+            points.append((side*.29 + .125*math.cos(angle),
+                           1.165, 1.795 + .07*math.sin(angle)))
+        make_curve("%s smiling lid" % pos, points, cocoa, "Head", .022)
+        # Tiny catchlight follows the skull; leave eye blink/curious shapes
+        # on the underlying eye mesh, not the reflection.
+        make_mesh("%s eye catchlight" % pos,
+                  (side*.29-.029, 1.16, 1.775),
+                  (.026, .009, .025), white, "Head", 16, 12)
         for whisker in range(3):
             start_x = side*.61
             end_x = side*(.90 + whisker*.035)
             z = 1.33 + (whisker-1)*.10
             make_curve("%s whisker %s" % (pos, whisker),
-                       [(start_x, 1.025, 1.33), (end_x, .94, z)],
-                       cocoa, "Head", .014)
+                       [(start_x, 1.025, 1.33), (end_x, .98, z)],
+                       cocoa, "Head", .009)
     for fore in (True, False):
         y = .33 if fore else -.69
         z = 1.02 if fore else .89
@@ -269,11 +294,11 @@ def model():
             label = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
             x = side*.46
             shoulder = make_mesh(label + " shoulder", (x,y,z-.25),
-                                 (.23,.27,.38), cream, label + "_Upper", 32,22)
+                                 (.195,.235,.38), cream, label + "_Upper", 32,22)
             soften_skin(shoulder, label+"_Upper", "Body", lambda v, upper_z=z:
                         .67*smoothstep(upper_z-.32, upper_z+.12, v.z))
             lower_paw = make_mesh(label + " lower paw", (x,y,z-.68),
-                                  (.19,.24,.27), cream, label + "_Lower", 32,20)
+                                  (.166,.215,.27), cream, label + "_Lower", 32,20)
             soften_skin(lower_paw, label+"_Lower", label+"_Upper",
                         lambda v, lower_z=z-.68:
                         .59*smoothstep(lower_z-.12, lower_z+.28, v.z))
@@ -289,8 +314,11 @@ def model():
                                 pink, label + "_Lower", 16,12)
             soften_skin(toe_pad, label+"_Lower", label+"_Upper",
                         lambda v: .13)
-    make_mesh("Amber tail base", (0,-1.14,.99), (.23,.40,.22), gold, "Tail_1")
-    make_mesh("Dark tipped tail", (0,-1.35,1.28), (.24,.29,.23), cocoa, "Tail_2")
+    # A continuous-looking curled tail profile, not two disconnected spheres.
+    make_curve("Amber tail base", [(0,-.96,.92), (0,-1.11,1.01),
+                                  (0,-1.21,1.18)], gold, "Tail_1", .11)
+    make_curve("Dark tipped tail", [(0,-1.21,1.18), (0,-1.27,1.31),
+                                   (0,-1.22,1.46)], cocoa, "Tail_2", .10)
     # Add an independent little whisker/tongue/mouth assembly through the rig.
     # This rig is intentionally visually recognisable but is not a scanned pet.
 
