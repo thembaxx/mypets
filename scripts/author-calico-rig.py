@@ -807,6 +807,11 @@ def fit_nonwalk_support(frame, raised=()):
                 return min(evaluated_lowest(name) for name in surfaces)
 
             before = low()
+            # A jumping/playing paw above ground must remain airborne.
+            # Correct penetration only: forcing every paw to z=.006 would
+            # flatten existing Play bounce and flight arcs.
+            if before >= .002:
+                continue
             bone = RIG.pose.bones[label+"_Lower"]
             original = bone.location.y
             probe = .018
