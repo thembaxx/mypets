@@ -46,7 +46,6 @@ test('pet model viewer honours animation settings and keeps reduced-motion orbit
     assert.ok(source.includes(fragment), fragment);
 });
 
-
 test('3D playroom remains an opt-in viewer, preserves artwork and has local video capture', () => {
   const shared = readFileSync(new URL('../components/shared.tsx', import.meta.url), 'utf8');
   const viewer = readFileSync(new URL('../components/tripo-pet.tsx', import.meta.url), 'utf8');

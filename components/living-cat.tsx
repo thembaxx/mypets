@@ -58,13 +58,7 @@ function Paw({ rear = false }: { rear?: boolean }) {
   );
 }
 
-function PlayBall({
-  active,
-  paused,
-}: {
-  active: boolean;
-  paused: boolean;
-}) {
+function PlayBall({ active, paused }: { active: boolean; paused: boolean }) {
   const mesh = useRef<Mesh>(null);
   const velocity = useRef({ x: -0.5, y: 0.5, z: 0 });
   useFrame((_, delta) => {
@@ -209,7 +203,12 @@ export default function LivingCat({
             <sphereGeometry args={[1, 48, 32]} />
             <meshStandardMaterial color="#fff0d6" roughness={0.85} />
           </mesh>
-          <mesh position={[-0.5, 0.94, 0.14]} rotation={[0, 0, 0.3]} scale={[0.23, 0.42, 0.16]} castShadow>
+          <mesh
+            position={[-0.5, 0.94, 0.14]}
+            rotation={[0, 0, 0.3]}
+            scale={[0.23, 0.42, 0.16]}
+            castShadow
+          >
             <sphereGeometry args={[1, 24, 16]} />
             <meshStandardMaterial color="#f4b653" roughness={0.86} />
           </mesh>
@@ -219,11 +218,21 @@ export default function LivingCat({
           </mesh>
         </group>
         <group ref={tail} position={[-0.49, 0.56, -0.5]} rotation={[0.3, 0, -0.3]}>
-          <mesh position={[-0.34, 0.06, -0.3]} rotation={[0, 0, -0.7]} scale={[0.23, 0.54, 0.23]} castShadow>
+          <mesh
+            position={[-0.34, 0.06, -0.3]}
+            rotation={[0, 0, -0.7]}
+            scale={[0.23, 0.54, 0.23]}
+            castShadow
+          >
             <sphereGeometry args={[1, 24, 16]} />
             <meshStandardMaterial color="#e9a34a" roughness={0.84} />
           </mesh>
-          <mesh position={[-0.62, 0.24, -0.37]} rotation={[0, 0, -0.55]} scale={[0.24, 0.35, 0.22]} castShadow>
+          <mesh
+            position={[-0.62, 0.24, -0.37]}
+            rotation={[0, 0, -0.55]}
+            scale={[0.24, 0.35, 0.22]}
+            castShadow
+          >
             <sphereGeometry args={[1, 24, 16]} />
             <meshStandardMaterial color="#784836" roughness={0.85} />
           </mesh>
@@ -246,11 +255,21 @@ export default function LivingCat({
             <meshStandardMaterial color="#fff4df" roughness={0.86} />
           </mesh>
           {/* The orange-left, chocolate-right calico silhouette is drawn in 3D. */}
-          <mesh position={[-0.48, 0.32, 0.22]} rotation={[0, 0, -0.38]} scale={[0.38, 0.36, 0.32]} castShadow>
+          <mesh
+            position={[-0.48, 0.32, 0.22]}
+            rotation={[0, 0, -0.38]}
+            scale={[0.38, 0.36, 0.32]}
+            castShadow
+          >
             <sphereGeometry args={[1, 32, 24]} />
             <meshStandardMaterial color="#eeb259" roughness={0.88} />
           </mesh>
-          <mesh position={[0.46, 0.24, 0.25]} rotation={[0, 0, 0.35]} scale={[0.4, 0.45, 0.29]} castShadow>
+          <mesh
+            position={[0.46, 0.24, 0.25]}
+            rotation={[0, 0, 0.35]}
+            scale={[0.4, 0.45, 0.29]}
+            castShadow
+          >
             <sphereGeometry args={[1, 32, 24]} />
             <meshStandardMaterial color="#774937" roughness={0.88} />
           </mesh>

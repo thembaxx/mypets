@@ -1,11 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {
-  catActivities,
-  catMoods,
-  catPoseAt,
-  clamp,
-} from '../lib/cat-motion';
+import { catActivities, catMoods, catPoseAt, clamp } from '../lib/cat-motion';
 
 test('poses remain finite and feet never penetrate the simple ground plane', () => {
   for (const activity of catActivities)

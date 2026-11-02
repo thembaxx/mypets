@@ -93,7 +93,9 @@
   color: var(--muted);
   line-height: 1.5;
 }
-.tripo-living-note { margin-top: 3px; }
+.tripo-living-note {
+  margin-top: 3px;
+}
 .tripo-error {
   display: grid;
   place-content: center;
@@ -111,19 +113,36 @@
   border-radius: 16px;
 }
 @media (max-width: 520px) {
-  .tripo-viewer { padding: 8px; }
+  .tripo-viewer {
+    padding: 8px;
+  }
   .tripo-living-dialog {
     width: 100%;
     height: min(94dvh, 860px);
     border-radius: 22px;
   }
-  .tripo-living-stage { min-height: 180px; }
-  .tripo-heading { padding: 15px; }
-  .tripo-heading strong { font-size: 14px; }
-  .tripo-heading span { font-size: 11px; max-width: 240px; }
-  .tripo-living-controls { padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
-  .tripo-activity-picker { gap: 5px; }
-  .tripo-activity-picker button { padding: 7px 9px; }
+  .tripo-living-stage {
+    min-height: 180px;
+  }
+  .tripo-heading {
+    padding: 15px;
+  }
+  .tripo-heading strong {
+    font-size: 14px;
+  }
+  .tripo-heading span {
+    font-size: 11px;
+    max-width: 240px;
+  }
+  .tripo-living-controls {
+    padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+  }
+  .tripo-activity-picker {
+    gap: 5px;
+  }
+  .tripo-activity-picker button {
+    padding: 7px 9px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .tripo-living-dialog *,
@@ -153,5 +172,11 @@
   font-size: 12px;
   cursor: pointer;
 }
-.tripo-record-button:disabled { opacity: 0.55; cursor: not-allowed; }
-.tripo-record-button:focus-visible { outline: 3px solid #d59757; outline-offset: 2px; }
+.tripo-record-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.tripo-record-button:focus-visible {
+  outline: 3px solid #d59757;
+  outline-offset: 2px;
+}

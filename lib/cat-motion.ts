@@ -32,11 +32,7 @@ export function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-export function catPoseAt(
-  activity: CatActivity,
-  mood: CatMood,
-  time: number,
-): CatPose {
+export function catPoseAt(activity: CatActivity, mood: CatMood, time: number): CatPose {
   const t = Math.max(0, time);
   const walking = activity === 'walk';
   const eating = activity === 'eat';
@@ -51,12 +47,26 @@ export function catPoseAt(
   const gaitRight = walking ? Math.sin(stride + Math.PI) : 0;
   return {
     x: walking ? Math.sin(t * 0.54) * 0.65 : 0,
-    heading: walking ? (Math.cos(t * 0.54) >= 0 ? 0.60 : -0.60) : 0,
-    rise: walking ? Math.abs(Math.sin(stride)) * 0.055 : playing ? Math.abs(Math.sin(t * 4)) * 0.07 : 0,
+    heading: walking ? (Math.cos(t * 0.54) >= 0 ? 0.6 : -0.6) : 0,
+    rise: walking
+      ? Math.abs(Math.sin(stride)) * 0.055
+      : playing
+        ? Math.abs(Math.sin(t * 4)) * 0.07
+        : 0,
     lean: walking ? Math.sin(stride) * 0.045 : playing ? Math.sin(t * 5) * 0.07 : 0,
     breathe: 1 + Math.sin(t * (resting ? 1.25 : 2.1)) * 0.013,
-    headPitch: eating ? 0.54 + Math.sin(t * 3.2) * 0.08 : resting ? 0.12 : playing ? -0.12 : Math.sin(t * 0.85) * 0.045,
-    headYaw: eating ? -0.12 + Math.sin(t * 2.8) * 0.05 : mood === 'curious' ? Math.sin(t * 1.1) * 0.2 : Math.sin(t * 0.55) * 0.07,
+    headPitch: eating
+      ? 0.54 + Math.sin(t * 3.2) * 0.08
+      : resting
+        ? 0.12
+        : playing
+          ? -0.12
+          : Math.sin(t * 0.85) * 0.045,
+    headYaw: eating
+      ? -0.12 + Math.sin(t * 2.8) * 0.05
+      : mood === 'curious'
+        ? Math.sin(t * 1.1) * 0.2
+        : Math.sin(t * 0.55) * 0.07,
     headDrop: eating ? 0.45 : resting ? 0.27 : 0,
     jaw: eating ? 0.14 + Math.max(0, bite) * 0.25 : playing ? 0.08 : mood === 'happy' ? 0.055 : 0,
     tongue: eating ? Math.pow(Math.max(0, Math.sin(t * 8)), 3) * 0.21 : 0,
@@ -66,7 +76,9 @@ export function catPoseAt(
     tail: Math.sin(t * (playing ? 5 : 1.7)) * (playing ? 0.34 : 0.16),
     frontPaws: [gaitLeft * 0.48, gaitRight * 0.48],
     backPaws: [gaitRight * 0.39, gaitLeft * 0.39],
-    pawLift: [walking ? Math.max(0, gaitLeft) * 0.1 : playing ? 0.22 + Math.sin(t * 5) * 0.14 : 0,
-      walking ? Math.max(0, gaitRight) * 0.1 : 0],
+    pawLift: [
+      walking ? Math.max(0, gaitLeft) * 0.1 : playing ? 0.22 + Math.sin(t * 5) * 0.14 : 0,
+      walking ? Math.max(0, gaitRight) * 0.1 : 0,
+    ],
   };
 }
