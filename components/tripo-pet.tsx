@@ -469,7 +469,7 @@ export default function TripoPet({
                   <LivingCat activity={activity} mood={mood} paused={reduced} />
                 )}
               </Suspense>
-              {activeUrl && activity === 'eat' && <FeedingBowl />}
+              {activeUrl && activity === 'eat' && <FeedingBowl distance={1.05} />}
               <PetOrbit reducedMotion={reduced} />
             </Canvas>
           </ModelErrorBoundary>
