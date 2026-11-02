@@ -1,0 +1,46 @@
+name: Rigged calico candidate build
+on:
+  push:
+    branches:
+      - feat/living-3d-pet-behaviours-20261102
+    paths:
+      - scripts/author-calico-rig.py
+      - scripts/verify-calico-rig.mjs
+      - scripts/render-calico-review.py
+      - .github/workflows/rigged-calico-candidate.yml
+permissions:
+  contents: read
+jobs:
+  blender-calico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install offline Blender authoring tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y blender
+          blender --version | head -3
+      - name: Check Blender authoring scripts
+        run: |
+          python3 -m py_compile scripts/author-calico-rig.py
+          python3 -m py_compile scripts/render-calico-review.py
+      - name: Generate original rigged calico candidate
+        run: |
+          blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-calico-rig.py -- --output-dir "$RUNNER_TEMP/calico"
+      - name: Validate real glTF skin, named clips and morph targets
+        run: |
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/calico" --require-assets
+          node scripts/verify-calico-rig.mjs "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb"
+      - name: Render independent front, side and 3/4 reviews
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/calico"
+      - name: Upload unapproved Blender source, GLB and renders
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuzzle-calico-rigged-review
+          path: ${{ runner.temp }}/calico/
+          if-no-files-found: error
+          retention-days: 14
