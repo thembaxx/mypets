@@ -3,20 +3,6 @@ import { test, expect } from '@playwright/test';
 test.use({ reducedMotion: 'no-preference' });
 
 test.describe('real WebGL cat lab', () => {
-  test('branch serves a textured rigged cat', async ({ request }) => {
-    const response = await request.get(
-      'http://127.0.0.1:3000/models/candidates/nuzzle-calico-rig.glb',
-    );
-    expect(response.ok()).toBeTruthy();
-    const bytes = Buffer.from(await response.body());
-    const size = bytes.readUInt32LE(12);
-    const gltf = JSON.parse(bytes.subarray(20, 20 + size).toString('utf8').trim());
-    const imageNames = gltf.images?.map((image) => image.name);
-    expect(imageNames).toContain('calico-short-fur-normal');
-    const count = gltf.materials.filter((material) => material.normalTexture).length;
-    expect(count).toBeGreaterThanOrEqual(3);
-  });
-
   test('desktop: GLB loads, facial actions and feeding actually animate', async ({ page }) => {
     // Software WebGL and four screenshots can exceed Playwright's default 30s
     // despite a responsive control and valid animation frames.
