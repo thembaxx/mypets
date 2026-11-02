@@ -296,7 +296,7 @@ def build_actions():
                 # Two-stage feeding action: lower head and reach, then chew/lick.
                 approach = min(1, max(0,(frame-1)/10), max(0,(LAST-frame)/10))
                 set_pose(frame, head_pitch=-.42*approach,
-                         head_drop=.50*approach, head_reach=.10*approach,
+                         head_drop=.65*approach, head_reach=.14*approach,
                          body_pitch=-.12*approach,
                          jaw=.32*bite*approach,
                          tongue=.14*max(0,math.sin(cycle*4))*approach,
@@ -313,9 +313,9 @@ def build_actions():
                 set_pose(frame, body_z=.016*math.sin(cycle),
                          head_yaw=.07*math.sin(cycle), head_pitch=.03*math.sin(cycle),
                          tail=.14*math.sin(cycle), ears=.035*math.sin(cycle))
-        # Ensure the clip loops without gaps, with an explicit end key.
-        set_pose(LAST, root_z=0, body_z=-.24 if clip=="Rest" else 0,
-                 head_pitch=.18 if clip=="Rest" else -.38 if clip=="Eat" else 0)
+        # Frame LAST is already authored in the above loop at the same
+        # walk-cycle phase as frame 1. Never overwrite it with neutral limbs:
+        # that introduces a visible gait/feeding snap at the loop seam.
         RIG.animation_data.action = None
         track = RIG.animation_data.nla_tracks.new()
         track.name = clip
