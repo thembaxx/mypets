@@ -156,7 +156,7 @@ export default function LivingCat({
     if (!root.current || !head.current || !torso.current) return;
     const dt = Math.min(0.05, delta);
     if (!paused) elapsed.current += dt;
-    const p = catPoseAt(activity, mood, paused ? 0 : elapsed.current);
+    const p = catPoseAt(activity, mood, elapsed.current);
     root.current.position.x = p.x;
     root.current.rotation.y = p.heading;
     torso.current.position.y = p.rise + (activity === 'rest' ? -0.25 : 0);
