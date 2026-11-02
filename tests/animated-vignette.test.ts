@@ -51,7 +51,7 @@ test('3D playroom remains an opt-in viewer, preserves artwork and has local vide
   const shared = readFileSync(new URL('../components/shared.tsx', import.meta.url), 'utf8');
   const viewer = readFileSync(new URL('../components/tripo-pet.tsx', import.meta.url), 'utf8');
   const model = readFileSync(new URL('../components/living-cat.tsx', import.meta.url), 'utf8');
-  assert.match(shared, /photo \\|\\| '\\/animals\\/'/);
+  assert.ok(shared.includes("photo || '/animals/'"));
   assert.match(shared, /species === 'cat'/);
   assert.match(viewer, /findPetClip/);
   assert.match(viewer, /MediaRecorder/);
