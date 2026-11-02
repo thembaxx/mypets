@@ -252,7 +252,8 @@ export default function TripoPet({
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const localPreviewRef = useRef<string | null>(null);
   const [previewError, setPreviewError] = useState('');
-  const activeUrl = localPreview ?? url;
+  const [candidateMode, setCandidateMode] = useState(false);
+  const activeUrl = localPreview ?? (candidateMode ? '/models/candidates/nuzzle-calico-rig.glb' : url);
   const reduced = systemReduced || !animationEnabled || paused;
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
@@ -432,6 +433,24 @@ export default function TripoPet({
           </ModelErrorBoundary>
         </div>
         <div className="tripo-living-controls">
+          {!url && (
+            <button
+              type="button"
+              className="tripo-candidate-toggle"
+              disabled={recording}
+              onClick={() => {
+                setCandidateMode((current) => !current);
+                setPreviewError('');
+                setReport(null);
+                setActivity('idle');
+                if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+                localPreviewRef.current = null;
+                setLocalPreview(null);
+              }}
+            >
+              {candidateMode ? 'Return to original procedural 3D cat' : 'Preview rigged Blender cat (experimental)'}
+            </button>
+          )}
           <label className="tripo-local-file">
             <UploadSimpleIcon size={18} aria-hidden="true" />
             <span>Review a downloaded Blender GLB (on-device only)</span>
@@ -508,6 +527,9 @@ export default function TripoPet({
           <p className="tripo-living-status" role="status">
             {recordError || status}
           </p>
+          {candidateMode && !localPreview && (
+            <p className="tripo-living-note">Experimental Blender rig. Unapproved appearance; compare against the original before adoption.</p>
+          )}
           {!activeUrl && (
             <p className="tripo-living-note">
               This is an articulated 3D character prototype with simulated movement and collisions,
