@@ -257,11 +257,15 @@ export default function TripoPet({
   name,
   onClose,
   defaultCandidate = false,
+  candidateUrl = '/models/candidates/nuzzle-calico-rig.glb',
+  allowProceduralCat = true,
 }: {
   url?: string;
   name: string;
   onClose: () => void;
   defaultCandidate?: boolean;
+  candidateUrl?: string;
+  allowProceduralCat?: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const animationEnabled = useContext(AnimalAnimationContext);
@@ -287,7 +291,7 @@ export default function TripoPet({
     return () => document.removeEventListener('visibilitychange', syncVisibility);
   }, []);
   const activeUrl =
-    localPreview ?? (candidateMode ? '/models/candidates/nuzzle-calico-rig.glb' : url);
+    localPreview ?? (candidateMode ? candidateUrl : url);
   // Sleeping background WebGL views saves GPU/battery on iPhone. Resume the
   // existing mixer position instead of restarting an action on visibility.
   const motionBlocked = systemReduced || !animationEnabled;
@@ -372,7 +376,7 @@ export default function TripoPet({
         const objectUrl = URL.createObjectURL(file);
         const link = document.createElement('a');
         link.href = objectUrl;
-        link.download = 'mypets-cat-feeding.' + extension;
+        link.download = 'mypets-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-feeding.' + extension;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -492,7 +496,7 @@ export default function TripoPet({
           </ModelErrorBoundary>
         </div>
         <div className="tripo-living-controls">
-          {!url && (
+          {!url && allowProceduralCat && (
             <button
               type="button"
               className="tripo-candidate-toggle"
@@ -554,7 +558,7 @@ export default function TripoPet({
                 value={mood}
                 onChange={(event) => setMood(event.target.value as CatMood)}
                 disabled={recording}
-                aria-label="Cat facial expression"
+                aria-label={allowProceduralCat ? 'Cat facial expression' : 'Animal facial expression'}
               >
                 {catMoods.map((value) => (
                   <option key={value} value={value}>
@@ -594,8 +598,8 @@ export default function TripoPet({
           </p>
           {candidateMode && !localPreview && (
             <p className="tripo-living-note">
-              Experimental Blender rig. Unapproved appearance; compare against the original before
-              adoption.
+              Experimental species-specific Blender rig. Compare its anatomy, appearance and
+              motion with the original illustration before considering adoption.
             </p>
           )}
           {!activeUrl && (
