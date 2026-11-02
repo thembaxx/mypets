@@ -3,6 +3,32 @@
 This is a review of the **unapproved** Blender calico candidate on
 [PR #37](https://github.com/thembaxx/mypets/pull/37).
 
+## Latest visual and facial validation (2 November 2026)
+
+- [Blender sculpt and review build #41476719499](https://github.com/thembaxx/mypets/actions/runs/41476719499)
+  passed rig, mesh-contact, binary GLB and real rendered-preview checks.
+- [Nuzzle checks #41476730785](https://github.com/thembaxx/mypets/actions/runs/41476730785)
+  and [Chromium/WebKit browser QA #41476730691](https://github.com/thembaxx/mypets/actions/runs/41476730691)
+  passed for the authored revision.
+- Updated rounded-head proportions, slimmer forelimbs, thin swept ears,
+  subtler cheeks and muzzle, a curled tail and curved whiskers. These are
+  **stylized sculpt improvements**, not a realistic retopologized cat.
+- Fixed a severe facial animation bug: the previous exported `Eye_Wide`
+  target displaced vertices up to **5.744 m**, and `Blink` displaced them
+  **1.580 m**. The reviewed GLB now limits `Eye_Wide` to **0.0765 m**,
+  `Blink` to **0.0792 m**, `Jaw_Open` to **0.0731 m** and `Lick`
+  to **0.0432 m**. Blender and binary GLB verification now reject
+  oversized facial movements.
+- The review's evaluated skinned geometry keeps the lowest walking paw
+  **5.76 mm above the floor**; closest grooming surface gap is **4.95 mm**
+  with maximum forearm separation **10.02 mm**. Feeding mouth-to-food
+  centre remains **76.34 mm**.
+
+**Still needs visual approval:** ear shape, exposed seams between the
+separate paw/leg sections, tail profile and general toy-like anatomy.
+The GLB remains an optional candidate and must not replace the original
+cat illustration as the default pet.
+
 ## Measured result (2 November 2026)
 
 - Last verified geometry audit: [Blender build #41467111898](https://github.com/thembaxx/mypets/actions/runs/41467111898).
