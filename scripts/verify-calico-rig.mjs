@@ -27,7 +27,16 @@ for (const clip of expected)
     `Rigged model must expose separate authored clip ${clip}; found ${actualNames.join(', ')}`,
   );
 const morphs = (doc.meshes ?? []).flatMap((mesh) => mesh.extras?.targetNames ?? []);
-for (const key of ['Blink_L', 'Blink_R', 'Eye_Wide', 'Jaw_Open', 'Lick', 'Smile', 'Cheek_Puff', 'Sniff'])
+for (const key of [
+  'Blink_L',
+  'Blink_R',
+  'Eye_Wide',
+  'Jaw_Open',
+  'Lick',
+  'Smile',
+  'Cheek_Puff',
+  'Sniff',
+])
   assert.ok(
     morphs.includes(key),
     `Expected animated facial geometry ${key}; available: ${morphs.join(', ')}`,
@@ -70,7 +79,11 @@ for (const mesh of doc.meshes ?? []) {
       const view = doc.bufferViews?.[accessor?.bufferView];
       assert.ok(accessor && view, `Morph target ${label} requires a binary accessor`);
       assert.equal(accessor.type, 'VEC3', `Morph target ${label} must export 3D offsets`);
-      assert.equal(accessor.componentType, 5126, `Morph target ${label} requires float coordinates`);
+      assert.equal(
+        accessor.componentType,
+        5126,
+        `Morph target ${label} requires float coordinates`,
+      );
       const stride = view.byteStride ?? 12;
       const start = binaryStart + (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
       for (let n = 0; n < accessor.count; n++) {
