@@ -45,18 +45,34 @@ jobs:
           path: ${{ runner.temp }}/calico/
           if-no-files-found: error
           retention-days: 14
-      - name: Publish only the unapproved model to the feature branch
+      - name: Publish current unapproved candidate without stale binary overwrites
         if: github.ref == 'refs/heads/feat/living-3d-pet-behaviours-20261102'
         run: |
-          mkdir -p public/models/candidates docs/screenshots
-          cp "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb" public/models/candidates/nuzzle-calico-rig.glb
-          cp "$RUNNER_TEMP/calico/calico-front.png" docs/screenshots/calico-front-candidate.png
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/models/candidates/nuzzle-calico-rig.glb docs/screenshots/calico-front-candidate.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'assets(3d): add unapproved Blender calico GLB and review image'
+          set -euo pipefail
+          for attempt in 1 2 3; do
             git fetch origin feat/living-3d-pet-behaviours-20261102
-            git rebase origin/feat/living-3d-pet-behaviours-20261102
-            git push origin HEAD:feat/living-3d-pet-behaviours-20261102
-          fi
+            # An older job must never replace candidate files generated from
+            # newer Blender/validation/review scripts.
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py .github/workflows/rigged-calico-candidate.yml; then
+              echo "Newer 3D authoring sources exist. Skip stale candidate publication."
+              exit 0
+            fi
+            git checkout -B candidate-publish origin/feat/living-3d-pet-behaviours-20261102
+            mkdir -p public/models/candidates docs/screenshots
+            cp "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb" public/models/candidates/nuzzle-calico-rig.glb
+            cp "$RUNNER_TEMP/calico/calico-front.png" docs/screenshots/calico-front-candidate.png
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add public/models/candidates/nuzzle-calico-rig.glb docs/screenshots/calico-front-candidate.png
+            if git diff --cached --quiet; then
+              echo "Already published exact reviewed candidate."
+              exit 0
+            fi
+            git commit -m 'assets(3d): update unapproved source-matched cat candidate'
+            if git push origin HEAD:feat/living-3d-pet-behaviours-20261102; then
+              exit 0
+            fi
+            echo "Branch advanced while publishing. Retry with fresh base."
+          done
+          echo "Unable to publish without a concurrent change. No force push attempted." >&2
+          exit 1
