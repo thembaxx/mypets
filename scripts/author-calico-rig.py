@@ -607,7 +607,11 @@ def model():
         iris = make_mesh("%s amber iris" % pos, (side*.29, .990, 1.74),
                          (.073, .027, .066), gold, "Head", 32, 20)
         shape_target(iris, "Blink_" + pos, .12)
-        shape_target(iris, "Eye_Wide", 1.12)
+        wide_iris = iris.shape_key_add(name="Eye_Wide")
+        iris_basis = iris.data.shape_keys.key_blocks["Basis"].data
+        for source, target in zip(iris_basis, wide_iris.data):
+            target.co = (source.co.x, source.co.y,
+                         1.74 + (source.co.z - 1.74) * 1.12)
         eye = make_mesh("%s deep cocoa eye" % pos, (side*.29, 1.013, 1.74),
                         (.031, .015, .058), dark, "Head", 32, 20)
         shape_target(eye, "Blink_" + pos, .12)
