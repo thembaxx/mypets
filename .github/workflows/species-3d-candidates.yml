@@ -1,0 +1,81 @@
+name: All species experimental 3D rig builder
+on:
+  push:
+    branches:
+      - feat/3d-all-animals-candidates-20261102
+    paths:
+      - scripts/author-species-rigs.py
+      - scripts/verify-species-rigs.mjs
+      - .github/workflows/species-3d-candidates.yml
+permissions:
+  contents: write
+concurrency:
+  group: species-3d-review
+  cancel-in-progress: true
+jobs:
+  species-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - name: Install offline Blender
+        run: |
+          set -euo pipefail
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
+          blender --version | head -3
+      - name: Verify source syntax
+        run: |
+          python3 -m py_compile scripts/author-species-rigs.py
+          node --check scripts/verify-species-rigs.mjs
+      - name: Generate 16 genuine skinned 3D animal candidates
+        run: |
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-species-rigs.py -- --output-dir "$RUNNER_TEMP/species"
+      - name: Audit each GLB skeleton and real Blender review render
+        run: |
+          node scripts/verify-species-rigs.mjs "$RUNNER_TEMP/species"
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/species" --require-assets
+          python3 - "$RUNNER_TEMP/species/manifest.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          manifest=json.loads(Path(sys.argv[1]).read_text())
+          assert len(manifest)==16
+          assert all(m["status"]=="EXPERIMENTAL_REVIEW_ONLY" for m in manifest)
+          assert len({m["sha256"] for m in manifest})==16
+          print("SPECIES_16_DISTINCT_3D_GLBS_PASS")
+          PY
+      - name: Upload unapproved species visual review artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-mypets-3d-species-review
+          path: ${{ runner.temp }}/species/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish only candidate models to feature branch
+        run: |
+          set -euo pipefail
+          branch=feat/3d-all-animals-candidates-20261102
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch origin "$branch"
+            if ! git diff --quiet "$GITHUB_SHA" "origin/$branch" -- scripts/author-species-rigs.py scripts/verify-species-rigs.mjs .github/workflows/species-3d-candidates.yml; then
+              echo "A newer animal-authoring revision exists. Do not publish stale rigs."
+              exit 0
+            fi
+            git checkout -B species-review "origin/$branch"
+            mkdir -p public/models/candidates/species
+            cp "$RUNNER_TEMP/species/"*.glb public/models/candidates/species/
+            git add public/models/candidates/species/
+            if git diff --cached --quiet; then
+              echo "Exact reviewed candidate files already published."
+              exit 0
+            fi
+            git commit -m "assets(3d): publish 16 unapproved species-specific candidate rigs"
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          echo "Publication failed without force-pushing" >&2
+          exit 1
