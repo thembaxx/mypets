@@ -32,7 +32,7 @@ function Ear({ side }: { side: -1 | 1 }) {
 function Paw({ rear = false }: { rear?: boolean }) {
   return (
     <group>
-      <mesh castShadow position={[0, -0.2, 0]}>
+      <mesh castShadow position={[0, -0.2, 0]} scale={[0.26, 0.42, 0.24]}>
         <sphereGeometry args={[1, 24, 16]} />
         <meshStandardMaterial color="#fff3d9" roughness={0.86} />
       </mesh>
