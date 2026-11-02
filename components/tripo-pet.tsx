@@ -26,11 +26,11 @@ import {
   EyeIcon,
   PauseIcon,
   PlayIcon,
+  VideoCameraIcon,
 } from '@phosphor-icons/react';
 import { AnimalAnimationContext } from './shared';
 import LivingCat from './living-cat';
 import {
-  catActivities,
   catMoods,
   type CatActivity,
   type CatMood,
@@ -219,6 +219,11 @@ export default function TripoPet({
   const [mood, setMood] = useState<CatMood>('happy');
   const [paused, setPaused] = useState(false);
   const [report, setReport] = useState<ModelReport | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [recordError, setRecordError] = useState('');
   const reduced = systemReduced || !animationEnabled || paused;
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
@@ -235,6 +240,63 @@ export default function TripoPet({
       active?.focus();
     };
   }, [onClose]);
+  useEffect(() => () => {
+    if (recordTimeout.current) clearTimeout(recordTimeout.current);
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+  }, []);
+  const recordClip = () => {
+    if (reduced || recording) return;
+    const canvas = canvasRef.current;
+    if (!canvas?.captureStream || typeof MediaRecorder === 'undefined') {
+      setRecordError('Video recording is not supported by this browser. Live 3D animation is still available.');
+      return;
+    }
+    try {
+      const format = [
+        'video/mp4;codecs=avc1.42E01E',
+        'video/webm;codecs=vp9',
+        'video/webm',
+      ].find((mime) => MediaRecorder.isTypeSupported(mime));
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, format ? { mimeType: format } : undefined);
+      const chunks: BlobPart[] = [];
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) chunks.push(event.data);
+      };
+      recorder.onerror = () => setRecordError('Recording failed. Try the live 3D controls instead.');
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+        setRecording(false);
+        if (recordTimeout.current) clearTimeout(recordTimeout.current);
+        if (!chunks.length) {
+          setRecordError('The browser could not capture frames from the 3D canvas.');
+          return;
+        }
+        const type = recorder.mimeType || 'video/webm';
+        const extension = type.includes('mp4') ? 'mp4' : 'webm';
+        const file = new Blob(chunks, { type });
+        const objectUrl = URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = 'mypets-cat-feeding.' + extension;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+      };
+      setRecordError('');
+      setActivity('eat');
+      recorder.start(250);
+      setRecording(true);
+      recordTimeout.current = setTimeout(() => {
+        if (recorder.state === 'recording') recorder.stop();
+      }, 8000);
+    } catch {
+      setRecording(false);
+      setRecordError('This device could not start a 3D video recording.');
+    }
+  };
   const supportedAction = !url || activity === 'idle' ||
     (report !== null && !!findPetClip(report.clips, activity));
   const status = url
@@ -276,6 +338,7 @@ export default function TripoPet({
               camera={{ position: [0, 1.25, 4.8], fov: 39 }}
               gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
               shadows
+              onCreated={({ gl }) => { canvasRef.current = gl.domElement; }}
             >
               <hemisphereLight args={['#fff5e5', '#7b91a1', 1.7]} />
               <ambientLight intensity={0.5} />
@@ -338,7 +401,18 @@ export default function TripoPet({
               {reduced ? 'Paused' : 'Pause motion'}
             </button>
           </div>
-          <p className="tripo-living-status" role="status">{status}</p>
+          <div className="tripo-record-row">
+            <button
+              type="button"
+              className="tripo-record-button"
+              disabled={reduced || recording}
+              onClick={recordClip}
+            >
+              <VideoCameraIcon size={18} aria-hidden="true" />
+              {recording ? 'Recording 8-second feeding clip…' : 'Record feeding video (8s)'}
+            </button>
+          </div>
+          <p className="tripo-living-status" role="status">{recordError || status}</p>
           {!url && (
             <p className="tripo-living-note">
               This is an articulated 3D character prototype with simulated movement and collisions,
