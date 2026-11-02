@@ -11,10 +11,14 @@ on:
       - scripts/verify-calico-rig.mjs
       - scripts/render-calico-review.py
       - scripts/audit-calico-contact.py
-      - scripts/calico_gait.py
       - .github/workflows/rigged-calico-candidate.yml
 permissions:
   contents: write
+# Only the most recent Blender source revision should consume a runner or
+# publish review assets. The job already guards against stale source SHAs.
+concurrency:
+  group: calico-review-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   blender-calico:
     runs-on: ubuntu-latest
@@ -25,8 +29,10 @@ jobs:
           persist-credentials: true
       - name: Install offline Blender authoring tools
         run: |
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y blender python3-numpy libegl1 libgl1-mesa-dri xvfb
+          set -euo pipefail
+          echo "Installing Blender and software rendering dependencies"
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
           /usr/bin/python3 -c 'import numpy; print(numpy.__version__)'
           blender --version | head -3
       - name: Check Blender authoring scripts
@@ -84,7 +90,7 @@ jobs:
             git fetch origin feat/living-3d-pet-behaviours-20261102
             # An older job must never replace candidate files generated from
             # newer Blender/validation/review scripts.
-            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py scripts/calico_gait.py .github/workflows/rigged-calico-candidate.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py .github/workflows/rigged-calico-candidate.yml; then
               echo "Newer 3D authoring sources exist. Skip stale candidate publication."
               exit 0
             fi
