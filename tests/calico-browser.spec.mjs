@@ -34,6 +34,12 @@ test.describe('real WebGL cat lab', () => {
       'true',
     );
     await expect(dialog.getByRole('status')).toContainText('Groom (7 clips)');
+    await page.waitForTimeout(400);
+    const groomStart = await canvas.screenshot();
+    await page.waitForTimeout(500);
+    const groomEnd = await canvas.screenshot();
+    expect(Buffer.compare(groomStart, groomEnd)).not.toBe(0);
+    await canvas.screenshot({ path: 'test-results/calico-desktop-grooming.png' });
     await dialog.getByRole('button', { name: 'Sniff', exact: true }).click();
     await expect(dialog.getByRole('button', { name: 'Sniff', exact: true })).toHaveAttribute(
       'aria-pressed',
