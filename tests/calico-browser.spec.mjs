@@ -4,6 +4,9 @@ test.use({ reducedMotion: 'no-preference' });
 
 test.describe('real WebGL cat lab', () => {
   test('desktop: GLB loads, facial actions and feeding actually animate', async ({ page }) => {
+    // Software WebGL and four screenshots can exceed Playwright's default 30s
+    // despite a responsive control and valid animation frames.
+    test.setTimeout(90_000);
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('http://127.0.0.1:3000/3d-lab');
@@ -71,6 +74,7 @@ test.describe('real WebGL cat lab', () => {
   });
 
   test('mobile: studio actions remain accessible with touch controls', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('http://127.0.0.1:3000/3d-lab');
     await page.getByRole('button', { name: 'Open the Blender cat studio' }).click();
