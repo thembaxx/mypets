@@ -5,7 +5,7 @@ const kinds = [
   { id: 'bird', kind: 'avian' },
   { id: 'fish', kind: 'aquatic' },
   { id: 'gecko', kind: 'reptile' },
-] as const;
+];
 
 test('all illustrated animal candidates are real individual GLB files', async ({ request }) => {
   test.setTimeout(120_000);
