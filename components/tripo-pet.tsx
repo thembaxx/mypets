@@ -178,7 +178,9 @@ function AnimalModel({
           : blink
         : /jaw.?open|mouth.?open/i.test(name)
           ? chew * 0.8
-          : /smile|happy/i.test(name)
+          : /eye.?wide/i.test(name)
+            ? (mood === 'curious' ? 0.9 : 0)
+            : /smile|happy/i.test(name)
             ? mood === 'happy'
               ? 0.7
               : 0
@@ -406,7 +408,7 @@ export default function TripoPet({
               <directionalLight position={[3, 3, -4]} intensity={1.3} color="#d6e6ff" />
               <Suspense fallback={null}>
                 {activeUrl ? (
-                  <group rotation={localPreview ? [0, Math.PI, 0] : [0, 0, 0]}>
+                  <group rotation={[0, localPreview ? Math.PI : 0, 0]}>
                     <AnimalModel
                     url={activeUrl}
                     activity={activity}
