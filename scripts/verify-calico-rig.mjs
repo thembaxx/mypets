@@ -48,6 +48,14 @@ function meshInstances() {
     .filter((entry) => entry.mesh);
 }
 const instances = meshInstances();
+for (const side of ['L', 'R']) {
+  const eyelid = instances.find(({ name }) => name === side + ' upper eyelid');
+  assert.ok(eyelid, 'Missing skinned upper eyelid on ' + side);
+  const keys = eyelid.mesh.extras?.targetNames ?? [];
+  assert.ok(keys.includes('Blink_' + side), 'Eyelid must actually export its blink morph');
+  assert.ok(keys.includes('Eye_Wide'), 'Eyelid must export eye widening');
+}
+
 for (const label of ['Front_L', 'Front_R', 'Rear_L', 'Rear_R']) {
   const limb = instances.find(({ name }) => name === label + ' lower paw');
   assert.ok(
