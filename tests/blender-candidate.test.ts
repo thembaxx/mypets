@@ -3,8 +3,14 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 test('cloud Blender authoring is opt-in and review-only', () => {
-  const script = readFileSync(new URL('../scripts/author-blender-candidate.py', import.meta.url), 'utf8');
-  const workflow = readFileSync(new URL('../.github/workflows/blender-candidate.yml', import.meta.url), 'utf8');
+  const script = readFileSync(
+    new URL('../scripts/author-blender-candidate.py', import.meta.url),
+    'utf8',
+  );
+  const workflow = readFileSync(
+    new URL('../.github/workflows/blender-candidate.yml', import.meta.url),
+    'utf8',
+  );
   assert.match(script, /def paw_scene\(\)/);
   assert.match(script, /export_format="GLB"/);
   assert.match(workflow, /workflow_dispatch/);
@@ -19,6 +25,6 @@ test('candidate review stays on-device and checks GLB bounds', () => {
   assert.ok(html.includes('id="candidate"'));
   assert.ok(script.includes('candidateInput.files?.[0]'));
   assert.ok(script.includes('file.arrayBuffer()'));
-  assert.ok(script.includes('file.size>MAX_FILE'));
+  assert.match(script, /file\.size\s*>\s*MAX_FILE/);
   assert.ok(!script.includes('FormData('));
 });

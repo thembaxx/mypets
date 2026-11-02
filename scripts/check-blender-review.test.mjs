@@ -14,5 +14,7 @@ test('missing or non-GLB review assets fail before upload', () => {
     writeFileSync(join(dir, 'mypets-paw-blender-candidate.blend'), Buffer.alloc(160, 1));
     writeFileSync(join(dir, 'mypets-paw-blender-candidate.glb'), Buffer.alloc(64, 1));
     assert.throws(() => verifyReviewPack(dir, 'paw'), /Invalid GLB header/);
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
