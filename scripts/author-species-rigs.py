@@ -491,9 +491,9 @@ def animate(slug, spec, rig):
                         if bone.name.startswith("Fin_"):
                             bone.rotation_euler.y=.11*math.sin(cycle*4)
             elif label=="Play":
-                # True vertical jump uses Blender Z, not the former horizontal Y.
-                # Two smooth airborne hops match the reference video rhythm.
-                root.location.z=celebration_height(slug,kind,t)
+                # The armature's local Y axis is vertical in Blender world Z.
+                # Two smooth airborne hops mimic the reference video rhythm.
+                root.location.y=celebration_height(slug,kind,t)
                 body.location.y=.055*abs(math.sin(cycle*2))
                 body.rotation_euler.z=.09*math.sin(cycle*2)
                 head.rotation_euler.z=.13*math.sin(cycle*2)
