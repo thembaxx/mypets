@@ -210,13 +210,28 @@ def model():
     make_cone("Screen-right chocolate ear", (-.50, .45, 2.18), .30, .61, cocoa, "Ear_L")
     make_cone("Screen-left rose ear inset", (.50, .67, 2.17), .16, .38, pink, "Ear_R")
     make_cone("Screen-right rose ear inset", (-.50, .67, 2.17), .16, .38, pink, "Ear_L")
-    make_mesh("Left rose cheek", (-.47, 1.04, 1.44), (.19, .055, .12), blush, "Head")
-    make_mesh("Right rose cheek", (.47, 1.04, 1.44), (.19, .055, .12), blush, "Head")
+    for side, label in ((-1, "Left"), (1, "Right")):
+        cheek = make_mesh(label+" rose cheek", (side*.47, 1.04, 1.44),
+                          (.19, .055, .12), blush, "Head")
+        cheek.shape_key_add(name="Basis")
+        puff = cheek.shape_key_add(name="Cheek_Puff")
+        for source, vertex in zip(cheek.data.shape_keys.key_blocks["Basis"].data, puff.data):
+            vertex.co = (source.co.x + side*.034,
+                         source.co.y + .022, source.co.z + .012)
     make_mesh("Left muzzle", (-.16, 1.08, 1.30), (.23, .13, .18), white, "Head")
     make_mesh("Right muzzle", (.16, 1.08, 1.30), (.23, .13, .18), white, "Head")
-    make_mesh("Heart shaped coral nose", (0, 1.23, 1.46), (.10, .06, .065), nose, "Head")
+    nose_mesh = make_mesh("Heart shaped coral nose", (0, 1.23, 1.46),
+                          (.10, .06, .065), nose, "Head")
+    nose_mesh.shape_key_add(name="Basis")
+    sniff = nose_mesh.shape_key_add(name="Sniff")
+    for source, vertex in zip(nose_mesh.data.shape_keys.key_blocks["Basis"].data, sniff.data):
+        vertex.co = (source.co.x*1.18, source.co.y+.018, 1.46+(source.co.z-1.46)*1.09)
     mouth = make_mesh("Dark living mouth", (0, 1.10, 1.18), (.22, .055, .17), mouth_red, "Jaw")
     shape_target(mouth, "Jaw_Open", 1.43)
+    smile = mouth.shape_key_add(name="Smile")
+    for source, vertex in zip(mouth.data.shape_keys.key_blocks["Basis"].data, smile.data):
+        bend = min(1.0, abs(source.co.x)/.21)
+        vertex.co = (source.co.x*1.09, source.co.y, source.co.z+.052*bend)
     tongue = make_mesh("Licking pink tongue", (0, 1.166, 1.14), (.145, .035, .072), pink, "Tongue")
     shape_target(tongue, "Lick", 1.60)
     for side in (-1, 1):
@@ -314,7 +329,7 @@ def gait_ik(phase, is_front):
 
 def build_actions():
     RIG.animation_data_create()
-    for clip in ("Idle","Walk","Eat","Play","Rest"):
+    for clip in ("Idle","Walk","Eat","Play","Rest","Groom","Sniff"):
         action = bpy.data.actions.new(clip)
         RIG.animation_data.action = action
         for frame in range(1, LAST+1, 4):
@@ -349,6 +364,23 @@ def build_actions():
             elif clip == "Rest":
                 set_pose(frame, body_z=-.24, head_pitch=.18,
                          tail=.09*math.sin(cycle))
+            elif clip == "Groom":
+                # Lift one paw toward the face, tilt the head, lick, reset.
+                # Deliberately kinematic; future IK should solve true paw contact.
+                reach = math.sin(math.pi*t)**2
+                lick = max(0.0, math.sin(cycle*5))
+                set_pose(frame, body_z=-.045*reach, head_pitch=-.17*reach,
+                         head_yaw=-.27*reach, head_drop=.095*reach,
+                         jaw=.16*lick*reach, tongue=.13*lick*reach,
+                         tail=.09*math.sin(cycle),
+                         legs={"Front_L":(-.82*reach, 1.08*reach)})
+            elif clip == "Sniff":
+                # Gentle nose-first inspection with small ear/head movement.
+                reach = math.sin(math.pi*t)**2
+                set_pose(frame, head_pitch=-.12*reach,
+                         head_yaw=.13*math.sin(cycle),
+                         head_reach=.085*reach, head_drop=.07*reach,
+                         ears=.095*math.sin(cycle*2), tail=.12*math.sin(cycle))
             else:
                 set_pose(frame, body_z=.016*math.sin(cycle),
                          head_yaw=.07*math.sin(cycle), head_pitch=.03*math.sin(cycle),
@@ -409,7 +441,7 @@ def main():
         status="UNAPPROVED",
         source="public/animals/cat.webp (style reference only)",
         blender=bpy.app.version_string,
-        clips=["Idle","Walk","Eat","Play","Rest"],
+        clips=["Idle","Walk","Eat","Play","Rest","Groom","Sniff"],
         rig="Skin-weighted neck, torso, head and limbs; two-link kinematic gait",
         physics="Static paw ground-height calibration; no collision-aware IK or rigid-body muscle simulation",
         sha256=hashlib.sha256(glb.read_bytes()).hexdigest(),
