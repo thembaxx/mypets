@@ -140,8 +140,13 @@ def plant_feet(frame, paw_meshes, target_z=.012):
     root = RIG.pose.bones["Root"]
     root.location.z += correction
     root.keyframe_insert("location", frame=frame, group="Root")
-    bpy.context.scene.frame_set(frame)
+    # Re-evaluate the changed pose directly. Recalling frame_set on the same
+    # frame can restore stale NLA pose data before the new FCurve is evaluated.
+    bpy.context.view_layer.update()
     actual = vertex_contact(paw_meshes)
+    if frame in (1, 17, 49):
+        print("PAW_CONTACT frame=%d before=%.4f correction=%.4f after=%.4f root=%.4f" %
+              (frame, low, correction, actual, root.location.z), flush=True)
     if abs(actual-target_z) > .028:
         raise RuntimeError("Foot contact correction failed at %s: %.3fm" % (frame, actual))
 
