@@ -40,3 +40,14 @@ test('faces change on mood and natural blink repeats deterministically', () => {
   assert.deepEqual(catPoseAt('eat', 'happy', 3.5), catPoseAt('eat', 'happy', 3.5));
   assert.equal(clamp(2, 0, 1), 1);
 });
+
+test('grooming lifts one forepaw and actuates the tongue while sniffing varies the face', () => {
+  const groom = Array.from({ length: 50 }, (_, i) => catPoseAt('groom', 'happy', i / 20));
+  assert.ok(groom.some((pose) => pose.pawLift[0] > 0.34));
+  assert.ok(groom.some((pose) => pose.tongue > 0.13));
+  assert.ok(groom.some((pose) => Math.abs(pose.headYaw) > 0.22));
+  const sniff = Array.from({ length: 50 }, (_, i) => catPoseAt('sniff', 'curious', i / 20));
+  assert.ok(sniff.some((pose) => pose.eyeOpen > 0.7));
+  assert.ok(sniff.some((pose) => Math.abs(pose.earTilt) > 0.08));
+  assert.ok(sniff.some((pose) => Math.abs(pose.headYaw) > 0.16));
+});
