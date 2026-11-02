@@ -64,6 +64,8 @@ def main():
         ("side", (5.4, 0.2, 2.1), "Idle", 9),
         ("feeding", (2.2, 5.1, 2.20), "Eat", 21),
         ("walking", (2.5, 4.9, 2.15), "Walk", 17),
+        ("grooming", (2.5, 4.9, 2.15), "Groom", 21),
+        ("sniffing", (2.5, 4.9, 2.15), "Sniff", 21),
     ):
         camera_at("Review-"+name, xyz, (0, .18, 1.18))
         clip(which, frame)
