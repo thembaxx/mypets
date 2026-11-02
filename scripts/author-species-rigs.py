@@ -25,6 +25,7 @@ from species_realism import (
     sculpt_muzzle, sculpt_beak,
 )
 from species_motion import limb_angles, tail_wave, walk_torso, wing_stroke
+from species_anatomy import anatomical_skull, head_eye_offset
 from audit_species_contact import audit as audit_species_motion
 
 # 13 species beyond the independently authored cat, plus breed/colour variants.
@@ -245,25 +246,26 @@ def make_animal(slug, spec, rig, output_dir):
     if kind=="fish":
         # Fish have one tapered living body, not a detached ball-shaped head.
         face=None
+    elif kind in ("quadruped","reptile"):
+        # One continuous forehead, eye sockets, cheek and snout surface.
+        # The old overlapping skull/muzzle spheres are intentionally removed.
+        face=anatomical_skull(slug,face_y,hz,hr,
+                              coat if kind=="reptile" else light,rig,weighted)
     else:
         face=ellipsoid("Skinned "+slug+" skull",(0,face_y,hz),
                        (hr,hr*.88,hr*.83),
-                       coat if kind in ("reptile","snake") else light,
+                       coat if kind=="snake" else light,
                        rig,"Head",48,32)
         sculpt_profile(face,slug,"skull",l,hr)
     muzzle_y=(-.16+l*.80 if kind=="fish" else face_y+hr*.69)
     if kind in ("quadruped","reptile"):
-        muzzle_scale=1.40 if slug=="dog" else .75 if slug=="rabbit" else 1
-        muzzle = ellipsoid(slug+" muzzle",
-                  (0,muzzle_y+hr*.13*(muzzle_scale-1),hz-hr*.23),
-                  (hr*.59,hr*.48*muzzle_scale,hr*.34),light,rig,"Head")
-        sculpt_muzzle(muzzle, slug)
         nose=ellipsoid(slug+" breathing nose",(0,muzzle_y+hr*.39,hz-hr*.20),
-                       (hr*.21,hr*.10,hr*.14),dark,rig,"Head",20,12)
+                       (hr*.15,hr*.07,hr*.105),dark,rig,"Head",20,12)
     else:
         nose=None
     for side in (-1,1):
         x=(side*w*(.39 if slug=="angelfish" else .60) if kind=="fish"
+           else side*hr*head_eye_offset(slug) if kind in ("quadruped","reptile")
            else side*hr*.53)
         eye_centre=((x,.12,cz+depth*.19) if kind=="fish"
                     else (x,face_y+hr*.68,hz+hr*.20))
