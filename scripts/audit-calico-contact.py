@@ -21,6 +21,28 @@ PAWS = ("Front_L", "Front_R", "Rear_L", "Rear_R")
 FRAMES = tuple(range(1, 50, 3)) + (49,)
 
 
+def evaluated_points(name):
+    """Copy true armature-deformed vertex coordinates for contact testing."""
+    original = bpy.data.objects.get(name)
+    if original is None:
+        raise RuntimeError("Missing contact object: " + name)
+    graph = bpy.context.evaluated_depsgraph_get()
+    obj = original.evaluated_get(graph)
+    mesh = obj.to_mesh(preserve_all_data_layers=False, depsgraph=graph)
+    try:
+        return [obj.matrix_world @ vertex.co for vertex in mesh.vertices]
+    finally:
+        obj.to_mesh_clear()
+
+
+def minimum_surface_distance(left, right):
+    """Nearest actual mesh vertices; centre distance is NOT surface contact."""
+    a, b = evaluated_points(left), evaluated_points(right)
+    if not a or not b:
+        raise RuntimeError("Cannot measure surface contact for empty geometry")
+    return min((u-v).length for u in a for v in b)
+
+
 def evaluated_bounds(name):
     """Bounding points after ALL live armature modifiers, in world metres."""
     original = bpy.data.objects.get(name)
@@ -107,6 +129,10 @@ def audit():
         muzzle = evaluated_bounds("Left muzzle")["centre"]
         grooming.append({"frame":frame,
                          "paw_to_muzzle":round(distance(paw,muzzle),5),
+                         "surface_gap":round(minimum_surface_distance(
+                             "Front_L lower paw", "Left muzzle"),5),
+                         "forearm_separation":round(minimum_surface_distance(
+                             "Front_L lower paw", "Front_L shoulder"),5),
                          "paw":tuple(round(v,5) for v in paw),
                          "muzzle":tuple(round(v,5) for v in muzzle)})
     report = {
@@ -122,7 +148,10 @@ def audit():
             "deepest_paw_z":round(min(v["paw_low_z"] for v in all_paws),5),
         },
         "eat":{"frames":eating,"nearest_mouth_food":min(v["mouth_to_food"] for v in eating)},
-        "groom":{"frames":grooming,"nearest_paw_muzzle":min(v["paw_to_muzzle"] for v in grooming)},
+        "groom":{"frames":grooming,
+                 "nearest_paw_muzzle":min(v["paw_to_muzzle"] for v in grooming),
+                 "nearest_surface_gap":min(v["surface_gap"] for v in grooming),
+                 "max_forearm_separation":max(v["forearm_separation"] for v in grooming)},
         "status":"REVIEW_NEEDED - geometry audit does not simulate contacts or forces",
     }
     for value in [report["walk"]["deepest_paw_z"],
