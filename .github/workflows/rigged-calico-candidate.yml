@@ -1,0 +1,135 @@
+name: Rigged calico candidate build
+on:
+  push:
+    branches:
+      - feat/living-3d-pet-behaviours-20261102
+    paths:
+      - scripts/author-calico-rig.py
+      - scripts/verify-calico-anatomy.py
+      - scripts/calico_gait.py
+      - scripts/test_calico_gait.py
+      - scripts/check_calico_contact.py
+      - scripts/verify-calico-rig.mjs
+      - scripts/verify-calico-fur.py
+      - scripts/render-calico-review.py
+      - scripts/audit-calico-contact.py
+      - .github/workflows/rigged-calico-candidate.yml
+permissions:
+  contents: write
+# Only the most recent Blender source revision should consume a runner or
+# publish review assets. The job already guards against stale source SHAs.
+concurrency:
+  group: calico-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  blender-calico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - name: Install offline Blender authoring tools
+        run: |
+          set -euo pipefail
+          echo "Installing Blender and software rendering dependencies"
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
+          /usr/bin/python3 -c 'import numpy; print(numpy.__version__)'
+          blender --version | head -3
+      - name: Check Blender authoring scripts
+        run: |
+          python3 -m py_compile scripts/verify-calico-fur.py scripts/author-calico-rig.py scripts/verify-calico-anatomy.py scripts/verify-calico-fur.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py
+          python3 scripts/test_calico_gait.py -v
+          python3 -m py_compile scripts/render-calico-review.py
+          python3 -m py_compile scripts/audit-calico-contact.py
+          python3 -m unittest discover -s scripts -p 'test_calico_gait.py'
+      - name: Generate original rigged calico candidate
+        run: |
+          blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-calico-rig.py -- --output-dir "$RUNNER_TEMP/calico"
+      - name: Reject disconnected limb parts and missing fur geometry
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/verify-calico-anatomy.py
+      - name: Verify actual keyed Blender shin targets and stance height
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/check_calico_contact.py -- --output-dir "$RUNNER_TEMP/calico"
+      - name: Validate real glTF skin, named clips and morph targets
+        run: |
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/calico" --require-assets
+          node scripts/verify-calico-rig.mjs "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb"
+          python3 scripts/verify-calico-fur.py "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb"
+      - name: Audit evaluated paw-ground, grooming and feeding geometry
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/audit-calico-contact.py -- --output-dir "$RUNNER_TEMP/calico"
+          python3 -m json.tool "$RUNNER_TEMP/calico/calico-geometry-contact.json" >/dev/null
+          python3 - "$RUNNER_TEMP/calico/calico-geometry-contact.json" <<'PY'
+          import json
+          import sys
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          samples = [part for frame in report["walk"]["frames"]
+                     for part in frame["paws"].values()]
+          stance = [part["paw_low_z"] for part in samples if part["stance"]]
+          swing = [part["paw_low_z"] for part in samples if not part["stance"]]
+          assert len(stance) >= 30 and len(swing) >= 12, "Insufficient real skinned-mesh samples"
+          assert all(-0.01 <= low <= 0.025 for low in stance), (
+              "Planted paws must stay close to the true floor, not hover or penetrate", stance)
+          assert all(low >= -0.01 for low in swing), (
+              "Swinging paws must not penetrate the ground", swing)
+          print("REAL_MESH_CONTACT_PASS stance=[%.4f, %.4f] swing_min=%.4f" %
+                (min(stance), max(stance), min(swing)))
+          # Require visible grooming contact without separating the forearm.
+          groom = report["groom"]
+          at_peak = [frame for frame in groom["frames"] if frame["frame"] in (19, 25, 31)]
+          assert len(at_peak) == 3 and all(frame["surface_gap"] <= .03 for frame in at_peak), (
+              "Grooming paw must actually approach the muzzle during peak grooming", at_peak)
+          assert groom["connected_limb"], (
+              "All grooming paw vertices must belong to the continuous anatomical limb", groom)
+          assert report["eat"]["nearest_mouth_food"] <= .15, (
+              "Feeding mouth must reach the food location", report["eat"])
+          assert report["walk"]["stance_pad_z_max"] <= .12, (
+              "Decorative toe pads are floating too high above grounded paws", report["walk"])
+          print("REAL_GROOM_AND_FEED_PASS peak_gap=%.4f connected_limb=%s food_gap=%.4f" %
+                (max(frame["surface_gap"] for frame in at_peak),
+                 groom["connected_limb"], report["eat"]["nearest_mouth_food"]))
+          PY
+      - name: Render independent front, side and 3/4 reviews
+        run: |
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/calico"
+      - name: Upload unapproved Blender source, GLB and renders
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuzzle-calico-rigged-review
+          path: ${{ runner.temp }}/calico/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish current unapproved candidate without stale binary overwrites
+        if: github.ref == 'refs/heads/feat/living-3d-pet-behaviours-20261102'
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            git fetch origin feat/living-3d-pet-behaviours-20261102
+            # An older job must never replace candidate files generated from
+            # newer Blender/validation/review scripts.
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py .github/workflows/rigged-calico-candidate.yml; then
+              echo "Newer 3D authoring sources exist. Skip stale candidate publication."
+              exit 0
+            fi
+            git checkout -B candidate-publish origin/feat/living-3d-pet-behaviours-20261102
+            mkdir -p public/models/candidates docs/screenshots
+            cp "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb" public/models/candidates/nuzzle-calico-rig.glb
+            cp "$RUNNER_TEMP/calico/calico-front.png" docs/screenshots/calico-front-candidate.png
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add public/models/candidates/nuzzle-calico-rig.glb docs/screenshots/calico-front-candidate.png
+            if git diff --cached --quiet; then
+              echo "Already published exact reviewed candidate."
+              exit 0
+            fi
+            git commit -m 'assets(3d): update unapproved source-matched cat candidate'
+            if git push origin HEAD:feat/living-3d-pet-behaviours-20261102; then
+              exit 0
+            fi
+            echo "Branch advanced while publishing. Retry with fresh base."
+          done
+          echo "Unable to publish without a concurrent change. No force push attempted." >&2
+          exit 1
