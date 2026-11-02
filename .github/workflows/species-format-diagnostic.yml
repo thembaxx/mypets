@@ -19,5 +19,5 @@ jobs:
       - run: npm ci
       - name: Print exact formatting corrections
         run: |
-          npx oxfmt app/3d-lab/page.tsx components/tripo-pet.tsx lib/species-3d.ts scripts/verify-species-rigs.mjs tests/species-3d.test.ts
-          git diff -- app/3d-lab/page.tsx components/tripo-pet.tsx lib/species-3d.ts scripts/verify-species-rigs.mjs tests/species-3d.test.ts
+          npx oxfmt app/3d-lab/page.tsx components/tripo-pet.tsx lib/species-3d.ts scripts/verify-species-rigs.mjs tests/species-3d.test.ts tests/species-browser.spec.mjs
+          git diff -- app/3d-lab/page.tsx components/tripo-pet.tsx lib/species-3d.ts scripts/verify-species-rigs.mjs tests/species-3d.test.ts tests/species-browser.spec.mjs
