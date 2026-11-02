@@ -235,7 +235,8 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
     for pb in RIG.pose.bones:
         pb.location = (0, 0, 0)
         pb.rotation_euler = (0, 0, 0)
-    RIG.pose.bones["Root"].location = (0, root_y, root_z)
+    # Set the resting sole just above the ground instead of hovering.
+    RIG.pose.bones["Root"].location = (0, root_y, root_z - .12)
     RIG.pose.bones["Body"].location.z = body_z
     RIG.pose.bones["Body"].rotation_euler.x = body_pitch
     RIG.pose.bones["Head"].rotation_euler.x = head_pitch
@@ -295,8 +296,8 @@ def build_actions():
                 bite = max(0, math.sin(cycle*5))
                 # Two-stage feeding action: lower head and reach, then chew/lick.
                 approach = min(1, max(0,(frame-1)/10), max(0,(LAST-frame)/10))
-                set_pose(frame, head_pitch=-.42*approach,
-                         head_drop=.65*approach, head_reach=.14*approach,
+                set_pose(frame, head_pitch=-.54*approach,
+                         head_drop=.74*approach, head_reach=.17*approach,
                          body_pitch=-.12*approach,
                          jaw=.32*bite*approach,
                          tongue=.14*max(0,math.sin(cycle*4))*approach,
