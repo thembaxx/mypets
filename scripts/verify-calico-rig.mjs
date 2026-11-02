@@ -48,8 +48,8 @@ for (const label of ['Front_L', 'Front_R', 'Rear_L', 'Rear_R']) {
     `Missing connected limb node ${label}; exported mesh nodes: ${instances.map(({ name }) => name).join(', ')}`,
   );
   assert.ok(
-    (limb.mesh.primitives ?? []).some((part) =>
-      part.attributes?.JOINTS_0 !== undefined && part.attributes?.WEIGHTS_0 !== undefined,
+    (limb.mesh.primitives ?? []).some(
+      (part) => part.attributes?.JOINTS_0 !== undefined && part.attributes?.WEIGHTS_0 !== undefined,
     ),
     `Limb ${label} node must reference actual skin-weighted geometry`,
   );
