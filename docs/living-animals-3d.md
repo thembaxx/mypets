@@ -77,3 +77,24 @@ audit, facial morph and fur image checks, front/side/three-quarter reviews,
 and fresh Chromium/WebKit desktop/mobile regression all complete on the final
 PR head. The QA workflow also now listens for main-branch asset pushes so a
 future merged binary can receive an exact-revision browser run.
+
+## Review milestone — feline eyelid geometry and real stance-slip diagnostics
+
+After #43 merged, this branch replaces the fixed smiling arcs with
+Blender-authored **skinned upper eyelid ribbons**, keyed for both Blink and
+Eye_Wide, and uses separate, restrained corneal/iris PBR settings. This adds
+real facial animation geometry, but does not make the procedural head a
+scan-quality cat. The builder still exports all seven animal actions.
+
+The evaluated paw audit now records the *world-space XY centre of the lowest
+12 mm of skinned toe vertices*, samples consecutive stance contacts per paw,
+and reports horizontal path length and maximum slip per pair. This **diagnoses**
+foot sliding: it does not magically solve root motion or contact dynamics.
+The in-place walk is expected to show nonzero stance drift until grounded
+locomotion is implemented, so numerical slip is a non-gating review metric
+rather than a misleading pass/fail claim.
+
+Desktop dog WebKit animation tests now poll several rendered frames to avoid
+a one-pair compositor timing false negative, while still rejecting genuinely
+frozen movement. Keep real device/artistic review mandatory before adopting
+this model as the default animal.
