@@ -196,12 +196,12 @@ export function Animal({
           )}
         </AnimatePresence>
       </motion.button>
-      {modelUrl && (
+      {(modelUrl || species === 'cat') && (
         <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
-          Explore in 3D
+          {modelUrl ? 'Explore in 3D' : 'Meet the 3D cat prototype'}
         </button>
       )}
-      {view3d && modelUrl && (
+      {view3d && (modelUrl || species === 'cat') && (
         <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
       )}
     </>
