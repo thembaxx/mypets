@@ -433,46 +433,55 @@ def animate(slug, spec, rig):
             elif label=="Walk":
                 # Distinct swimming/slithering/wing patterns, not a copied cat gait.
                 speed=2 if kind in ("quadruped","reptile") else 3
-                body.location.y=.026*math.sin(cycle*speed)
+                bob,sway,pitch=walk_torso(slug,kind,t)
+                body.location.y=bob
+                body.location.x=sway
+                body.rotation_euler.x=pitch
                 body.rotation_euler.z=.032*math.sin(cycle*speed)
-                tail1.rotation_euler.z=.18*math.sin(cycle*speed)
-                tail2.rotation_euler.z=.25*math.sin(cycle*speed+.5)
+                tail1.rotation_euler.z,tail2.rotation_euler.z=tail_wave(kind,t)
                 if kind=="fish":
                     # Traveling lateral swimming wave from the torso toward the tail.
                     body.rotation_euler.z=.055*math.sin(cycle*3)
                     tail1.rotation_euler.z=.28*math.sin(cycle*3-.65)
                     tail2.rotation_euler.z=.42*math.sin(cycle*3-1.15)
                 for bone in rig.pose.bones:
+                    if kind in ("quadruped","reptile") and bone.name.startswith(("Front_","Rear_")) and bone.name.endswith(("_Upper","_Lower")):
+                        upper,lower=limb_angles(slug,bone.name,t)
+                        bone.rotation_euler.x=upper if bone.name.endswith("_Upper") else lower
                     if kind=="bird" and bone.name.startswith("Wing_"):
-                        bone.rotation_euler.y=.09*math.sin(cycle*2)
-                        bone.rotation_euler.x=.08*math.sin(cycle*2) if bone.name.endswith("_Tip") else 0
-                        continue
-                    if bone.name.endswith("_Upper"):
-                        phase=math.pi if bone.name.endswith("_L_Upper") else 0
-                        if bone.name.startswith("Rear"):
-                            phase+=math.pi
-                        if slug in ("dog","rabbit"):
-                            articulated_gait(slug,bone,phase,cycle)
-                        else:
-                            bone.rotation_euler.x=.25*math.sin(cycle*2+phase)
-                    if bone.name.endswith("_Lower") and slug in ("dog","rabbit"):
-                        phase=math.pi if bone.name.endswith("_L_Lower") else 0
-                        if bone.name.startswith("Rear"):
-                            phase+=math.pi
-                        articulated_gait(slug,bone,phase,cycle)
-                    if bone.name.startswith(("Wing_","Fin_")):
-                        bone.rotation_euler.y=.30*math.sin(cycle*3)
+                        tip=bone.name.endswith("_Tip")
+                        side=-1 if "_L" in bone.name else 1
+                        bone.rotation_euler.y=side*wing_stroke(t,tip=tip)
+                        if tip:
+                            bone.rotation_euler.x=.035*math.sin(cycle*2-.4)
+                    if kind=="fish" and bone.name.startswith("Fin_"):
+                        side=-1 if "_L" in bone.name else 1
+                        bone.rotation_euler.y=side*.26*math.sin(cycle*3+side*.35)
                     if bone.name.startswith("Leg_"):
-                        bone.rotation_euler.x=.30*math.sin(cycle*2)
+                        bone.rotation_euler.x=.25*math.sin(cycle*2)
+                if kind=="bird":
+                    head.rotation_euler.x=.055*math.sin(cycle*2)
+                elif kind=="snake":
+                    head.rotation_euler.z=.055*math.sin(cycle*2-.4)
             elif label=="Eat":
                 ramp=math.sin(math.pi*t)**2
-                head.rotation_euler.x=-.27*ramp
+                head.rotation_euler.x=(-.40 if kind=="bird" else -.18 if kind=="fish" else -.27)*ramp
                 rig.pose.bones["Jaw"].rotation_euler.x=.26*max(0,math.sin(cycle*5))*ramp
+                if kind=="bird":
+                    body.rotation_euler.x=.045*ramp
+                elif kind=="fish":
+                    for bone in rig.pose.bones:
+                        if bone.name.startswith("Fin_"):
+                            bone.rotation_euler.y=.11*math.sin(cycle*4)
             elif label=="Play":
                 body.location.y=.055*abs(math.sin(cycle*2))
                 body.rotation_euler.z=.09*math.sin(cycle*2)
                 head.rotation_euler.z=.13*math.sin(cycle*2)
                 tail1.rotation_euler.z=.21*math.sin(cycle*2)
+                if slug=="rabbit":
+                    body.location.y=.085*abs(math.sin(cycle*2))
+                if kind=="fish":
+                    tail1.rotation_euler.z,tail2.rotation_euler.z=tail_wave("fish",t)
                 if kind=="bird":
                     for pb in rig.pose.bones:
                         if pb.name.startswith("Wing_"):
@@ -485,6 +494,10 @@ def animate(slug, spec, rig):
             elif label=="Groom":
                 head.rotation_euler.x=-.13*math.sin(math.pi*t)**2
                 head.rotation_euler.z=.12*math.sin(cycle*2)
+                if kind=="bird":
+                    for bone in rig.pose.bones:
+                        if bone.name.startswith("Wing_"):
+                            bone.rotation_euler.y=wing_stroke(t,tip=bone.name.endswith("_Tip"))
             elif label=="Sniff":
                 head.rotation_euler.x=-.12*math.sin(math.pi*t)**2
                 head.rotation_euler.z=.08*math.sin(cycle*3)
