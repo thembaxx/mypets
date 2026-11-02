@@ -281,10 +281,11 @@ def model():
             # world height. The previous z=.18 made rear pads float about 26 cm
             # above the evaluated stance paw despite correct lower-mesh contact.
             # In bind pose the lower paw is centred at z-.68 with radius .27;
-            # its sole lies near z-.95. Place the inset pad 7 cm above that
-            # underside so the rose mesh stays embedded and remains visible.
+            # its sole lies near z-.95. Use fore/hind anatomical offsets,
+            # calibrated against the *evaluated* stance and swing pad bounds
+            # in the Blender contact-audit report.
             toe_pad = make_mesh(label + " rosy toe pad",
-                                (x,y+.19,z-.88), (.12,.035,.08),
+                                (x,y+.19,z-(.89 if fore else .95)), (.12,.035,.08),
                                 pink, label + "_Lower", 16,12)
             soften_skin(toe_pad, label+"_Lower", label+"_Upper",
                         lambda v: .13)
