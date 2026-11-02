@@ -43,6 +43,13 @@ for label in LABELS:
     )
     assert "distal_cutoff_z" in limb, f"{label}: needs evaluated toe-only contact data"
     assert any(p.material_index == 1 for p in limb.data.polygons) if label == "Rear_R" else True
+assert len([obj for obj in bpy.data.objects if obj.type == "MESH"
+            and (" cupped cartilage" in obj.data.name)]) >= 4, (
+    "All original outer/inner pinnae should have rounded, curved cartilage"
+)
+assert bpy.data.images.get("Calico short-fur normal") is not None, (
+    "Baked glTF normal map is required for mobile PBR coat shading"
+)
 fur = [ob for ob in bpy.data.objects if ob.type == "MESH" and ob.name.startswith("Fur ")]
 assert len(fur) >= 5, f"Need batched tuft groups, got {len(fur)}"
 assert all(len(ob.data.polygons) >= 20 for ob in fur)

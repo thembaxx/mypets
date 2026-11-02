@@ -15,6 +15,13 @@ const doc = JSON.parse(
     .trim(),
 );
 assert.ok(doc.nodes?.length > 12, 'Require articulated node hierarchy');
+// Ensure fur microdetail is present in the *actual GLB*, not just in Blender.
+assert.ok((doc.images ?? []).length >= 1, 'Missing packed short-fur normal image');
+assert.ok((doc.textures ?? []).length >= 1, 'Missing exported fur normal texture');
+assert.ok(
+  (doc.materials ?? []).filter((m) => m.normalTexture !== undefined).length >= 3,
+  'Require shared PBR coat normals on the ivory, amber and chocolate fur materials',
+);
 assert.ok(
   doc.skins?.some((skin) => skin.joints?.length >= 12),
   'Require actual exported skin and skeleton',

@@ -21,6 +21,62 @@ FPS = 24
 LAST = 49
 
 
+
+# A single tiny, baked tangent-space normal image is shared by every coat
+# material. Blender's procedural nodes do not survive glTF export, so material
+# noise without this bake looked flat in the real Three.js viewer.
+FUR_NORMAL_IMAGE = None
+
+
+def prepare_fur_normals(output_dir, size=128):
+    """Exportable short-fur bump detail; no translucent hair cards or uploads.
+
+    Tileable value-noise gradients emulate subtle directional fur combing.
+    This is explicitly a shading approximation, not simulated strand dynamics.
+    """
+    global FUR_NORMAL_IMAGE
+
+    def seed(x, y):
+        n = ((x * 73856093) ^ (y * 19349663)) & 0xffffffff
+        n = ((n ^ (n >> 13)) * 1274126177) & 0xffffffff
+        return n / 4294967295
+
+    def noise(u, v, scale_u, scale_v):
+        x, y = u * scale_u, v * scale_v
+        ix, iy = math.floor(x), math.floor(y)
+        a, b = x-ix, y-iy
+        a, b = a*a*(3-2*a), b*b*(3-2*b)
+        v0 = seed(ix, iy)*(1-a) + seed(ix+1, iy)*a
+        v1 = seed(ix, iy+1)*(1-a) + seed(ix+1, iy+1)*a
+        return v0*(1-b)+v1*b
+
+    def relief(x, y):
+        # Anisotropic strokes with finer undercoat variation.
+        u, v = x / size, y / size
+        return (.64*noise(u, v, 37, 83) +
+                .26*noise(u, v, 71, 111) +
+                .10*noise(u, v, 17, 29))
+
+    pixel_values = []
+    for y in range(size):
+        for x in range(size):
+            dhx = relief((x+1)%size, y)-relief((x-1)%size, y)
+            dhy = relief(x, (y+1)%size)-relief(x, (y-1)%size)
+            normal = Vector((-.32*dhx, -.32*dhy, 1)).normalized()
+            pixel_values.extend((.5+.5*normal.x, .5+.5*normal.y,
+                                 .5+.5*normal.z, 1))
+    img = bpy.data.images.new("Calico short-fur normal", width=size,
+                              height=size, alpha=True)
+    img.pixels.foreach_set(pixel_values)
+    img.colorspace_settings.name = "Non-Color"
+    img.filepath_raw = str(output_dir / "calico-short-fur-normal.png")
+    img.file_format = "PNG"
+    img.save()
+    img.pack()
+    FUR_NORMAL_IMAGE = img
+    print("FUR_NORMAL_BAKED %s %sx%s" % (img.filepath, size, size), flush=True)
+
+
 def material(name, rgb, roughness=0.83):
     m = bpy.data.materials.new(name)
     m.diffuse_color = (*rgb, 1)
@@ -28,6 +84,19 @@ def material(name, rgb, roughness=0.83):
     bsdf = m.node_tree.nodes.get("Principled BSDF")
     bsdf.inputs["Base Color"].default_value = (*rgb, 1)
     bsdf.inputs["Roughness"].default_value = roughness
+    # Tangent normal maps are glTF-compatible and preserve per-face calico paint.
+    # Other surfaces (eyes, cheeks, pink nose and mouth) stay smooth.
+    if FUR_NORMAL_IMAGE and name in {
+        "Calico ivory fur", "Face cream", "Calico amber", "Calico chocolate"
+    }:
+        tex = m.node_tree.nodes.new("ShaderNodeTexImage")
+        tex.name = "Exportable short-coat normals"
+        tex.image = FUR_NORMAL_IMAGE
+        tex.extension = "REPEAT"
+        normal = m.node_tree.nodes.new("ShaderNodeNormalMap")
+        normal.inputs["Strength"].default_value = .24
+        m.node_tree.links.new(tex.outputs["Color"], normal.inputs["Color"])
+        m.node_tree.links.new(normal.outputs["Normal"], bsdf.inputs["Normal"])
     return m
 
 
@@ -46,35 +115,62 @@ def make_mesh(name, pos, radius, mat, bone, segments=24, rings=16):
 
 
 def make_cone(name, pos, radius, depth, mat, bone):
-    """Build a thin, swept triangular feline ear instead of a round cone.
+    """A cupped, softly curved feline pinna with thickness and a rounded tip.
 
-    The broad base follows the skull and the slanted tip points outward.
-    Front and back faces give this genuinely three-dimensional ear a little
-    thickness without introducing a heavy cartoon traffic-cone silhouette.
+    This keeps the existing ear bones and coloured inset identities but
+    replaces the old five-face flat cardboard triangle. Geometry is still
+    economical enough to skin and display on mid-range mobile hardware.
     """
     x, y, z = pos
     outward = 1 if x > 0 else -1
-    base_z = z - depth*.39
-    tip_z = z + depth*.56
-    pts = [
-        (x-radius*.90, y+.05, base_z),
-        (x+radius*.90, y+.05, base_z),
-        (x+outward*radius*.18, y-.015, tip_z),
-        (x-radius*.90, y-.10, base_z),
-        (x+radius*.90, y-.10, base_z),
-        (x+outward*radius*.18, y-.11, tip_z),
-    ]
-    faces = [(0,1,2), (5,4,3), (0,3,4,1),
-             (1,4,5,2), (2,5,3,0)]
-    mesh = bpy.data.meshes.new(name + " ear geometry")
-    mesh.from_pydata(pts, [], faces)
+    levels, width_steps = 11, 10
+    base_z = z-depth*.39
+    verts, faces = [], []
+    for front in (True, False):
+        for row in range(levels):
+            t = row / (levels-1)
+            width = radius * (.035 + .965*(1-t)**.81)
+            centre_x = x + outward*radius*.14*t
+            height = base_z+depth*.95*t
+            for step in range(width_steps+1):
+                u = 2*step/width_steps-1
+                # A gentle concavity faces the camera (+Y); ear cartilage is
+                # fuller at the base and curves toward the tip.
+                cup = .057*(1-u*u)*math.sin(math.pi*t)
+                front_y = y+.028*(1-t)-.054*t+cup
+                offset = 0 if front else -.075*(.4+.6*(1-t))
+                verts.append((centre_x+u*width, front_y+offset, height))
+    layer_size = levels*(width_steps+1)
+    for surface in (0,1):
+        offset = surface*layer_size
+        for row in range(levels-1):
+            for step in range(width_steps):
+                a = offset+row*(width_steps+1)+step
+                b = a+1
+                c = b+width_steps+1
+                d = a+width_steps+1
+                faces.append((a,b,c,d) if surface == 0 else (d,c,b,a))
+    for row in range(levels-1):
+        for edge in (0,width_steps):
+            a = row*(width_steps+1)+edge
+            b = (row+1)*(width_steps+1)+edge
+            faces.append((a,b,b+layer_size,a+layer_size))
+    for step in range(width_steps):
+        a,b=step,step+1
+        faces.append((a+layer_size,b+layer_size,b,a))
+        a=(levels-1)*(width_steps+1)+step
+        b=a+1
+        faces.append((a,b,b+layer_size,a+layer_size))
+    mesh = bpy.data.meshes.new(name + " cupped cartilage")
+    mesh.from_pydata(verts, [], faces)
     mesh.update()
     ob = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(ob)
     ob.data.materials.append(mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
     bind(ob, bone)
     return ob
-
 
 def make_curve(name, points, colour, bone, thickness=.034):
     curve = bpy.data.curves.new(name, "CURVE")
@@ -229,6 +325,21 @@ def joined_limb(name, side, fore, hip_y, hip_z, mat, gold):
     mesh = bpy.data.meshes.new(label+" seamless limb geometry")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
+    # UV coordinates let the exported glTF fur normal map follow the leg
+    # surface. Keep ring seams deliberate rather than relying on Blender's
+    # automatic UVs (these generated meshes have none by default).
+    uv = mesh.uv_layers.new(name="Limb coat UV")
+    for face in mesh.polygons:
+        seam = {mesh.loops[loop].vertex_index % sides
+                for loop in face.loop_indices}
+        wrap = 0 in seam and sides-1 in seam
+        for loop_index in face.loop_indices:
+            vi = mesh.loops[loop_index].vertex_index
+            row = min(vi // sides, len(sections)-1)
+            u = (vi % sides) / sides
+            if wrap and vi % sides == 0:
+                u = 1.0
+            uv.data[loop_index].uv = (u, row / (len(sections)-1))
     ob = bpy.data.objects.new(label+" lower paw", mesh)
     bpy.context.collection.objects.link(ob)
     mesh.materials.append(mat)
@@ -800,6 +911,7 @@ def main():
     bpy.context.scene.frame_start = 1
     bpy.context.scene.frame_end = LAST
     skeleton()
+    prepare_fur_normals(out)
     model()
     verify_expression_shapes()
     build_actions()
