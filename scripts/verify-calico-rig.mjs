@@ -66,30 +66,38 @@ for (const mesh of doc.meshes ?? []) {
     const view = doc.bufferViews?.[accessor?.bufferView];
     assert.ok(accessor && view, 'Mesh skin weights require an embedded bufferView');
     assert.equal(accessor.type, 'VEC4');
-    const componentBytes = accessor.componentType === 5126 ? 4
-      : accessor.componentType === 5123 ? 2
-        : accessor.componentType === 5121 ? 1 : 0;
+    const componentBytes =
+      accessor.componentType === 5126
+        ? 4
+        : accessor.componentType === 5123
+          ? 2
+          : accessor.componentType === 5121
+            ? 1
+            : 0;
     assert.ok(componentBytes > 0, 'Unsupported skin weight component format');
-    const stride = view.byteStride ?? (componentBytes * 4);
+    const stride = view.byteStride ?? componentBytes * 4;
     const start = binaryStart + (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
     for (let n = 0; n < accessor.count; n++) {
       let active = 0;
       for (let lane = 0; lane < 4; lane++) {
         const offset = start + n * stride + lane * componentBytes;
-        let weight = accessor.componentType === 5126
-          ? bytes.readFloatLE(offset)
-          : accessor.componentType === 5123
-            ? bytes.readUInt16LE(offset) / 65535
-            : bytes.readUInt8(offset) / 255;
-        if (weight > .08) active++;
+        let weight =
+          accessor.componentType === 5126
+            ? bytes.readFloatLE(offset)
+            : accessor.componentType === 5123
+              ? bytes.readUInt16LE(offset) / 65535
+              : bytes.readUInt8(offset) / 255;
+        if (weight > 0.08) active++;
       }
       if (active > 1) blendedVertices++;
       maxInfluenceCount = Math.max(maxInfluenceCount, active);
     }
   }
 }
-assert.ok(blendedVertices >= 160,
-  `Need real multi-bone deforming fur surface; observed ${blendedVertices} blended vertices`);
+assert.ok(
+  blendedVertices >= 160,
+  `Need real multi-bone deforming fur surface; observed ${blendedVertices} blended vertices`,
+);
 
 assert.ok(bytes.length <= 8 * 1024 * 1024);
 console.log(
