@@ -78,7 +78,7 @@ def main():
     food_material = bpy.data.materials.new("Review food amber")
     food_material.diffuse_color = (.65, .37, .20, 1)
     bpy.ops.mesh.primitive_cylinder_add(vertices=40, radius=.44,
-                                        depth=.20, location=(0,1.39,.13))
+                                        depth=.20, location=(0,1.13,.13))
     bowl = bpy.context.object
     bowl.name = "Eating animation preview bowl"
     bowl.data.materials.append(bowl_material)
@@ -86,7 +86,7 @@ def main():
         a = 2*math.pi*index/8
         bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=8,
                                              location=(math.cos(a)*.23,
-                                                       1.39+math.sin(a)*.23,.25))
+                                                       1.13+math.sin(a)*.23,.25))
         bite = bpy.context.object
         bite.name = "Review kibble %02d" % index
         bite.scale = (.085,.08,.04)
