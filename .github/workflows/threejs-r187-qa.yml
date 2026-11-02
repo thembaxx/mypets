@@ -1,5 +1,13 @@
 name: Three.js r187 focused QA
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'public/models/candidates/**'
+      - 'components/tripo-pet.tsx'
+      - 'tests/**'
+      - '.github/workflows/threejs-r187-qa.yml'
   pull_request:
     paths:
       - 'components/tripo-pet.tsx'
@@ -9,6 +17,10 @@ on:
       - 'tests/species-browser.spec.mjs'
       - 'tests/species-realism-browser.spec.mjs'
       - 'scripts/species_realism.py'
+      - 'scripts/author-calico-rig.py'
+      - 'scripts/calico_feline_sculpt.py'
+      - 'scripts/calico_gait.py'
+      - '.github/workflows/rigged-calico-candidate.yml'
       - 'scripts/author-species-rigs.py'
       - 'public/models/candidates/**'
       - 'docs/avian-aquatic-visual-review.md'
