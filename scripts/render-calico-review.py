@@ -61,6 +61,42 @@ def main():
         clip(which, frame)
         scene.render.filepath = str(out / ("calico-" + name + ".png"))
         bpy.ops.render.render(write_still=True)
+    # A real Blender-rendered action sequence, not a still image with motion.
+    # The ceramic bowl is a review prop, deliberately not baked into the cat GLB.
+    bowl_material = bpy.data.materials.new("Review bowl sage")
+    bowl_material.diffuse_color = (.45, .66, .54, 1)
+    food_material = bpy.data.materials.new("Review food amber")
+    food_material.diffuse_color = (.65, .37, .20, 1)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=40, radius=.44,
+                                        depth=.20, location=(0,1.39,.13))
+    bowl = bpy.context.object
+    bowl.name = "Eating animation preview bowl"
+    bowl.data.materials.append(bowl_material)
+    for index in range(8):
+        a = 2*math.pi*index/8
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=8,
+                                             location=(math.cos(a)*.23,
+                                                       1.39+math.sin(a)*.23,.25))
+        bite = bpy.context.object
+        bite.name = "Review kibble %02d" % index
+        bite.scale = (.085,.08,.04)
+        bite.data.materials.append(food_material)
+    camera_at("Eating video review", (2.2,4.9,2.15), (0,.54,1.05))
+    clip("Eat", 1)
+    scene.render.resolution_x = 560
+    scene.render.resolution_y = 560
+    scene.frame_start = 1
+    scene.frame_end = 49
+    scene.render.fps = 24
+    scene.render.image_settings.file_format = "FFMPEG"
+    scene.render.ffmpeg.format = "MPEG4"
+    scene.render.ffmpeg.codec = "H264"
+    scene.render.ffmpeg.constant_rate_factor = "MEDIUM"
+    scene.render.filepath = str(out / "calico-feeding-preview.mp4")
+    bpy.ops.render.render(animation=True)
+    if not (out / "calico-feeding-preview.mp4").is_file():
+        raise RuntimeError("Could not produce actual eating animation video")
+    print("Real review video rendered:", (out / "calico-feeding-preview.mp4").stat().st_size)
     print("Review renders generated:", [p.name for p in out.glob("*.png")])
 
 
