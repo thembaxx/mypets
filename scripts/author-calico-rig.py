@@ -776,6 +776,63 @@ def fit_walk_stance(frame, t):
                       (name, frame, before, actual), flush=True)
 
 
+def evaluated_lowest(name):
+    """Lowest WORLD-Z point of the actual evaluated skinned preview mesh."""
+    ob = bpy.data.objects[name]
+    bpy.context.view_layer.update()
+    graph = bpy.context.evaluated_depsgraph_get()
+    evaluated = ob.evaluated_get(graph)
+    mesh = evaluated.to_mesh(preserve_all_data_layers=False, depsgraph=graph)
+    try:
+        return min((evaluated.matrix_world @ vertex.co).z for vertex in mesh.vertices)
+    finally:
+        evaluated.to_mesh_clear()
+
+
+def fit_nonwalk_support(frame, raised=()):
+    """Keep supported feet above the ground after non-walk body/head animation.
+
+    The exported cat has no runtime rigid-body collision solver. Measure and
+    correct the *evaluated* paw AND cosmetic pad against world-Z instead of
+    trusting the knee-tip rig. Skip raised grooming limbs, preserving the
+    independently measured paw-to-muzzle interaction.
+    """
+    for fore in (True, False):
+        for side in (-1, 1):
+            label = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
+            if label in raised:
+                continue
+            surfaces = (label+" lower paw", label+" rosy toe pad")
+            def low():
+                return min(evaluated_lowest(name) for name in surfaces)
+
+            before = low()
+            bone = RIG.pose.bones[label+"_Lower"]
+            original = bone.location.y
+            probe = .018
+            bone.location.y = original + probe
+            tested = low()
+            bone.location.y = original
+            gradient = (tested-before)/probe
+            if not math.isfinite(gradient) or abs(gradient) < .13:
+                raise RuntimeError(
+                    "Support-foot contact derivative is invalid: %s %.4f" %
+                    (label, gradient)
+                )
+            correction = max(-.28, min(.28, (.006-before)/gradient))
+            bone.location.y = original + correction
+            bone.keyframe_insert("location", frame=frame, group=bone.name)
+            after = low()
+            if not (-.045 <= after <= .050):
+                raise RuntimeError(
+                    "Supported paw cannot reach ground: %s frame=%d before=%.3f after=%.3f" %
+                    (label, frame, before, after)
+                )
+            if frame in (1, 21, 25, 49):
+                print("NONWALK_PAW_SUPPORT %s frame=%d %.4f -> %.4f" %
+                      (label, frame, before, after), flush=True)
+
+
 def evaluated_mesh_centre(name):
     """Axis-aligned centre of the deforming paw TIP (or full facial mesh)."""
     ob = bpy.data.objects[name]
@@ -906,6 +963,7 @@ def build_actions():
                          tail=.09*math.sin(cycle),
                          legs={"Front_L":groom_paw_pose(reach)})
                 aim_grooming_forepaw(frame, reach)
+                fit_nonwalk_support(frame, raised=("Front_L",))
             elif clip == "Sniff":
                 # Gentle nose-first inspection with small ear/head movement.
                 reach = math.sin(math.pi*t)**2
@@ -917,6 +975,8 @@ def build_actions():
                 set_pose(frame, body_z=.016*math.sin(cycle),
                          head_yaw=.07*math.sin(cycle), head_pitch=.03*math.sin(cycle),
                          tail=.14*math.sin(cycle), ears=.035*math.sin(cycle))
+            if clip not in ("Walk", "Groom"):
+                fit_nonwalk_support(frame)
         # Frame LAST is already authored in the above loop at the same
         # walk-cycle phase as frame 1. Never overwrite it with neutral limbs:
         # that introduces a visible gait/feeding snap at the loop seam.
