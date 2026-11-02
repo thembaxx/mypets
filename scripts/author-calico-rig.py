@@ -405,7 +405,7 @@ def build_actions():
                 # Two-stage feeding action: lower head and reach, then chew/lick.
                 approach = smoothstep(0, 1, min(1,max(0,(frame-1)/12),max(0,(LAST-frame)/12)))
                 set_pose(frame, head_pitch=-.54*approach,
-                         head_drop=.49*approach, head_reach=.17*approach,
+                         head_drop=.42*approach, head_reach=.17*approach,
                          body_pitch=-.12*approach,
                          jaw=.32*bite*approach,
                          tongue=.14*max(0,math.sin(cycle*4))*approach,
