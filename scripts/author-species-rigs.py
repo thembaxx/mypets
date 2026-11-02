@@ -32,8 +32,8 @@ from audit_species_contact import audit as audit_species_motion
 # 13 species beyond the independently authored cat, plus breed/colour variants.
 # body width,length,depth; center height; head radius; head height; colours.
 CONFIG = {
-    "dog":         ("quadruped", .49, .96, .41, 1.01, .34, 1.38, (.79,.52,.31), (.99,.90,.73)),
-    "rabbit":      ("quadruped", .40, .72, .40, .76, .29, 1.10, (.95,.79,.57), (.99,.95,.88)),
+    "dog":         ("quadruped", .49, .85, .42, 1.01, .40, 1.38, (.79,.52,.31), (.99,.90,.73)),
+    "rabbit":      ("quadruped", .40, .68, .42, .76, .35, 1.10, (.95,.79,.57), (.99,.95,.88)),
     "hamster":     ("quadruped", .52, .57, .43, .65, .34, .94, (.85,.55,.28), (.98,.84,.62)),
     "guinea-pig":  ("quadruped", .49, .72, .40, .62, .33, .91, (.68,.45,.30), (.98,.88,.68)),
     "ferret":      ("quadruped", .36, 1.03, .34, .68, .30, 1.04, (.66,.52,.40), (.89,.78,.63)),
