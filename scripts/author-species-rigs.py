@@ -265,8 +265,10 @@ def make_animal(slug, spec, rig, output_dir):
             target.co.z=centre+(source.co.z-centre)*.18
     mouth_pos=((0,muzzle_y+hr*.08,cz-.045) if kind=="fish"
                else (0,muzzle_y+hr*.30,hz-hr*.48))
+    mouth_radii=((hr*.12,hr*.035,hr*.050) if kind=="fish"
+                 else (hr*.20,hr*.06,hr*.10))
     mouth=ellipsoid(slug+" eating mouth",mouth_pos,
-                    (hr*.20,hr*.06,hr*.10),dark,rig,"Jaw",20,12)
+                    mouth_radii,dark,rig,"Jaw",20,12)
     mouth.shape_key_add(name="Basis")
     jaw=mouth.shape_key_add(name="Jaw_Open")
     for basis,target in zip(mouth.data.shape_keys.key_blocks["Basis"].data,jaw.data):
@@ -365,11 +367,17 @@ def make_animal(slug, spec, rig, output_dir):
     elif kind=="fish":
         # Closed, skinned membranes follow a fish's caudal/dorsal fin silhouette.
         specimen_fins(slug,w,l,depth,cz,rig,light)
+        gill_shade=mat(slug+" subtle gill creases",
+                       tuple(max(0,value*.63) for value in main),.94)
         for side in (-1,1):
+            # Creases sit on the compressed surface instead of floating
+            # outside the fish's actual body contour near the throat.
+            inset=w*(.25 if slug=="angelfish" else .55)
             curve_tube(slug+" gill "+str(side),
-                       [(side*w*.72,face_y*.66,cz+.13),
-                        (side*w*.78,face_y*.53,cz-.13)],
-                       .017,dark,rig,"Head")
+                       [(side*inset,.11,cz+.08),
+                        (side*(inset*1.04),.065,cz),
+                        (side*inset,.11,cz-.08)],
+                       .006,gill_shade,rig,"Head")
     else:  # snake
         # Rounded elongated trunk and narrow tapered tail; no fake walking legs.
         curve_tube(slug+" unbroken spine",
