@@ -39,11 +39,7 @@ export default function ThreeDLabPage() {
         </p>
       </section>
       {open && (
-        <ThreeDCatStudio
-          name="Calico cat"
-          defaultCandidate
-          onClose={() => setOpen(false)}
-        />
+        <ThreeDCatStudio name="Calico cat" defaultCandidate onClose={() => setOpen(false)} />
       )}
     </main>
   );
