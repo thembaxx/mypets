@@ -441,7 +441,12 @@ export default function TripoPet({
                 <group>
                   <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.008, 0]}>
                     <circleGeometry args={[2.1, 64]} />
-                    <meshBasicMaterial color="#a08c7a" transparent opacity={0.08} depthWrite={false} />
+                    <meshBasicMaterial
+                      color="#a08c7a"
+                      transparent
+                      opacity={0.08}
+                      depthWrite={false}
+                    />
                   </mesh>
                   <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.004, 0]} receiveShadow>
                     <circleGeometry args={[2.1, 64]} />
