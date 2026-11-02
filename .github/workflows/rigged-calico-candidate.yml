@@ -5,6 +5,9 @@ on:
       - feat/living-3d-pet-behaviours-20261102
     paths:
       - scripts/author-calico-rig.py
+      - scripts/calico_gait.py
+      - scripts/test_calico_gait.py
+      - scripts/check_calico_contact.py
       - scripts/verify-calico-rig.mjs
       - scripts/render-calico-review.py
       - .github/workflows/rigged-calico-candidate.yml
@@ -26,11 +29,15 @@ jobs:
           blender --version | head -3
       - name: Check Blender authoring scripts
         run: |
-          python3 -m py_compile scripts/author-calico-rig.py
+          python3 -m py_compile scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py
+          python3 scripts/test_calico_gait.py -v
           python3 -m py_compile scripts/render-calico-review.py
       - name: Generate original rigged calico candidate
         run: |
           blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-calico-rig.py -- --output-dir "$RUNNER_TEMP/calico"
+      - name: Verify actual keyed Blender shin targets and stance height
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/check_calico_contact.py -- --output-dir "$RUNNER_TEMP/calico"
       - name: Validate real glTF skin, named clips and morph targets
         run: |
           node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/calico" --require-assets
@@ -53,7 +60,7 @@ jobs:
             git fetch origin feat/living-3d-pet-behaviours-20261102
             # An older job must never replace candidate files generated from
             # newer Blender/validation/review scripts.
-            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py .github/workflows/rigged-calico-candidate.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py .github/workflows/rigged-calico-candidate.yml; then
               echo "Newer 3D authoring sources exist. Skip stale candidate publication."
               exit 0
             fi

@@ -14,6 +14,9 @@ from pathlib import Path
 import bpy
 from mathutils import Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from calico_gait import root_height, walk_leg_pose, groom_paw_pose, smoothstep
+
 FPS = 24
 LAST = 49
 
@@ -312,27 +315,12 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
         pb.keyframe_insert("rotation_euler", frame=frame, group=pb.name)
 
 
-def gait_ik(phase, is_front):
-    # Stance -> plant (negative Z travel), swing -> lifted forward paw.
-    phase = phase % 1
-    foot_y = .16 - .32*phase if phase < .60 else -.16 + .32*(phase-.60)/.40
-    lift = 0 if phase < .60 else .12 * math.sin(math.pi*(phase-.60)/.40)
-    drop = .81 if is_front else .69
-    dy = foot_y
-    dz = -drop + lift
-    l1,l2 = .43,.46
-    d = max(.08,min(l1+l2-.001,math.hypot(dy,dz)))
-    first = math.atan2(dy,-dz) - math.acos(max(-1,min(1,(l1*l1+d*d-l2*l2)/(2*l1*d))))
-    second = math.pi-math.acos(max(-1,min(1,(l1*l1+l2*l2-d*d)/(2*l1*l2))))
-    return (first, second)
-
-
 def build_actions():
     RIG.animation_data_create()
     for clip in ("Idle","Walk","Eat","Play","Rest","Groom","Sniff"):
         action = bpy.data.actions.new(clip)
         RIG.animation_data.action = action
-        for frame in range(1, LAST+1, 4):
+        for frame in range(1, LAST+1, 2):
             t = (frame-1)/(LAST-1)
             cycle = 2*math.pi*t
             if clip == "Walk":
@@ -340,16 +328,17 @@ def build_actions():
                 for fore in (True, False):
                     for side in (-1,1):
                         label = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
-                        # Diagonal pair gait, with a consistent foot-plant interval.
-                        phase = (2*t + (.5 if (fore == (side < 0)) else 0)) % 1
-                        legs[label] = gait_ik(phase, fore)
-                set_pose(frame, root_z=.024*abs(math.sin(cycle*2)), body_z=.02,
-                         body_pitch=.03*math.sin(cycle*2), head_pitch=-.04,
-                         tail=.15*math.sin(cycle), legs=legs)
+                        legs[label] = walk_leg_pose(t, fore, side)[0]
+                # Hold a mathematical shin-tip target over stance and lift it
+                # over swing. The root bobs but does not translate in world
+                # space; actual floor/mesh collisions still need refinement.
+                set_pose(frame, root_z=root_height(t)+.048,
+                         head_pitch=-.035*math.sin(cycle*2),
+                         tail=.16*math.sin(cycle), legs=legs)
             elif clip == "Eat":
                 bite = max(0, math.sin(cycle*5))
                 # Two-stage feeding action: lower head and reach, then chew/lick.
-                approach = min(1, max(0,(frame-1)/10), max(0,(LAST-frame)/10))
+                approach = smoothstep(min(1,max(0,(frame-1)/12),max(0,(LAST-frame)/12)))
                 set_pose(frame, head_pitch=-.54*approach,
                          head_drop=.74*approach, head_reach=.17*approach,
                          body_pitch=-.12*approach,
@@ -369,11 +358,11 @@ def build_actions():
                 # Deliberately kinematic; future IK should solve true paw contact.
                 reach = math.sin(math.pi*t)**2
                 lick = max(0.0, math.sin(cycle*5))
-                set_pose(frame, body_z=-.045*reach, head_pitch=-.17*reach,
+                set_pose(frame, body_z=-.025*reach, head_pitch=-.17*reach,
                          head_yaw=-.27*reach, head_drop=.095*reach,
                          jaw=.16*lick*reach, tongue=.13*lick*reach,
                          tail=.09*math.sin(cycle),
-                         legs={"Front_L":(-.82*reach, 1.08*reach)})
+                         legs={"Front_L":groom_paw_pose(reach)})
             elif clip == "Sniff":
                 # Gentle nose-first inspection with small ear/head movement.
                 reach = math.sin(math.pi*t)**2
@@ -443,7 +432,7 @@ def main():
         blender=bpy.app.version_string,
         clips=["Idle","Walk","Eat","Play","Rest","Groom","Sniff"],
         rig="Skin-weighted neck, torso, head and limbs; two-link kinematic gait",
-        physics="Static paw ground-height calibration; no collision-aware IK or rigid-body muscle simulation",
+        physics="Authored two-link paw-target IK, mathematically planted gait height; no mesh collision or muscle simulation",
         sha256=hashlib.sha256(glb.read_bytes()).hexdigest(),
         bytes=glb.stat().st_size,
     )
