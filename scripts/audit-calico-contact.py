@@ -84,6 +84,26 @@ def distance(a,b):
     return math.sqrt(sum((x-y)**2 for x,y in zip(a,b)))
 
 
+def connected_limb(name):
+    """Compute topology connectivity directly from the saved skin mesh."""
+    obj = bpy.data.objects[name]
+    mesh = obj.data
+    neighbors = [[] for _ in mesh.vertices]
+    for edge in mesh.edges:
+        a, b = edge.vertices
+        neighbors[a].append(b)
+        neighbors[b].append(a)
+    if not neighbors:
+        return False
+    seen, stack = {0}, [0]
+    while stack:
+        for other in neighbors[stack.pop()]:
+            if other not in seen:
+                seen.add(other)
+                stack.append(other)
+    return len(seen) == len(neighbors)
+
+
 def audit():
     measurements = []
     for frame in FRAMES:
@@ -137,7 +157,7 @@ def audit():
                          "paw_to_muzzle":round(distance(paw,muzzle),5),
                          "surface_gap":round(minimum_surface_distance(
                              "Front_L lower paw", "Left muzzle"),5),
-                         "connected_limb":True,
+                         "connected_limb":connected_limb("Front_L lower paw"),
                          "paw":tuple(round(v,5) for v in paw),
                          "muzzle":tuple(round(v,5) for v in muzzle)})
     report = {

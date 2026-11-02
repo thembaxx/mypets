@@ -1,13 +1,5 @@
 # Calico 3D contact review
 
-## Next candidate iteration — anatomy and coat (unverified until Blender CI finishes)
-
-- One manifold tapered limb per leg replaces separate shoulder/shin/paw spheres. Existing upper/lower bones and locomotion remain; toe contact and grooming fit now examine only distal vertices, not the whole limb centre.
-- Torso length, head width and eye size are adjusted toward more natural cat proportions. Subtle exported geometric surface relief and batched volumetric tufts improve the coat silhouette without heavy transparent hair cards.
-- New Blender structural audit rejects disconnected legs and missing multi-bone weights; GLB checker blocks regressions to floating shoulder meshes.
-- **Not photorealistic fur or a photo-faithful pet reconstruction.** The updated export and rendered screenshots must pass workflow gates and human visual review; the earlier contact figures below describe the *previous* candidate only.
-
-
 This is a review of the **unapproved** Blender calico candidate on
 [PR #37](https://github.com/thembaxx/mypets/pull/37).
 
