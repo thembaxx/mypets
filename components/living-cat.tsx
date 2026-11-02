@@ -98,9 +98,9 @@ function PlayBall({ active, paused }: { active: boolean; paused: boolean }) {
   );
 }
 
-export function FeedingBowl() {
+export function FeedingBowl({ distance = 1.3 }: { distance?: number }) {
   return (
-    <group position={[0, 0.12, 1.3]}>
+    <group position={[0, 0.12, distance]}>
       <mesh receiveShadow castShadow>
         <cylinderGeometry args={[0.52, 0.37, 0.23, 40]} />
         <meshStandardMaterial color="#8baf97" metalness={0.08} roughness={0.53} />
