@@ -27,7 +27,16 @@ def skull_position(x, y, z):
     lower_face = 1.0 - smoothstep(1.38, 1.75, z)
     brow = smoothstep(1.83, 2.02, z) * (1.0 - smoothstep(.85, 1.10, y))
     width = 1.0 - .095 * muzzle * lower_face
-    return x * width, y, z + .008 * brow
+    # Shape a subtle nasal bridge and cheek transition in the existing skull
+    # instead of adding disconnected, cartoon-like facial spheres.
+    bridge = ((1 - smoothstep(.08, .23, abs(x)))
+              * smoothstep(.80, .98, y) * smoothstep(1.51, 1.65, z)
+              * (1 - smoothstep(1.83, 1.95, z)))
+    cheek = (smoothstep(.18, .30, abs(x))
+             * (1 - smoothstep(.41, .52, abs(x)))
+             * smoothstep(.70, .91, y) * smoothstep(1.40, 1.51, z)
+             * (1 - smoothstep(1.62, 1.73, z)))
+    return x * width, y + .018 * bridge + .011 * cheek, z + .008 * brow
 
 
 def toe_position(x, y, z, centre_x, hip_y, hip_z):
