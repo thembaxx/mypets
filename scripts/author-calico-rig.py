@@ -319,6 +319,57 @@ def set_pose(frame, *, root_y=0, root_z=0, body_z=0, body_pitch=0,
         pb.keyframe_insert("rotation_euler", frame=frame, group=pb.name)
 
 
+def evaluated_lower_paw_height(label):
+    """World-space underside of a live, armature-deformed paw mesh."""
+    ob = bpy.data.objects[label + " lower paw"]
+    bpy.context.view_layer.update()
+    graph = bpy.context.evaluated_depsgraph_get()
+    evaluated = ob.evaluated_get(graph)
+    mesh = evaluated.to_mesh(preserve_all_data_layers=False, depsgraph=graph)
+    try:
+        return min((evaluated.matrix_world @ v.co).z for v in mesh.vertices)
+    finally:
+        evaluated.to_mesh_clear()
+
+
+def fit_walk_stance(frame, t):
+    """Solve stance feet from Blender's *evaluated paw geometry*.
+
+    The analytic IK positions bone tips. Mesh soles do not coincide with those
+    tips and were penetrating the floor. Adjust only each planted lower-bone
+    offset, measuring the actual deformation derivative numerically.
+    The offset is limited to 8 cm to avoid visibly disconnecting the joint.
+    This is authored geometry correction, NOT a collision/force simulator.
+    """
+    for fore in (True, False):
+        for side in (-1, 1):
+            name = ("Front" if fore else "Rear") + ("_L" if side < 0 else "_R")
+            _, _, planted = walk_leg_pose(t, fore, side)
+            if not planted:
+                continue
+            lower = RIG.pose.bones[name + "_Lower"]
+            before = evaluated_lower_paw_height(name)
+            original = lower.location.y
+            probe = .018
+            lower.location.y = original + probe
+            tested = evaluated_lower_paw_height(name)
+            lower.location.y = original
+            gradient = (tested-before)/probe
+            if not math.isfinite(gradient) or abs(gradient) < .15:
+                raise RuntimeError("Cannot solve Blender paw contact: %s at frame %s gradient=%s" %
+                                   (name, frame, gradient))
+            correction = max(-.08, min(.08, (.006-before)/gradient))
+            lower.location.y = original + correction
+            lower.keyframe_insert("location", frame=frame, group=lower.name)
+            actual = evaluated_lower_paw_height(name)
+            if abs(actual-.006) > .025:
+                raise RuntimeError("Stance paw did not converge: %s frame %s before %.4f after %.4f" %
+                                   (name, frame, before, actual))
+            if frame in (1, 13, 25, 37, 49):
+                print("STANCE_CONTACT name=%s frame=%d before=%.4f after=%.4f" %
+                      (name, frame, before, actual), flush=True)
+
+
 def build_actions():
     RIG.animation_data_create()
     for clip in ("Idle","Walk","Eat","Play","Rest","Groom","Sniff"):
@@ -339,6 +390,7 @@ def build_actions():
                 set_pose(frame, root_z=root_height(t)+.048,
                          head_pitch=-.035*math.sin(cycle*2),
                          tail=.16*math.sin(cycle), legs=legs)
+                fit_walk_stance(frame, t)
             elif clip == "Eat":
                 bite = max(0, math.sin(cycle*5))
                 # Two-stage feeding action: lower head and reach, then chew/lick.
@@ -436,7 +488,7 @@ def main():
         blender=bpy.app.version_string,
         clips=["Idle","Walk","Eat","Play","Rest","Groom","Sniff"],
         rig="Skin-weighted neck, torso, head and limbs; two-link kinematic gait",
-        physics="Authored two-link paw-target IK, mathematically planted gait height; no mesh collision or muscle simulation",
+        physics="Two-link IK plus evaluated mesh stance-floor correction; no dynamic collision or muscle simulation",
         sha256=hashlib.sha256(glb.read_bytes()).hexdigest(),
         bytes=glb.stat().st_size,
     )
