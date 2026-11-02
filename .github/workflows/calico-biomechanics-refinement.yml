@@ -15,6 +15,7 @@ on:
       - scripts/verify-calico-fur.py
       - scripts/render-calico-review.py
       - scripts/audit-calico-contact.py
+      - scripts/audit-calico-pose-bounds.py
       - .github/workflows/rigged-calico-candidate.yml
 permissions:
   contents: write
@@ -46,6 +47,7 @@ jobs:
           python3 scripts/test_calico_feline_sculpt.py -v
           python3 -m py_compile scripts/render-calico-review.py
           python3 -m py_compile scripts/audit-calico-contact.py
+          python3 -m py_compile scripts/audit-calico-pose-bounds.py
           python3 -m unittest discover -s scripts -p 'test_calico_gait.py'
       - name: Generate original rigged calico candidate
         run: |
@@ -95,6 +97,9 @@ jobs:
                 (max(frame["surface_gap"] for frame in at_peak),
                  groom["connected_limb"], report["eat"]["nearest_mouth_food"]))
           PY
+      - name: Audit real evaluated Blender geometry for exploded pose vertices
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/audit-calico-pose-bounds.py -- "$RUNNER_TEMP/calico"
       - name: Render independent front, side and 3/4 reviews
         run: |
           LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/calico"
@@ -113,7 +118,7 @@ jobs:
             git fetch origin feat/calico-biomechanics-refinement-20261102
             # An older job must never replace candidate files generated from
             # newer Blender/validation/review scripts.
-            if ! git diff --quiet "$GITHUB_SHA" origin/feat/calico-biomechanics-refinement-20261102 --               scripts/author-calico-rig.py scripts/calico_feline_sculpt.py scripts/test_calico_feline_sculpt.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py .github/workflows/rigged-calico-candidate.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/calico-biomechanics-refinement-20261102 --               scripts/author-calico-rig.py scripts/calico_feline_sculpt.py scripts/test_calico_feline_sculpt.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-pose-bounds.py scripts/audit-calico-contact.py .github/workflows/rigged-calico-candidate.yml; then
               echo "Newer 3D authoring sources exist. Skip stale candidate publication."
               exit 0
             fi
