@@ -16,6 +16,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from calico_gait import foot_target
+from calico_contact_metrics import stance_slip_summary
 
 PAWS = ("Front_L", "Front_R", "Rear_L", "Rear_R")
 FRAMES = tuple(range(1, 50, 3)) + (49,)
@@ -35,6 +36,19 @@ def evaluated_points(name, distal_only=False):
                 if cutoff is None or original.data.vertices[vertex.index].co.z <= cutoff]
     finally:
         obj.to_mesh_clear()
+
+
+def contact_patch_xy(name, tolerance=.012):
+    """Centroid of lowest evaluated paw vertices, not arbitrary shin tip."""
+    points = evaluated_points(name, distal_only=True)
+    if not points:
+        raise RuntimeError("No evaluated contact patch vertices for " + name)
+    floor = min(p.z for p in points)
+    patch = [p for p in points if p.z <= floor + tolerance]
+    if not patch:
+        raise RuntimeError("Empty contact patch for " + name)
+    return (round(sum(p.x for p in patch)/len(patch), 5),
+            round(sum(p.y for p in patch)/len(patch), 5))
 
 
 def minimum_surface_distance(left, right):
@@ -120,6 +134,7 @@ def audit():
                 "stance": stance,
                 "pad_low_z": round(pad["min"][2],5),
                 "paw_low_z": round(lower["min"][2],5),
+                "contact_xy": contact_patch_xy(name + " lower paw"),
                 "pad_center_y": round(pad["centre"][1],5),
                 "ankle_tip_z": round((
                     bpy.data.objects["NuzzleCalicoArmature"].matrix_world
@@ -162,7 +177,7 @@ def audit():
                          "muzzle":tuple(round(v,5) for v in muzzle)})
     report = {
         "basis":"Blender 4 evaluated skinned mesh vertices; world metres",
-        "version":1,
+        "version":2,
         "ground_z":0,
         "walk":{
             "frames":measurements,
@@ -171,6 +186,9 @@ def audit():
             "swing_pad_z_min":round(min(v["pad_low_z"] for v in swing),5),
             "swing_pad_z_max":round(max(v["pad_low_z"] for v in swing),5),
             "deepest_paw_z":round(min(v["paw_low_z"] for v in all_paws),5),
+            # Diagnostic only: an in-place stride intentionally travels in
+            # local space. Real translation/foot locking isn't implemented.
+            "planted_xy_slip":stance_slip_summary(measurements, PAWS),
         },
         "eat":{"frames":eating,"nearest_mouth_food":min(v["mouth_to_food"] for v in eating)},
         "groom":{"frames":grooming,
