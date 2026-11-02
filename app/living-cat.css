@@ -1,0 +1,135 @@
+.tripo-living-dialog {
+  width: min(94vw, 760px);
+  height: min(92dvh, 800px);
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+.tripo-living-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 210px;
+  background: radial-gradient(ellipse at 50% 38%, #fff9ee 0, #f4ebdd 65%, #e4dfd5 100%);
+  touch-action: pan-y;
+}
+.tripo-living-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.tripo-living-controls {
+  flex: 0 0 auto;
+  padding: 14px 17px max(15px, env(safe-area-inset-bottom));
+  background: var(--surface);
+}
+.tripo-activity-picker {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 3px 0 9px;
+  scrollbar-width: thin;
+}
+.tripo-activity-picker button,
+.tripo-motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid var(--border, #b6ae9d88);
+  border-radius: 15px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tripo-activity-picker button.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface);
+}
+.tripo-activity-picker button:focus-visible,
+.tripo-motion-toggle:focus-visible,
+.tripo-living-settings select:focus-visible {
+  outline: 3px solid #d59757;
+  outline-offset: 2px;
+}
+.tripo-living-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.tripo-living-settings label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tripo-living-settings select {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border, #b6ae9d88);
+  font: inherit;
+  text-transform: capitalize;
+}
+.tripo-motion-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tripo-living-status,
+.tripo-living-note {
+  margin: 7px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.tripo-living-note { margin-top: 3px; }
+.tripo-error {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 9px;
+  height: 100%;
+  padding: 28px;
+  text-align: center;
+  color: #553c36;
+}
+.tripo-error button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid currentColor;
+  border-radius: 16px;
+}
+@media (max-width: 520px) {
+  .tripo-viewer { padding: 8px; }
+  .tripo-living-dialog {
+    width: 100%;
+    height: min(94dvh, 860px);
+    border-radius: 22px;
+  }
+  .tripo-living-stage { min-height: 180px; }
+  .tripo-heading { padding: 15px; }
+  .tripo-heading strong { font-size: 14px; }
+  .tripo-heading span { font-size: 11px; max-width: 240px; }
+  .tripo-living-controls { padding: 10px 12px max(12px, env(safe-area-inset-bottom)); }
+  .tripo-activity-picker { gap: 5px; }
+  .tripo-activity-picker button { padding: 7px 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tripo-living-dialog *,
+  .tripo-living-dialog *::before,
+  .tripo-living-dialog *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
