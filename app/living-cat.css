@@ -133,3 +133,25 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+.tripo-record-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 9px;
+}
+.tripo-record-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border, #b6ae9d88);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tripo-record-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.tripo-record-button:focus-visible { outline: 3px solid #d59757; outline-offset: 2px; }
