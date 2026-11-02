@@ -90,13 +90,14 @@ def audit():
         evaluate("Eat", frame)
         mouth = evaluated_bounds("Dark living mouth")["centre"]
         nose = evaluated_bounds("Heart shaped coral nose")["centre"]
-        # Review bowl in scripts/render-calico-review.py: x=0,y=1.39,z=.13
-        bowl_food = (0,1.39,.25)
+        # Review bowl in scripts/render-calico-review.py: x=0,y=1.13,z=.13
+        bowl_food = (0,1.13,.25)
         eating.append({
             "frame":frame,
             "mouth_to_food":round(distance(mouth,bowl_food),5),
             "nose_to_food":round(distance(nose,bowl_food),5),
             "mouth":tuple(round(x,5) for x in mouth),
+            "nose":tuple(round(x,5) for x in nose),
         })
 
     grooming = []
