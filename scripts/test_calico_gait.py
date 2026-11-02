@@ -1,7 +1,8 @@
 import math
 import unittest
 from calico_gait import (SOLE_OFFSET, foot_target, root_height, solve_2bone,
-                         ankle_from_angles, walk_leg_pose, groom_paw_pose)
+                         ankle_from_angles, walk_leg_pose, groom_paw_pose,
+                         walk_weight_shift)
 
 
 class TestQuadrupedContact(unittest.TestCase):
@@ -32,6 +33,17 @@ class TestQuadrupedContact(unittest.TestCase):
                              walk_leg_pose(t,False,1)[2])
         self.assertGreater(max(walk_leg_pose(i/1000,True,-1)[1][1]
                                for i in range(1001)),SOLE_OFFSET+.125)
+
+    def test_walk_weight_transfer_is_bounded_and_loop_safe(self):
+        first = walk_weight_shift(0)
+        last = walk_weight_shift(1)
+        for left, right in zip(first, last):
+            self.assertAlmostEqual(left, right, places=10)
+        for step in range(1001):
+            sway, pitch = walk_weight_shift(step/1000)
+            self.assertTrue(math.isfinite(sway) and math.isfinite(pitch))
+            self.assertLessEqual(abs(sway), .01600001)
+            self.assertLessEqual(abs(pitch), .01200001)
 
     def test_rejects_unreachable_ankles(self):
         with self.assertRaises(ValueError): solve_2bone(0,-1.5)
