@@ -8,7 +8,9 @@ import argparse
 import hashlib
 import json
 import math
+import struct
 import sys
+import zlib
 from pathlib import Path
 
 import bpy
@@ -57,25 +59,45 @@ def prepare_fur_normals(output_dir, size=128):
                 .26*noise(u, v, 71, 111) +
                 .10*noise(u, v, 17, 29))
 
-    pixel_values = []
+    # Image.pixels.foreach_set + Image.save sometimes writes a black PNG.
+    # Generate deterministic PNG bytes directly, reload and pack into GLB.
+    data = bytearray()
+    reds, greens = [], []
     for y in range(size):
+        data.append(0)  # PNG scanline filter: none
         for x in range(size):
-            dhx = relief((x+1)%size, y)-relief((x-1)%size, y)
-            dhy = relief(x, (y+1)%size)-relief(x, (y-1)%size)
-            normal = Vector((-.32*dhx, -.32*dhy, 1)).normalized()
-            pixel_values.extend((.5+.5*normal.x, .5+.5*normal.y,
-                                 .5+.5*normal.z, 1))
-    img = bpy.data.images.new("Calico short-fur normal", width=size,
-                              height=size, alpha=True)
-    img.pixels.foreach_set(pixel_values)
+            dx = relief((x+1)%size,y) - relief((x-1)%size,y)
+            dy = relief(x,(y+1)%size) - relief(x,(y-1)%size)
+            n = Vector((-.32*dx,-.32*dy,1)).normalized()
+            colour = (round(255*(.5+.5*n.x)),
+                      round(255*(.5+.5*n.y)),
+                      round(255*(.5+.5*n.z)),255)
+            reds.append(colour[0])
+            greens.append(colour[1])
+            data.extend(colour)
+    r_span, g_span = max(reds)-min(reds), max(greens)-min(greens)
+    if min(r_span, g_span) < 10:
+        raise RuntimeError("Fur atlas is flat: red=%s green=%s" % (r_span,g_span))
+
+    def chunk(kind, payload):
+        raw = kind + payload
+        return (struct.pack(">I",len(payload)) + raw +
+                struct.pack(">I",zlib.crc32(raw)&0xffffffff))
+
+    png = (b"\x89PNG\r\n\x1a\n" +
+           chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0)) +
+           chunk(b"IDAT",zlib.compress(bytes(data),9)) +
+           chunk(b"IEND",b""))
+    path = output_dir / "calico-short-fur-normal.png"
+    path.write_bytes(png)
+    if len(png)<2500:
+        raise RuntimeError("Fur normal PNG is suspiciously small")
+    img = bpy.data.images.load(str(path),check_existing=False)
     img.colorspace_settings.name = "Non-Color"
-    img.filepath_raw = str(output_dir / "calico-short-fur-normal.png")
-    img.file_format = "PNG"
-    img.save()
     img.pack()
     FUR_NORMAL_IMAGE = img
-    print("FUR_NORMAL_BAKED %s %sx%s" % (img.filepath, size, size), flush=True)
-
+    print("FUR_NORMAL_BAKED path=%s red_range=%s green_range=%s bytes=%s" %
+          (path,r_span,g_span,len(png)),flush=True)
 
 def material(name, rgb, roughness=0.83):
     m = bpy.data.materials.new(name)
