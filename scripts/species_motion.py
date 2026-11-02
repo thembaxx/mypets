@@ -43,6 +43,7 @@ def limb_angles(slug, name, t):
     if not name.endswith(("_Upper", "_Lower")):
         raise ValueError("Not a limb bone: " + name)
     # Rabbits pair their rear legs while other animals use diagonal phases.
+    rear = name.startswith("Rear_")
     phase = gait_phase(slug, name)
     angle = 4 * math.pi * t + phase
     stride = math.sin(angle)
