@@ -370,13 +370,14 @@ export default function TripoPet({
       setRecordError('This device could not start a 3D video recording.');
     }
   };
+  const namedClip = report ? findPetClip(report.clips, activity) : null;
   const supportedAction =
-    !activeUrl || activity === 'idle' || (report !== null && !!findPetClip(report.clips, activity));
+    !activeUrl || activity === 'idle' || namedClip !== null;
   const status = activeUrl
     ? !report
       ? 'Loading the rigged 3D model.'
       : supportedAction
-        ? 'Playing an authored 3D animation when available.'
+        ? `Playing an authored 3D animation: ${namedClip ?? 'Idle'} (${report.clips.length} clips).`
         : 'This model has no ' + activity + ' animation. Showing its idle pose.'
     : 'Original 3D calico study. The illustrated pet remains unchanged.';
   return createPortal(

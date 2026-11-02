@@ -33,11 +33,13 @@ test.describe('real WebGL cat lab', () => {
       'aria-pressed',
       'true',
     );
+    await expect(dialog.getByRole('status')).toContainText('Groom (7 clips)');
     await dialog.getByRole('button', { name: 'Sniff', exact: true }).click();
     await expect(dialog.getByRole('button', { name: 'Sniff', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
+    await expect(dialog.getByRole('status')).toContainText('Sniff (7 clips)');
     await dialog.getByRole('button', { name: 'Walk', exact: true }).click();
     await expect(dialog.getByRole('button', { name: 'Walk', exact: true })).toHaveAttribute(
       'aria-pressed',
