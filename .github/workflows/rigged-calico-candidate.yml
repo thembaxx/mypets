@@ -10,6 +10,8 @@ on:
       - scripts/check_calico_contact.py
       - scripts/verify-calico-rig.mjs
       - scripts/render-calico-review.py
+      - scripts/audit-calico-contact.py
+      - scripts/calico_gait.py
       - .github/workflows/rigged-calico-candidate.yml
 permissions:
   contents: write
@@ -32,6 +34,8 @@ jobs:
           python3 -m py_compile scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py
           python3 scripts/test_calico_gait.py -v
           python3 -m py_compile scripts/render-calico-review.py
+          python3 -m py_compile scripts/audit-calico-contact.py
+          python3 -m unittest discover -s scripts -p 'test_calico_gait.py'
       - name: Generate original rigged calico candidate
         run: |
           blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-calico-rig.py -- --output-dir "$RUNNER_TEMP/calico"
@@ -42,6 +46,10 @@ jobs:
         run: |
           node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/calico" --require-assets
           node scripts/verify-calico-rig.mjs "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb"
+      - name: Audit evaluated paw-ground, grooming and feeding geometry
+        run: |
+          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/audit-calico-contact.py -- --output-dir "$RUNNER_TEMP/calico"
+          python3 -m json.tool "$RUNNER_TEMP/calico/calico-geometry-contact.json" >/dev/null
       - name: Render independent front, side and 3/4 reviews
         run: |
           LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/calico"
@@ -60,7 +68,7 @@ jobs:
             git fetch origin feat/living-3d-pet-behaviours-20261102
             # An older job must never replace candidate files generated from
             # newer Blender/validation/review scripts.
-            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py .github/workflows/rigged-calico-candidate.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/living-3d-pet-behaviours-20261102 --               scripts/author-calico-rig.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py scripts/calico_gait.py .github/workflows/rigged-calico-candidate.yml; then
               echo "Newer 3D authoring sources exist. Skip stale candidate publication."
               exit 0
             fi
