@@ -21,7 +21,7 @@ jobs:
       - name: Install offline Blender authoring tools
         run: |
           sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y blender python3-numpy
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y blender python3-numpy libegl1 libgl1-mesa-dri xvfb
           /usr/bin/python3 -c 'import numpy; print(numpy.__version__)'
           blender --version | head -3
       - name: Check Blender authoring scripts
@@ -37,7 +37,7 @@ jobs:
           node scripts/verify-calico-rig.mjs "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb"
       - name: Render independent front, side and 3/4 reviews
         run: |
-          blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/calico"
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/calico"
       - name: Upload unapproved Blender source, GLB and renders
         uses: actions/upload-artifact@v4
         with:
