@@ -15,12 +15,12 @@ const actualNames = (doc.animations ?? []).map((clip) => clip.name || '');
 const expected = ['Idle', 'Walk', 'Eat', 'Play', 'Rest'];
 for (const clip of expected)
   assert.ok(actualNames.some((name) => name.toLowerCase().includes(clip.toLowerCase())),
-    \`Rigged model must expose separate authored clip \${clip}; found \${actualNames.join(', ')}\`);
+    `Rigged model must expose separate authored clip ${clip}; found ${actualNames.join(', ')}`);
 const morphs = (doc.meshes ?? []).flatMap((mesh) =>
   (mesh.extras?.targetNames ?? []));
 for (const key of ['Blink_L', 'Blink_R', 'Jaw_Open', 'Lick'])
   assert.ok(morphs.includes(key),
-    \`Expected animated facial geometry \${key}; available: \${morphs.join(', ')}\`);
+    `Expected animated facial geometry ${key}; available: ${morphs.join(', ')}`);
 assert.ok(
   (doc.meshes ?? []).some((mesh) =>
     (mesh.primitives ?? []).some((part) => part.attributes?.JOINTS_0 !== undefined
