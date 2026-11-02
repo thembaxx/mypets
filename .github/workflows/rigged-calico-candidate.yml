@@ -2,7 +2,7 @@ name: Rigged calico candidate build
 on:
   push:
     branches:
-      - feat/calico-eyelids-paw-slip-20261102
+      - feat/playful-pets-video-reference-20261103
     paths:
       - scripts/author-calico-rig.py
       - scripts/calico_feline_sculpt.py
@@ -109,18 +109,18 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Publish current unapproved candidate without stale binary overwrites
-        if: github.ref == 'refs/heads/feat/calico-eyelids-paw-slip-20261102'
+        if: github.ref == 'refs/heads/feat/playful-pets-video-reference-20261103'
         run: |
           set -euo pipefail
           for attempt in 1 2 3; do
-            git fetch origin feat/calico-eyelids-paw-slip-20261102
+            git fetch origin feat/playful-pets-video-reference-20261103
             # An older job must never replace candidate files generated from
             # newer Blender/validation/review scripts.
-            if ! git diff --quiet "$GITHUB_SHA" origin/feat/calico-eyelids-paw-slip-20261102 --               scripts/author-calico-rig.py scripts/calico_feline_sculpt.py scripts/test_calico_feline_sculpt.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py scripts/calico_contact_metrics.py scripts/test_calico_contact_metrics.py .github/workflows/rigged-calico-candidate.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/feat/playful-pets-video-reference-20261103 --               scripts/author-calico-rig.py scripts/calico_feline_sculpt.py scripts/test_calico_feline_sculpt.py scripts/verify-calico-anatomy.py scripts/calico_gait.py scripts/test_calico_gait.py scripts/check_calico_contact.py scripts/verify-calico-rig.mjs               scripts/render-calico-review.py scripts/audit-calico-contact.py scripts/calico_contact_metrics.py scripts/test_calico_contact_metrics.py .github/workflows/rigged-calico-candidate.yml; then
               echo "Newer 3D authoring sources exist. Skip stale candidate publication."
               exit 0
             fi
-            git checkout -B candidate-publish origin/feat/calico-eyelids-paw-slip-20261102
+            git checkout -B candidate-publish origin/feat/playful-pets-video-reference-20261103
             mkdir -p public/models/candidates docs/screenshots
             cp "$RUNNER_TEMP/calico/nuzzle-calico-rig.glb" public/models/candidates/nuzzle-calico-rig.glb
             cp "$RUNNER_TEMP/calico/calico-front.png" docs/screenshots/calico-front-candidate.png
@@ -132,7 +132,7 @@ jobs:
               exit 0
             fi
             git commit -m 'assets(3d): update unapproved source-matched cat candidate'
-            if git push origin HEAD:feat/calico-eyelids-paw-slip-20261102; then
+            if git push origin HEAD:feat/playful-pets-video-reference-20261103; then
               exit 0
             fi
             echo "Branch advanced while publishing. Retry with fresh base."
