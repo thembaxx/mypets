@@ -16,6 +16,9 @@ from mathutils import Vector
 
 # Blender --python does not reliably add the script folder to sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from species_avian_aquatic import (
+    wing_membrane, specimen_fins, fish_body_shell, shape_avian_torso,
+)
 from species_realism import (
     articulated_gait,
     bake_coat_normal,
@@ -34,10 +37,10 @@ CONFIG = {
     "guinea-pig":  ("quadruped", .49, .72, .40, .62, .33, .91, (.68,.45,.30), (.98,.88,.68)),
     "ferret":      ("quadruped", .36, 1.03, .34, .68, .30, 1.04, (.66,.52,.40), (.89,.78,.63)),
     "hedgehog":    ("quadruped", .43, .61, .41, .61, .28, .91, (.57,.40,.31), (.88,.78,.62)),
-    "chicken":     ("bird", .52, .62, .59, 1.04, .31, 1.50, (.83,.65,.42), (.98,.84,.58)),
-    "bird":        ("bird", .35, .48, .50, 1.17, .27, 1.59, (.26,.57,.76), (.43,.75,.88)),
-    "budgie":      ("bird", .35, .48, .50, 1.17, .27, 1.59, (.39,.73,.35), (.82,.89,.41)),
-    "canary":      ("bird", .35, .48, .50, 1.17, .27, 1.59, (.96,.77,.19), (.99,.88,.38)),
+    "chicken":     ("bird", .53, .71, .53, .99, .26, 1.42, (.83,.65,.42), (.98,.84,.58)),
+    "bird":        ("bird", .37, .62, .40, .94, .22, 1.29, (.26,.57,.76), (.43,.75,.88)),
+    "budgie":      ("bird", .37, .62, .40, .94, .22, 1.29, (.39,.73,.35), (.82,.89,.41)),
+    "canary":      ("bird", .37, .60, .40, .94, .22, 1.29, (.96,.77,.19), (.99,.88,.38)),
     "fish":        ("fish", .30, .66, .38, 1.04, .26, 1.10, (.27,.57,.78), (.66,.85,.93)),
     "angelfish":   ("fish", .30, .49, .60, 1.04, .24, 1.10, (.86,.67,.31), (.97,.89,.61)),
     "snake":       ("snake", .27, 1.18, .27, .54, .28, .76, (.39,.57,.32), (.67,.78,.45)),
@@ -185,7 +188,9 @@ def rig_for(slug, spec):
     if kind=="bird":
         for side in (-1,1):
             name="Wing_L" if side<0 else "Wing_R"
-            bones[name]=("Body",(side*w*.65,-.02,cz+.10),(side*(w+.34),-.12,cz+.1))
+            bones[name]=("Body",(side*w*.65,-.02,cz+.10),(side*(w+.24),-.12,cz+.12))
+            bones[name+"_Tip"]=(name,(side*(w+.24),-.12,cz+.12),
+                                      (side*(w+.50),-.24,cz+.06))
             leg="Leg_L" if side<0 else "Leg_R"
             bones[leg]=("Body",(side*.19,0,cz-.26),(side*.19,.06,.07))
     if kind=="fish":
@@ -213,8 +218,12 @@ def make_animal(slug, spec, rig, output_dir):
     light=shade_coat(mat(slug+" pale markings",accent),normal_map)
     dark=mat(slug+" eyes",(.075,.055,.05),.29)
     ear_pink=mat(slug+" ear cartilage",(.80,.49,.49))
-    body=ellipsoid("Anatomical "+slug+" torso",(0,-.16,cz),(w,l,depth),coat,rig,"Body",48,32)
+    body=(fish_body_shell(slug,w,l,depth,cz,rig,coat) if kind=="fish"
+          else ellipsoid("Anatomical "+slug+" torso",(0,-.16,cz),
+                         (w,l,depth),coat,rig,"Body",48,32))
     sculpt_profile(body,slug,"torso",l,hr)
+    if kind=="bird":
+        shape_avian_torso(body,slug,l,cz)
     if kind in ("quadruped","reptile"):
         body.data.materials.append(light)
         for polygon in body.data.polygons:
@@ -222,10 +231,16 @@ def make_animal(slug, spec, rig, output_dir):
             if p.z<cz-.04 and p.y>-.65*l:
                 polygon.material_index=1
     face_y=l*.63
-    face=ellipsoid("Skinned "+slug+" skull",(0,face_y,hz),(hr,hr*.88,hr*.83),
-                   coat if kind in ("reptile","fish","snake") else light,rig,"Head",48,32)
-    sculpt_profile(face,slug,"skull",l,hr)
-    muzzle_y=face_y+hr*.69
+    if kind=="fish":
+        # Fish have one tapered living body, not a detached ball-shaped head.
+        face=None
+    else:
+        face=ellipsoid("Skinned "+slug+" skull",(0,face_y,hz),
+                       (hr,hr*.88,hr*.83),
+                       coat if kind in ("reptile","snake") else light,
+                       rig,"Head",48,32)
+        sculpt_profile(face,slug,"skull",l,hr)
+    muzzle_y=(-.16+l*.80 if kind=="fish" else face_y+hr*.69)
     if kind in ("quadruped","reptile"):
         muzzle_scale=1.40 if slug=="dog" else .75 if slug=="rabbit" else 1
         ellipsoid(slug+" muzzle",(0,muzzle_y+hr*.13*(muzzle_scale-1),hz-hr*.23),
@@ -235,9 +250,12 @@ def make_animal(slug, spec, rig, output_dir):
     else:
         nose=None
     for side in (-1,1):
-        x=side*hr*.53
+        x=(side*w*(.39 if slug=="angelfish" else .60) if kind=="fish"
+           else side*hr*.53)
+        eye_centre=((x,.12,cz+depth*.19) if kind=="fish"
+                    else (x,face_y+hr*.68,hz+hr*.20))
         eye=ellipsoid(slug+(" left" if side<0 else " right")+" living eye",
-                      (x,face_y+hr*.68,hz+hr*.20),
+                      eye_centre,
                       (hr*.13,hr*.075,hr*.15),dark,rig,"Head",24,16)
         eye.shape_key_add(name="Basis")
         blink=eye.shape_key_add(name="Blink_L" if side<0 else "Blink_R")
@@ -245,8 +263,12 @@ def make_animal(slug, spec, rig, output_dir):
         centre=sum(v.co.z for v in basis)/len(basis)
         for source,target in zip(basis,blink.data):
             target.co.z=centre+(source.co.z-centre)*.18
-    mouth=ellipsoid(slug+" eating mouth",(0,muzzle_y+hr*.30,hz-hr*.48),
-                    (hr*.20,hr*.06,hr*.10),dark,rig,"Jaw",20,12)
+    mouth_pos=((0,muzzle_y+hr*.08,cz-.045) if kind=="fish"
+               else (0,muzzle_y+hr*.30,hz-hr*.48))
+    mouth_radii=((hr*.12,hr*.035,hr*.050) if kind=="fish"
+                 else (hr*.20,hr*.06,hr*.10))
+    mouth=ellipsoid(slug+" eating mouth",mouth_pos,
+                    mouth_radii,dark,rig,"Jaw",20,12)
     mouth.shape_key_add(name="Basis")
     jaw=mouth.shape_key_add(name="Jaw_Open")
     for basis,target in zip(mouth.data.shape_keys.key_blocks["Basis"].data,jaw.data):
@@ -322,34 +344,40 @@ def make_animal(slug, spec, rig, output_dir):
     elif kind=="bird":
         for side in (-1,1):
             wing="Wing_L" if side<0 else "Wing_R"
-            ellipsoid(slug+" wing "+str(side),
-                      (side*w*.85,-.13,cz+.04),
-                      (w*.29,l*.57,depth*.62),light,rig,wing,32,20)
+            wing_membrane(slug,side,w,l,cz+.04,rig,light)
             leg="Leg_L" if side<0 else "Leg_R"
             curve_tube(slug+" shin "+str(side),
                        [(side*.19,0,cz-.30),(side*.19,.02,.11),
                         (side*.19,.24,.09)],.044,coat,rig,leg)
+            for digit in (-1,0,1):
+                curve_tube(slug+" toe "+str(side)+" "+str(digit),
+                           [(side*.19,.12,.09),
+                            (side*.19+digit*.075,.29,.055)],
+                           .021,coat,rig,leg)
         beak=mat(slug+" beak",(.96,.62,.21))
         ellipsoid(slug+" curved beak",(0,face_y+hr*.82,hz-hr*.26),
                   (hr*.25,hr*.40,hr*.20),beak,rig,"Head")
+        # Budgerigars are long-tailed; chickens retain short tail coverts.
+        tail_span=l*(1.10 if slug=="budgie" else .58 if slug=="chicken" else .72)
         for i in range(3):
-            curve_tube(slug+" tail feather "+str(i),[(.09*(i-1),-l*.84,cz),
-                        (.15*(i-1),-l*1.20,cz+.03)],.045,coat,rig,"Tail_1")
+            curve_tube(slug+" tail feather "+str(i),
+                       [(.07*(i-1),-l*.76,cz),
+                        (.10*(i-1),-l*.76-tail_span,cz-.06)],
+                       .028,coat,rig,"Tail_1")
     elif kind=="fish":
-        # Flat tapered fins remain three-dimensional thickness-bearing meshes.
+        # Closed, skinned membranes follow a fish's caudal/dorsal fin silhouette.
+        specimen_fins(slug,w,l,depth,cz,rig,light)
+        gill_shade=mat(slug+" subtle gill creases",
+                       tuple(max(0,value*.63) for value in main),.94)
         for side in (-1,1):
-            fin="Fin_L" if side<0 else "Fin_R"
-            ellipsoid(slug+" pectoral fin "+str(side),
-                (side*w*.88,-.24,cz-.03),(.08,.32,.18),light,rig,fin)
-        ellipsoid(slug+" caudal fin",(0,-l*1.12,cz),
-                  (w*.80,.12,depth*.70),light,rig,"Tail_2")
-        ellipsoid(slug+" dorsal fin",(0,-.18,cz+depth*.91),
-                  (.08,l*.44,depth*.43),light,rig,"Body")
-        for side in (-1,1):
+            # Creases sit on the compressed surface instead of floating
+            # outside the fish's actual body contour near the throat.
+            inset=w*(.25 if slug=="angelfish" else .55)
             curve_tube(slug+" gill "+str(side),
-                       [(side*w*.72,face_y*.66,cz+.13),
-                        (side*w*.78,face_y*.53,cz-.13)],
-                       .017,dark,rig,"Head")
+                       [(side*inset,.11,cz+.08),
+                        (side*(inset*1.04),.065,cz),
+                        (side*inset,.11,cz-.08)],
+                       .006,gill_shade,rig,"Head")
     else:  # snake
         # Rounded elongated trunk and narrow tapered tail; no fake walking legs.
         curve_tube(slug+" unbroken spine",
@@ -392,7 +420,16 @@ def animate(slug, spec, rig):
                 body.rotation_euler.z=.032*math.sin(cycle*speed)
                 tail1.rotation_euler.z=.18*math.sin(cycle*speed)
                 tail2.rotation_euler.z=.25*math.sin(cycle*speed+.5)
+                if kind=="fish":
+                    # Traveling lateral swimming wave from the torso toward the tail.
+                    body.rotation_euler.z=.055*math.sin(cycle*3)
+                    tail1.rotation_euler.z=.28*math.sin(cycle*3-.65)
+                    tail2.rotation_euler.z=.42*math.sin(cycle*3-1.15)
                 for bone in rig.pose.bones:
+                    if kind=="bird" and bone.name.startswith("Wing_"):
+                        bone.rotation_euler.y=.09*math.sin(cycle*2)
+                        bone.rotation_euler.x=.08*math.sin(cycle*2) if bone.name.endswith("_Tip") else 0
+                        continue
                     if bone.name.endswith("_Upper"):
                         phase=math.pi if bone.name.endswith("_L_Upper") else 0
                         if bone.name.startswith("Rear"):
@@ -419,6 +456,12 @@ def animate(slug, spec, rig):
                 body.rotation_euler.z=.09*math.sin(cycle*2)
                 head.rotation_euler.z=.13*math.sin(cycle*2)
                 tail1.rotation_euler.z=.21*math.sin(cycle*2)
+                if kind=="bird":
+                    for pb in rig.pose.bones:
+                        if pb.name.startswith("Wing_"):
+                            pb.rotation_euler.y=.32*math.sin(cycle*2)
+                            if pb.name.endswith("_Tip"):
+                                pb.rotation_euler.x=.16*math.sin(cycle*2+.3)
             elif label=="Rest":
                 body.location.y=-.05
                 head.rotation_euler.x=.09

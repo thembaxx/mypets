@@ -59,9 +59,9 @@ for (const [species, kind] of Object.entries(candidates)) {
   for (const name of kind === 'quadruped' || kind === 'reptile'
     ? ['Front_L', 'Front_R', 'Rear_L', 'Rear_R']
     : kind === 'bird'
-      ? ['wing -1', 'wing 1']
+      ? ['continuous feathered wing left', 'continuous feathered wing right']
       : kind === 'fish'
-        ? ['caudal fin', 'dorsal fin']
+        ? ['sculpted caudal fin', 'sculpted dorsal fin']
         : ['unbroken spine', 'tapered tail']) {
     assert.ok(
       nodes.some((node) => node.includes(name)),

@@ -11,6 +11,7 @@ on:
       - 'scripts/species_realism.py'
       - 'scripts/author-species-rigs.py'
       - 'public/models/candidates/**'
+      - 'docs/avian-aquatic-visual-review.md'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/threejs-r187-qa.yml'
