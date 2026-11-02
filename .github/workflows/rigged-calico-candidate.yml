@@ -50,6 +50,22 @@ jobs:
         run: |
           blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/audit-calico-contact.py -- --output-dir "$RUNNER_TEMP/calico"
           python3 -m json.tool "$RUNNER_TEMP/calico/calico-geometry-contact.json" >/dev/null
+          python3 - "$RUNNER_TEMP/calico/calico-geometry-contact.json" <<'PY'
+          import json
+          import sys
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          samples = [part for frame in report["walk"]["frames"]
+                     for part in frame["paws"].values()]
+          stance = [part["paw_low_z"] for part in samples if part["stance"]]
+          swing = [part["paw_low_z"] for part in samples if not part["stance"]]
+          assert len(stance) >= 30 and len(swing) >= 12, "Insufficient real skinned-mesh samples"
+          assert all(-0.01 <= low <= 0.025 for low in stance), (
+              "Planted paws must stay close to the true floor, not hover or penetrate", stance)
+          assert all(low >= -0.01 for low in swing), (
+              "Swinging paws must not penetrate the ground", swing)
+          print("REAL_MESH_CONTACT_PASS stance=[%.4f, %.4f] swing_min=%.4f" %
+                (min(stance), max(stance), min(swing)))
+          PY
       - name: Render independent front, side and 3/4 reviews
         run: |
           LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 "$RUNNER_TEMP/calico/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/calico"
