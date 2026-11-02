@@ -82,6 +82,7 @@ def make_curve(name, points, colour, bone, thickness=.034):
     curve.resolution_u = 16
     curve.bevel_depth = thickness
     curve.bevel_resolution = 2
+    curve.use_fill_caps = True
     poly = curve.splines.new("POLY")
     poly.points.add(len(points) - 1)
     for p, xyz in zip(poly.points, points):
@@ -313,12 +314,12 @@ def model():
                   (side*.29-.029, 1.16, 1.775),
                   (.026, .009, .025), white, "Head", 16, 12)
         for whisker in range(3):
-            start_x = side*.61
-            end_x = side*(.90 + whisker*.035)
-            z = 1.33 + (whisker-1)*.10
+            z = 1.34 + (whisker-1)*.12
             make_curve("%s whisker %s" % (pos, whisker),
-                       [(start_x, 1.025, 1.33), (end_x, .98, z)],
-                       cocoa, "Head", .009)
+                       [(side*.47, 1.115, 1.34),
+                        (side*.67, 1.14, 1.34+(whisker-1)*.04),
+                        (side*(.94 + whisker*.03), 1.08, z)],
+                       cocoa, "Head", .007)
     for fore in (True, False):
         y = .33 if fore else -.69
         z = 1.02 if fore else .89
