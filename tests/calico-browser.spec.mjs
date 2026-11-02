@@ -28,6 +28,14 @@ test.describe('real WebGL cat lab', () => {
     const second = await canvas.screenshot();
     expect(Buffer.compare(first, second)).not.toBe(0);
     await page.screenshot({ path: 'test-results/calico-desktop-eating.png' });
+    await dialog.getByRole('button', { name: 'Groom', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: 'Groom', exact: true })).toHaveAttribute(
+      'aria-pressed', 'true',
+    );
+    await dialog.getByRole('button', { name: 'Sniff', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: 'Sniff', exact: true })).toHaveAttribute(
+      'aria-pressed', 'true',
+    );
     await dialog.getByRole('button', { name: 'Walk', exact: true }).click();
     await expect(dialog.getByRole('button', { name: 'Walk', exact: true })).toHaveAttribute(
       'aria-pressed',
