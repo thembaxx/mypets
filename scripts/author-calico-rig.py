@@ -277,8 +277,17 @@ def model():
             soften_skin(lower_paw, label+"_Lower", label+"_Upper",
                         lambda v, lower_z=z-.68:
                         .59*smoothstep(lower_z-.12, lower_z+.28, v.z))
-            make_mesh(label + " rosy toe pad", (x,y+.20,.18), (.12,.035,.08),
-                      pink, label + "_Lower", 16,12)
+            # Pads belong to each paw's own underside, not a shared absolute
+            # world height. The previous z=.18 made rear pads float about 26 cm
+            # above the evaluated stance paw despite correct lower-mesh contact.
+            # In bind pose the lower paw is centred at z-.68 with radius .27;
+            # its sole lies near z-.95. Place the inset pad 7 cm above that
+            # underside so the rose mesh stays embedded and remains visible.
+            toe_pad = make_mesh(label + " rosy toe pad",
+                                (x,y+.19,z-.88), (.12,.035,.08),
+                                pink, label + "_Lower", 16,12)
+            soften_skin(toe_pad, label+"_Lower", label+"_Upper",
+                        lambda v: .13)
     make_mesh("Amber tail base", (0,-1.14,.99), (.23,.40,.22), gold, "Tail_1")
     make_mesh("Dark tipped tail", (0,-1.35,1.28), (.24,.29,.23), cocoa, "Tail_2")
     # Add an independent little whisker/tongue/mouth assembly through the rig.
