@@ -344,8 +344,16 @@ def review(slug, rig, out):
     scene.render.resolution_y=600
     scene.render.resolution_percentage=100
     scene.render.image_settings.file_format="PNG"
-    scene.display.shading.background_type="WORLD"
+    scene.display.shading.background_type="VIEWPORT"
     scene.display.shading.background_color=(.96,.95,.93)
+    scene.render.film_transparent=False
+    # The review-only ground gives a visible airborne gap and soft footing.
+    # It is never exported to the GLB and never fakes simulated collision.
+    bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,-.023))
+    ground=bpy.context.object
+    ground.name="Blender reference review floor only"
+    floor=material("Soft beige review floor",(.91,.88,.84),.95)
+    ground.data.materials.append(floor)
     camera_data=bpy.data.cameras.new("Kawaii hero review camera")
     camera=bpy.data.objects.new("Kawaii hero review camera",camera_data)
     bpy.context.collection.objects.link(camera)
@@ -363,6 +371,7 @@ def review(slug, rig, out):
         bpy.ops.render.render(write_still=True)
     # Neither the camera nor render objects belong to the exported GLB.
     bpy.data.objects.remove(camera,do_unlink=True)
+    bpy.data.objects.remove(ground,do_unlink=True)
 
 
 def build(slug,out):
