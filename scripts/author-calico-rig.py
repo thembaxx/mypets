@@ -1013,10 +1013,17 @@ def build_actions():
                          tongue=.14*max(0,math.sin(cycle*4))*approach,
                          tail=.05*math.sin(cycle))
             elif clip == "Play":
-                set_pose(frame, root_z=.07*abs(math.sin(cycle*2)),
-                         body_pitch=.09*math.sin(cycle), head_pitch=-.12,
-                         head_yaw=.13*math.sin(cycle), tail=.26*math.sin(cycle*2),
-                         ears=.05*math.sin(cycle*2))
+                # The reference calico springs into two buoyant airborne beats.
+                # Root_z here is world vertical via the armature's local Y.
+                hop = .235 * math.sin(cycle)**2
+                set_pose(frame, root_z=hop,
+                         body_pitch=.13*math.sin(cycle*2), head_pitch=-.14,
+                         head_yaw=.18*math.sin(cycle), tail=.43*math.sin(cycle*3),
+                         ears=.14*math.sin(cycle*2),
+                         legs={
+                             "Front_L":(-.38*math.sin(cycle)**2, .27*math.sin(cycle)**2),
+                             "Front_R":(-.38*math.sin(cycle)**2, .27*math.sin(cycle)**2),
+                         })
             elif clip == "Rest":
                 set_pose(frame, body_z=-.24, head_pitch=.18,
                          tail=.09*math.sin(cycle))

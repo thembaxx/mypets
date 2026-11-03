@@ -2,13 +2,15 @@ name: Species realism prototype build
 on:
   push:
     branches:
-      - feat/species-contiguous-cranium-issue49
+      - feat/playful-pets-video-reference-20261103
     paths:
       - scripts/author-species-rigs.py
       - scripts/species_realism.py
       - scripts/species_anatomy.py
       - scripts/test_species_anatomy.py
       - scripts/species_motion.py
+      - scripts/species_playful_style.py
+      - scripts/test_species_playful_style.py
       - scripts/audit_species_contact.py
       - scripts/verify-species-contact.mjs
       - scripts/test_species_motion.py
@@ -38,7 +40,7 @@ jobs:
           blender --version | head -3
       - name: Verify source syntax
         run: |
-          python3 -m py_compile scripts/author-species-rigs.py scripts/species_realism.py scripts/species_anatomy.py scripts/test_species_anatomy.py scripts/species_motion.py scripts/test_species_motion.py scripts/audit_species_contact.py scripts/species_avian_aquatic.py
+          python3 -m py_compile scripts/author-species-rigs.py scripts/species_realism.py scripts/species_anatomy.py scripts/test_species_anatomy.py scripts/species_playful_style.py scripts/test_species_playful_style.py scripts/species_playful_style.py scripts/test_species_playful_style.py scripts/species_motion.py scripts/test_species_motion.py scripts/audit_species_contact.py scripts/species_avian_aquatic.py
           python3 -m unittest discover -s scripts -p 'test_species_*.py' -v
           node --check scripts/verify-species-realism.mjs
           node --check scripts/verify-avian-aquatic.mjs
@@ -74,12 +76,12 @@ jobs:
       - name: Publish only candidate models to feature branch
         run: |
           set -euo pipefail
-          branch=feat/species-contiguous-cranium-issue49
+          branch=feat/playful-pets-video-reference-20261103
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for attempt in 1 2 3; do
             git fetch origin "$branch"
-            if ! git diff --quiet "$GITHUB_SHA" "origin/$branch" -- scripts/author-species-rigs.py scripts/species_realism.py scripts/species_anatomy.py scripts/test_species_anatomy.py scripts/species_motion.py scripts/test_species_motion.py scripts/audit_species_contact.py scripts/species_avian_aquatic.py scripts/verify-species-rigs.mjs scripts/verify-species-contact.mjs scripts/verify-species-realism.mjs scripts/verify-avian-aquatic.mjs .github/workflows/species-3d-candidates.yml; then
+            if ! git diff --quiet "$GITHUB_SHA" "origin/$branch" -- scripts/author-species-rigs.py scripts/species_realism.py scripts/species_anatomy.py scripts/test_species_anatomy.py scripts/species_playful_style.py scripts/test_species_playful_style.py scripts/species_playful_style.py scripts/test_species_playful_style.py scripts/species_motion.py scripts/test_species_motion.py scripts/audit_species_contact.py scripts/species_avian_aquatic.py scripts/verify-species-rigs.mjs scripts/verify-species-contact.mjs scripts/verify-species-realism.mjs scripts/verify-avian-aquatic.mjs .github/workflows/species-3d-candidates.yml; then
               echo "A newer animal-authoring revision exists. Do not publish stale rigs."
               exit 0
             fi

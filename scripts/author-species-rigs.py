@@ -25,14 +25,15 @@ from species_realism import (
     sculpt_muzzle, sculpt_beak,
 )
 from species_motion import limb_angles, tail_wave, walk_torso, wing_stroke
+from species_playful_style import celebration_height, decorate
 from species_anatomy import anatomical_skull, head_eye_offset
 from audit_species_contact import audit as audit_species_motion
 
 # 13 species beyond the independently authored cat, plus breed/colour variants.
 # body width,length,depth; center height; head radius; head height; colours.
 CONFIG = {
-    "dog":         ("quadruped", .49, .96, .41, 1.01, .34, 1.38, (.70,.49,.30), (.91,.76,.53)),
-    "rabbit":      ("quadruped", .40, .72, .40, .76, .29, 1.10, (.80,.74,.67), (.91,.85,.78)),
+    "dog":         ("quadruped", .55, .75, .47, .85, .50, 1.20, (.80,.55,.35), (.99,.89,.71)),
+    "rabbit":      ("quadruped", .46, .65, .44, .72, .44, 1.05, (.94,.78,.60), (.99,.95,.91)),
     "hamster":     ("quadruped", .52, .57, .43, .65, .34, .94, (.85,.55,.28), (.98,.84,.62)),
     "guinea-pig":  ("quadruped", .49, .72, .40, .62, .33, .91, (.68,.45,.30), (.98,.88,.68)),
     "ferret":      ("quadruped", .36, 1.03, .34, .68, .30, 1.04, (.66,.52,.40), (.89,.78,.63)),
@@ -41,8 +42,8 @@ CONFIG = {
     "bird":        ("bird", .37, .62, .40, .94, .22, 1.29, (.26,.57,.76), (.43,.75,.88)),
     "budgie":      ("bird", .37, .62, .40, .94, .22, 1.29, (.39,.73,.35), (.82,.89,.41)),
     "canary":      ("bird", .37, .60, .40, .94, .22, 1.29, (.96,.77,.19), (.99,.88,.38)),
-    "fish":        ("fish", .30, .66, .38, 1.04, .26, 1.10, (.27,.57,.78), (.66,.85,.93)),
-    "angelfish":   ("fish", .30, .49, .60, 1.04, .24, 1.10, (.86,.67,.31), (.97,.89,.61)),
+    "fish":        ("fish", .41, .72, .49, 1.04, .33, 1.10, (.99,.48,.15), (.99,.80,.38)),
+    "angelfish":   ("fish", .37, .51, .63, 1.04, .27, 1.10, (.91,.71,.30), (.99,.89,.64)),
     "snake":       ("snake", .27, 1.18, .27, .54, .28, .76, (.39,.57,.32), (.67,.78,.45)),
     "iguana":      ("reptile", .38, .89, .34, .66, .31, .97, (.42,.59,.34), (.68,.76,.49)),
     "gecko":       ("reptile", .31, .64, .28, .56, .25, .81, (.75,.67,.40), (.92,.83,.57)),
@@ -264,18 +265,22 @@ def make_animal(slug, spec, rig, output_dir):
     else:
         nose=None
     for side in (-1,1):
-        x=(side*w*(.39 if slug=="angelfish" else .60) if kind=="fish"
+        x=(side*w*(.30 if slug=="angelfish" else .35) if kind=="fish"
            else side*hr*head_eye_offset(slug) if kind in ("quadruped","reptile")
            else side*hr*.53)
-        eye_centre=((x,.12,cz+depth*.19) if kind=="fish"
+        eye_centre=((x,.44,cz+depth*.19) if kind=="fish"
                     else (x,face_y+hr*.68,hz+hr*.20))
         side_name=" left" if side<0 else " right"
         # Two-layer eyes with actual iris and pupil rather than a single dark ball.
+        # Large glossy eyes are a defining feature of the reference characters.
+        hero=slug in ("dog","rabbit","fish","angelfish")
+        iris_size=.245 if hero else .135
+        pupil_size=.148 if hero else .058
         iris_eye=ellipsoid(slug+side_name+" iris",eye_centre,
-                           (hr*.135,hr*.074,hr*.15),iris,rig,"Head",28,20)
+                           (hr*iris_size,hr*.09,hr*(iris_size*1.05)),iris,rig,"Head",28,20)
         eye=ellipsoid(slug+side_name+" living eye",
-                      (eye_centre[0],eye_centre[1]+hr*.042,eye_centre[2]),
-                      (hr*.058,hr*.032,hr*.115),dark,rig,"Head",24,16)
+                      (eye_centre[0],eye_centre[1]+hr*.077,eye_centre[2]),
+                      (hr*pupil_size,hr*.043,hr*(pupil_size*1.14)),dark,rig,"Head",24,16)
         # Fish and snakes should not squeeze their entire eyeballs shut.
         if kind not in ("fish","snake"):
             for mesh in (iris_eye,eye):
@@ -288,14 +293,20 @@ def make_animal(slug, spec, rig, output_dir):
             feline_style_eyelid(slug,side,eye_centre,hr,light,rig,weighted)
     mouth_pos=((0,muzzle_y+hr*.08,cz-.045) if kind=="fish"
                else (0,muzzle_y+hr*.30,hz-hr*.48))
-    mouth_radii=((hr*.12,hr*.035,hr*.050) if kind=="fish"
-                 else (hr*.20,hr*.06,hr*.10))
+    mouth_radii=((hr*.17,hr*.041,hr*.095) if kind=="fish"
+                 else (hr*.24,hr*.065,hr*.14))
     mouth=ellipsoid(slug+" eating mouth",mouth_pos,
                     mouth_radii,dark,rig,"Jaw",20,12)
     mouth.shape_key_add(name="Basis")
     jaw=mouth.shape_key_add(name="Jaw_Open")
     for basis,target in zip(mouth.data.shape_keys.key_blocks["Basis"].data,jaw.data):
         target.co.z=basis.co.z-.035
+    # The WebGL viewer drives Smile when the pet is happy.
+    smile=mouth.shape_key_add(name="Smile")
+    for basis,target in zip(mouth.data.shape_keys.key_blocks["Basis"].data,smile.data):
+        corner=min(1.,abs(basis.co.x)/(hr*.24))
+        target.co.x=basis.co.x*1.12
+        target.co.z=basis.co.z+hr*.10*corner
 
     if kind=="quadruped":
         for side in (-1,1):
@@ -307,7 +318,8 @@ def make_animal(slug, spec, rig, output_dir):
                 ankle=.065
                 # A rounded, joined paw and limb. Rear haunches are stronger.
                 knee=hip*.56
-                radius=(w*.29 if fore else w*.36)
+                radius=(w*(.33 if fore else .42) if slug in ("dog","rabbit")
+                        else w*(.29 if fore else .36))
                 points=[(x,y,hip+.17),(x,y-.025,hip),
                         (x,y-.035,knee+.11),(x,y,knee),
                         (x,y+.09,ankle+.07),(x,y+.14,ankle)]
@@ -319,9 +331,21 @@ def make_animal(slug, spec, rig, output_dir):
                     points,radii=sculpted
                 tapered_mesh(name+" connected limb",points,radii,coat,rig,
                              name+"_Upper",name+"_Lower","Body")
+                if slug in ("dog","rabbit"):
+                    for digit in (-1,0,1):
+                        ellipsoid(slug+" "+name+" plush toe "+str(digit),
+                                  (x+digit*radius*.50,y+.16,ankle*.82),
+                                  (radius*.36,radius*.45,radius*.29),
+                                  coat,rig,name+"_Lower",16,12)
         if slug=="rabbit":
             for side in (-1,1):
                 cupped_pinna(slug,side,face_y,hz,hr,coat,rig,weighted)
+                # Rosy inset, weighted to the head, follows a broad capsule
+                # instead of the previous sharply tapered rabbit ear.
+                ellipsoid(slug+" pink inner ear "+str(side),
+                          (side*(hr*.75+.09),face_y+.003,hz+hr*.60+.35),
+                          (hr*.22,hr*.09,.29),
+                          ear_pink,rig,"Head",28,20)
         elif slug=="hedgehog":
             # Hundreds of spikes in one batched geometry would be too costly;
             # grouped low-count dorsal quills instead of flat texture sprites.
@@ -336,6 +360,10 @@ def make_animal(slug, spec, rig, output_dir):
                 ear_h=.25 if slug=="dog" else .13
                 if slug=="dog":
                     cupped_pinna(slug,side,face_y,hz,hr,coat,rig,weighted)
+                    ellipsoid(slug+" warm floppy inner ear "+str(side),
+                              (side*(hr*.75+.19),face_y+.042,hz+hr*.67-.17),
+                              (hr*.16,hr*.055,.145),
+                              ear_pink,rig,"Head",24,16)
                 else:
                     ellipsoid(slug+" ear "+str(side),
                               (side*hr*.79,face_y-.09,hz+hr*.67),
@@ -416,6 +444,7 @@ def make_animal(slug, spec, rig, output_dir):
         curve_tube(slug+" forked tongue",
                    [(0,face_y+hr*.90,hz-.16),(0,face_y+hr*1.29,hz-.18),
                     (-.06,face_y+hr*1.49,hz-.17)],.014,ear_pink,rig,"Jaw")
+    decorate(slug,spec,rig,ellipsoid,curve_tube,mat)
     return body
 
 
@@ -431,6 +460,7 @@ def animate(slug, spec, rig):
             for pb in rig.pose.bones:
                 pb.location=(0,0,0)
                 pb.rotation_euler=(0,0,0)
+            root=rig.pose.bones["Root"]
             body=rig.pose.bones["Body"]
             head=rig.pose.bones["Head"]
             tail1=rig.pose.bones["Tail_1"]
@@ -482,12 +512,22 @@ def animate(slug, spec, rig):
                         if bone.name.startswith("Fin_"):
                             bone.rotation_euler.y=.11*math.sin(cycle*4)
             elif label=="Play":
+                # The armature's local Y axis is vertical in Blender world Z.
+                # Two smooth airborne hops mimic the reference video rhythm.
+                root.location.y=celebration_height(slug,kind,t)
                 body.location.y=.055*abs(math.sin(cycle*2))
                 body.rotation_euler.z=.09*math.sin(cycle*2)
                 head.rotation_euler.z=.13*math.sin(cycle*2)
                 tail1.rotation_euler.z=.21*math.sin(cycle*2)
                 if slug=="rabbit":
-                    body.location.y=.085*abs(math.sin(cycle*2))
+                    # Paired rear-leg kick while the character is airborne.
+                    body.rotation_euler.x=.12*math.sin(cycle*2)
+                    for side in ("L","R"):
+                        rig.pose.bones["Rear_"+side+"_Upper"].rotation_euler.x=.22*math.sin(cycle*2)
+                        rig.pose.bones["Rear_"+side+"_Lower"].rotation_euler.x=-.25*max(0,math.sin(cycle*2))
+                if slug=="dog":
+                    tail1.rotation_euler.z=.43*math.sin(cycle*4)
+                    head.rotation_euler.z=.16*math.sin(cycle*2)
                 if kind=="fish":
                     tail1.rotation_euler.z,tail2.rotation_euler.z=tail_wave("fish",t)
                 if kind=="bird":
@@ -522,7 +562,7 @@ def animate(slug, spec, rig):
         track.mute=False
 
 
-def render_review(path):
+def render_review(path, front=False):
     scene=bpy.context.scene
     scene.render.engine="BLENDER_WORKBENCH"
     scene.display.shading.light="STUDIO"
@@ -531,11 +571,11 @@ def render_review(path):
     cam_data=bpy.data.cameras.new("Review camera")
     cam=bpy.data.objects.new("Review camera",cam_data)
     bpy.context.collection.objects.link(cam)
-    cam.location=(2.7,4.0,2.2)
+    cam.location=((0,4.5,1.95) if front else (2.7,4.0,2.2))
     target=Vector((0,0,1))
     cam.rotation_euler=(target-cam.location).to_track_quat("-Z","Y").to_euler()
     cam_data.type="ORTHO"
-    cam_data.ortho_scale=3.5
+    cam_data.ortho_scale=2.85 if front else 3.5
     scene.camera=cam
     scene.render.resolution_x=400
     scene.render.resolution_y=400
@@ -554,6 +594,18 @@ def build(slug, out):
     rig=rig_for(slug,spec)
     make_animal(slug,spec,rig,out)
     animate(slug,spec,rig)
+    if slug in ("dog","rabbit","fish","angelfish"):
+        for track in rig.animation_data.nla_tracks:
+            track.mute=track.name!="Play"
+        samples=[]
+        for frame in (1,13,25,37,49):
+            bpy.context.scene.frame_set(frame)
+            bpy.context.view_layer.update()
+            samples.append(rig.pose.bones["Root"].location.y)
+        if max(samples)-min(samples)<.12:
+            raise RuntimeError("No real vertical airborne celebration on "+slug)
+        print("PLAYFUL_AIRBORNE_MOTION",slug,
+              "vertical_amplitude=%.3f" % (max(samples)-min(samples)),flush=True)
     bpy.context.scene.frame_set(1)
     bpy.ops.object.select_all(action="DESELECT")
     for ob in bpy.context.scene.objects:
@@ -570,9 +622,17 @@ def build(slug, out):
     if not path.is_file() or path.stat().st_size>8*1024*1024:
         raise RuntimeError("Missing or oversized species GLB: "+slug)
     rig.animation_data.action=None
+    if slug in ("dog","rabbit","fish","angelfish"):
+        for track in rig.animation_data.nla_tracks:
+            track.mute=track.name!="Play"
+        bpy.context.scene.frame_set(13)
+        render_review(out/(slug+"-play-review.png"))
     for track in rig.animation_data.nla_tracks:
         track.mute=track.name!="Idle"
+    bpy.context.scene.frame_set(1)
     render_review(out/(slug+"-review.png"))
+    if slug in ("dog","rabbit","fish","angelfish"):
+        render_review(out/(slug+"-front-review.png"),front=True)
     # Report the *deformed*, world-space stance drift in the authored clip.
     # This is diagnostic only; curves are not a real foot-locking solver.
     audit_species_motion(slug, spec[0], rig, out)

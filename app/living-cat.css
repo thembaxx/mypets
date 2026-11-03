@@ -298,6 +298,38 @@
   background: #f0e5cf;
   color: #5c7157;
 }
+.cat-lab-style-picker {
+  display: flex;
+  align-self: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid #6e8d783b;
+  border-radius: 17px;
+  background: #f3f2ec;
+}
+.cat-lab-style-picker button {
+  flex: 1 1 190px;
+  padding: 11px 13px;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: #365244;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.cat-lab-style-picker button[aria-pressed='true'] {
+  border-color: #9cae9e;
+  background: #fff;
+  box-shadow: 0 2px 8px #294c3a12;
+}
+.cat-lab-style-picker button:focus-visible {
+  outline: 3px solid #c68d52;
+  outline-offset: 2px;
+}
 .cat-lab-launch {
   display: inline-flex;
   align-items: center;

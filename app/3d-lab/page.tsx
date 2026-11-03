@@ -6,6 +6,7 @@ import { ArrowLeftIcon, CubeTransparentIcon, PawPrintIcon } from '@phosphor-icon
 import {
   animalCandidateIds,
   candidateDisplayName,
+  chibiCandidateModelUrl,
   candidateModelUrl,
   type AnimalCandidateId,
 } from '@/lib/species-3d';
@@ -19,7 +20,11 @@ const ThreeDCatStudio = dynamic(() => import('@/components/tripo-pet'), { ssr: f
 export default function ThreeDLabPage() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<AnimalCandidateId>('cat');
+  const [visualStyle, setVisualStyle] = useState<'video' | 'previous'>('video');
   const cat = selected === 'cat';
+  const videoStyleUrl = chibiCandidateModelUrl(selected);
+  const selectedUrl =
+    visualStyle === 'video' && videoStyleUrl ? videoStyleUrl : candidateModelUrl(selected);
 
   return (
     <main className="cat-lab-page">
@@ -51,21 +56,40 @@ export default function ThreeDLabPage() {
             </option>
           ))}
         </select>
+        {videoStyleUrl && (
+          <div className="cat-lab-style-picker" role="group" aria-label="Choose 3D character style">
+            <button
+              type="button"
+              aria-pressed={visualStyle === 'video'}
+              onClick={() => setVisualStyle('video')}
+            >
+              Joyful video-reference prototype
+            </button>
+            <button
+              type="button"
+              aria-pressed={visualStyle === 'previous'}
+              onClick={() => setVisualStyle('previous')}
+            >
+              Previous anatomical study
+            </button>
+          </div>
+        )}
         <button className="cat-lab-launch" onClick={() => setOpen(true)}>
           <PawPrintIcon size={22} aria-hidden="true" />
           {cat ? 'Open the Blender cat studio' : 'Open the Blender animal studio'}
         </button>
         <p className="cat-lab-disclaimer">
-          These are original, separately authored 3D prototype assets, not photoreal reconstructions
-          or animal motion capture. Original illustrated pets stay unchanged.
+          Video-inspired chibi characters and previous anatomical studies are separately rigged
+          experimental GLBs. Neither is a photoreal reconstruction or motion capture. Original
+          illustrated pets stay unchanged.
         </p>
       </section>
       {open && (
         <ThreeDCatStudio
-          key={selected}
+          key={selected + ':' + visualStyle}
           name={cat ? 'Calico cat' : candidateDisplayName(selected)}
           defaultCandidate
-          candidateUrl={candidateModelUrl(selected)}
+          candidateUrl={selectedUrl}
           allowProceduralCat={cat}
           onClose={() => setOpen(false)}
         />

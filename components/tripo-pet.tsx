@@ -171,18 +171,26 @@ function AnimalModel({
     },
     [mixer, model],
   );
+  const expressiveCandidate =
+    url.includes('/models/candidates/chibi/') ||
+    url.endsWith('/nuzzle-calico-rig.glb') ||
+    ['dog', 'rabbit', 'fish', 'angelfish'].some((species) =>
+      url.endsWith('/models/candidates/species/' + species + '.glb'),
+    );
   useFrame((state, delta) => {
     if (!animated) return;
     const dt = Math.min(delta, 0.05);
     mixer.update(dt);
     // Only animate morphs that actually exist on the authored model.
     // Body motion cannot be invented from an unrigged, static photograph.
-    const blink = state.clock.elapsedTime % 4.1 < 0.14 ? 1 : 0;
+    const celebrating = expressiveCandidate && activity === 'play' && mood === 'happy';
+    const blink = celebrating ? 0.88 : state.clock.elapsedTime % 4.1 < 0.14 ? 1 : 0;
     const chew =
       activity === 'eat' || activity === 'groom'
         ? Math.max(0, Math.sin(state.clock.elapsedTime * 10))
         : 0;
     const sniff = activity === 'sniff' ? 0.35 + Math.sin(state.clock.elapsedTime * 9) * 0.2 : 0;
+    const happyMouth = celebrating ? 0.75 + 0.08 * Math.sin(state.clock.elapsedTime * 8) : 0;
     for (const { mesh, index, name } of morphTargetsRef.current) {
       const influences = mesh.morphTargetInfluences;
       if (!influences) continue;
@@ -191,22 +199,26 @@ function AnimalModel({
           ? 0.65
           : blink
         : /jaw.?open|mouth.?open/i.test(name)
-          ? chew * 0.8
+          ? Math.max(chew * 0.8, happyMouth)
           : /sniff|nose.?flare/i.test(name)
             ? sniff
             : /cheek.?puff/i.test(name)
               ? activity === 'groom'
                 ? 0.25
-                : mood === 'happy'
-                  ? 0.18
-                  : 0
+                : celebrating
+                  ? 0.58
+                  : mood === 'happy'
+                    ? 0.18
+                    : 0
               : /eye.?wide/i.test(name)
                 ? mood === 'curious'
                   ? 0.9
                   : 0
                 : /smile|happy/i.test(name)
                   ? mood === 'happy'
-                    ? 0.7
+                    ? celebrating
+                      ? 0.97
+                      : 0.7
                     : 0
                   : /ears?.?back|fear|angry/i.test(name)
                     ? 0

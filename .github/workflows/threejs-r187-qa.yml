@@ -14,6 +14,7 @@ on:
       - 'app/3d-lab/**'
       - 'app/living-cat.css'
       - 'tests/calico-browser.spec.mjs'
+      - 'tests/chibi-browser.spec.mjs'
       - 'tests/species-browser.spec.mjs'
       - 'tests/species-realism-browser.spec.mjs'
       - 'scripts/species_realism.py'
@@ -25,6 +26,10 @@ on:
       - 'scripts/species_anatomy.py'
       - 'scripts/test_species_anatomy.py'
       - 'scripts/verify-species-rigs.mjs'
+      - 'scripts/author-chibi-heroes.py'
+      - 'scripts/verify-chibi-heroes.mjs'
+      - 'lib/species-3d.ts'
+      - '.github/workflows/chibi-heroes-review.yml'
       - 'public/models/candidates/**'
       - 'docs/avian-aquatic-visual-review.md'
       - 'package.json'
@@ -67,12 +72,12 @@ jobs:
         run: |
           curl --fail --silent --retry 30 --retry-delay 1 --retry-connrefused --max-time 2 http://127.0.0.1:3000/3d-lab/ > /dev/null
           mkdir -p test-results
-          npx playwright test tests/calico-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --reporter=line --workers=1
+          npx playwright test tests/calico-browser.spec.mjs tests/chibi-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --reporter=line --workers=1
       - name: Install Safari WebKit browser runtime
         run: npx playwright install --with-deps webkit
       - name: Verify rigged cat interactions in Safari WebKit
         run: |
-          npx playwright test tests/calico-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --browser=webkit --reporter=line --workers=1
+          npx playwright test tests/calico-browser.spec.mjs tests/chibi-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --browser=webkit --reporter=line --workers=1
 
       - name: Upload cat action and facial animation screenshots
         if: always()
