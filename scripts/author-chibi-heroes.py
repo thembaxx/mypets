@@ -145,29 +145,29 @@ def face(slug, rig, materials):
            (.58, .47, .56), fur, rig, "Head", 48, 34)
     # A restrained patch conforms to the domed frontal silhouette.
     if slug == "cat":
-        sphere(slug+" amber calico forehead", (-.32,.40,1.81),
-               (.24,.095,.21), patch, rig,"Head",28,20,tilt=.22)
+        sphere(slug+" amber calico forehead", (-.32,.355,1.80),
+               (.24,.037,.19), patch, rig,"Head",28,20,tilt=.22)
         sphere(slug+" cocoa calico temple", (.39,.32,1.73),
-               (.15,.075,.19), materials["secondary"], rig, "Head")
+               (.15,.030,.19), materials["secondary"], rig, "Head")
     elif slug == "dog":
-        sphere(slug+" puppy caramel forehead", (-.30,.37,1.79),
-               (.26,.095,.22), patch, rig,"Head")
+        sphere(slug+" puppy caramel forehead", (-.30,.355,1.79),
+               (.26,.037,.21), patch, rig,"Head")
     else:
         sphere(slug+" peach crown patch", (.30,.33,1.85),
-               (.22,.08,.17), patch, rig,"Head")
+               (.22,.035,.17), patch, rig,"Head")
 
     for side in (-1,1):
         happy_eye(slug, side, dark, rig)
-        sphere(slug+" cheek "+str(side), (side*.38,.567,1.34),
-               (.18,.049,.12), pink, rig, "Head",24,16)
+        sphere(slug+" cheek "+str(side), (side*.38,.54,1.36),
+               (.17,.034,.11), pink, rig, "Head",24,16)
         # Sculpted separate muzzle puffs create the plush-toy cheek outline.
-        sphere(slug+" muzzle puff "+str(side), (side*.115,.573,1.29),
-               (.19,.086,.10), fur, rig,"Head",24,16)
+        sphere(slug+" muzzle puff "+str(side), (side*.115,.548,1.29),
+               (.155,.062,.09), fur, rig,"Head",24,16)
 
-    sphere(slug+" button nose", (0,.661,1.39),
-           (.078,.047,.052), dark,rig,"Head",22,14)
-    opening=sphere(slug+" joyful open mouth", (0,.639,1.205),
-           (.20,.064,.151),mouth,rig,"Jaw",32,24)
+    sphere(slug+" button nose", (0,.622,1.40),
+           (.067,.037,.048), dark,rig,"Head",22,14)
+    opening=sphere(slug+" joyful open mouth", (0,.596,1.205),
+           (.19,.058,.144),mouth,rig,"Jaw",32,24)
     opening.shape_key_add(name="Basis")
     smile=opening.shape_key_add(name="Smile")
     wide=opening.shape_key_add(name="Jaw_Open")
@@ -178,12 +178,12 @@ def face(slug, rig, materials):
         target_smile.co.z=basis.co.z+.03*edge
         target_smile.co.x=basis.co.x*1.10
         target_wide.co.z=1.205+(basis.co.z-1.205)*1.30
-    sphere(slug+" pink happy tongue",(0,.698,1.133),
+    sphere(slug+" pink happy tongue",(0,.645,1.137),
            (.105,.027,.058),tongue,rig,"Jaw",22,16)
     # Nose-to-mouth smile bridges are geometry, moving with the Head bone.
     for side in (-1,1):
         line(slug+" upturned smile crease "+str(side),
-             [(side*.16,.669,1.235),(side*.24,.619,1.29)],
+             [(side*.15,.636,1.235),(side*.23,.590,1.29)],
              .012,dark,rig,"Head")
     return opening
 
@@ -204,11 +204,11 @@ def ears(slug, rig, mats):
         for side in (-1,1):
             bone="Ear_L" if side<0 else "Ear_R"
             sphere(slug+" floppy soft ear "+str(side),
-                   (side*.61,.09,1.69),(.225,.148,.34),
-                   main,rig,bone,32,24,tilt=side*.55)
+                   (side*.66,.075,1.57),(.245,.158,.32),
+                   main,rig,bone,32,24,tilt=side*.81)
             sphere(slug+" pink floppy ear lining "+str(side),
-                   (side*.615,.214,1.68),(.14,.036,.23),
-                   inner,rig,bone,28,18,tilt=side*.55)
+                   (side*.66,.212,1.54),(.15,.039,.22),
+                   inner,rig,bone,28,18,tilt=side*.81)
     else:
         for side in (-1,1):
             bone="Ear_L" if side<0 else "Ear_R"
@@ -238,7 +238,7 @@ def body_and_limbs(slug, rig, mats):
         suffix="L" if side<0 else "R"
         # Short plump articulated arms: raised by the actual Arm bones.
         sphere(slug+" lifted paw arm "+suffix,
-               (side*.47,.15,1.02),(.19,.19,.27),fur,rig,"Arm_"+suffix,32,20,
+               (side*.44,.17,1.02),(.19,.19,.245),fur,rig,"Arm_"+suffix,32,20,
                tilt=-side*.24)
         sphere(slug+" plump planted haunch "+suffix,
                (side*.24,-.005,.38),(.21,.19,.27),fur,rig,"Leg_"+suffix,32,22)
