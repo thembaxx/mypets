@@ -562,7 +562,7 @@ def animate(slug, spec, rig):
         track.mute=False
 
 
-def render_review(path):
+def render_review(path, front=False):
     scene=bpy.context.scene
     scene.render.engine="BLENDER_WORKBENCH"
     scene.display.shading.light="STUDIO"
@@ -571,11 +571,11 @@ def render_review(path):
     cam_data=bpy.data.cameras.new("Review camera")
     cam=bpy.data.objects.new("Review camera",cam_data)
     bpy.context.collection.objects.link(cam)
-    cam.location=(2.7,4.0,2.2)
+    cam.location=((0,4.5,1.95) if front else (2.7,4.0,2.2))
     target=Vector((0,0,1))
     cam.rotation_euler=(target-cam.location).to_track_quat("-Z","Y").to_euler()
     cam_data.type="ORTHO"
-    cam_data.ortho_scale=3.5
+    cam_data.ortho_scale=2.85 if front else 3.5
     scene.camera=cam
     scene.render.resolution_x=400
     scene.render.resolution_y=400
@@ -631,6 +631,8 @@ def build(slug, out):
         track.mute=track.name!="Idle"
     bpy.context.scene.frame_set(1)
     render_review(out/(slug+"-review.png"))
+    if slug in ("dog","rabbit","fish","angelfish"):
+        render_review(out/(slug+"-front-review.png"),front=True)
     # Report the *deformed*, world-space stance drift in the authored clip.
     # This is diagnostic only; curves are not a real foot-locking solver.
     audit_species_motion(slug, spec[0], rig, out)
