@@ -177,8 +177,10 @@ h4 {
     background 0.2s,
     transform 0.2s;
 }
-.primary-button:hover {
-  background: #314a32;
+@media (hover: hover) and (pointer: fine) {
+  .primary-button:hover {
+    background: #314a32;
+  }
 }
 .primary-button:active,
 .secondary-button:active {
@@ -798,8 +800,10 @@ h4 {
   background: #edeade;
   transition: transform 0.25s;
 }
-.mini-feature:hover {
-  transform: translateY(-3px);
+@media (hover: hover) and (pointer: fine) {
+  .mini-feature:hover {
+    transform: translateY(-3px);
+  }
 }
 .training-feature {
   background: #ebe9ef;
@@ -3863,8 +3867,10 @@ h4 {
 :root[data-theme='dark'] .primary-button {
   color: #122313;
 }
-:root[data-theme='dark'] .primary-button:hover {
-  background: #9bae87;
+@media (hover: hover) and (pointer: fine) {
+  :root[data-theme='dark'] .primary-button:hover {
+    background: #9bae87;
+  }
 }
 :root[data-theme='dark'] .toast {
   background: #475b39ef;
@@ -4053,9 +4059,11 @@ h2 em,
 .month-day.is-today strong {
   color: var(--on-accent);
 }
-.primary-button:hover {
-  background: var(--accent);
-  filter: brightness(0.94);
+@media (hover: hover) and (pointer: fine) {
+  .primary-button:hover {
+    background: var(--accent);
+    filter: brightness(0.94);
+  }
 }
 .discovery-copy .eyebrow,
 .discovery-copy p,
@@ -4178,10 +4186,12 @@ textarea {
     border-color 0.2s,
     box-shadow 0.2s;
 }
-.icon-button:hover,
-.secondary-button:hover {
-  background: var(--sage);
-  border-color: var(--control);
+@media (hover: hover) and (pointer: fine) {
+  .icon-button:hover,
+  .secondary-button:hover {
+    background: var(--sage);
+    border-color: var(--control);
+  }
 }
 button:focus-visible,
 a:focus-visible,
@@ -4197,13 +4207,17 @@ textarea:focus-visible {
 .plain-button > svg {
   transition: transform 0.22s;
 }
-.primary-button:hover > svg,
-.plain-button:hover > svg {
-  transform: translateX(3px);
+@media (hover: hover) and (pointer: fine) {
+  .primary-button:hover > svg,
+  .plain-button:hover > svg {
+    transform: translateX(3px);
+  }
 }
-.discovery-link:hover svg,
-.source-link:hover > svg {
-  transform: translate(2px, -2px);
+@media (hover: hover) and (pointer: fine) {
+  .discovery-link:hover svg,
+  .source-link:hover > svg {
+    transform: translate(2px, -2px);
+  }
 }
 input:focus,
 select:focus,
@@ -4780,12 +4794,14 @@ textarea:focus {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .primary-button:hover > svg,
-  .plain-button:hover > svg,
-  .discovery-link:hover svg,
-  .source-link:hover > svg,
-  .mini-feature:hover {
-    transform: none;
+  @media (hover: hover) and (pointer: fine) {
+    .primary-button:hover > svg,
+    .plain-button:hover > svg,
+    .discovery-link:hover svg,
+    .source-link:hover > svg,
+    .mini-feature:hover {
+      transform: none;
+    }
   }
 }
 :root[data-theme='dark'] .species-card.chicken .animal-art,
@@ -4995,8 +5011,10 @@ textarea,
   height: 56px;
   border-radius: 18px;
 }
-.primary-icon:hover {
-  background: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  .primary-icon:hover {
+    background: var(--accent);
+  }
 }
 .form-save,
 .practice-next {
@@ -5449,7 +5467,11 @@ textarea,
   box-shadow: none;
   border-color: transparent;
 }
-.assistant-context .icon-button:hover,
+@media (hover: hover) and (pointer: fine) {
+  .assistant-context .icon-button:hover {
+    background: var(--sage);
+  }
+}
 .assistant-context .assistant-options.on {
   background: var(--sage);
 }
@@ -5969,9 +5991,11 @@ textarea,
   line-height: 1.5;
   color: var(--muted);
 }
-.assistant-suggestions button:hover {
-  border-color: var(--control);
-  background: var(--sage);
+@media (hover: hover) and (pointer: fine) {
+  .assistant-suggestions button:hover {
+    border-color: var(--control);
+    background: var(--sage);
+  }
 }
 .assistant-compose-area {
   flex-shrink: 0;
@@ -5988,9 +6012,11 @@ textarea,
   font-weight: 500;
   color: var(--accent);
 }
-.assistant-more-ideas:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+@media (hover: hover) and (pointer: fine) {
+  .assistant-more-ideas:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 }
 .assistant-composer {
   display: flex;
@@ -6038,9 +6064,11 @@ textarea,
   margin: 0;
   box-shadow: none;
 }
-.assistant-composer .primary-icon:hover {
-  background: var(--accent);
-  color: var(--on-accent);
+@media (hover: hover) and (pointer: fine) {
+  .assistant-composer .primary-icon:hover {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
 }
 .offline-assistant .assistant-footnote {
   display: flex;
