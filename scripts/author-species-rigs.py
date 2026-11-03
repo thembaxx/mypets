@@ -340,6 +340,12 @@ def make_animal(slug, spec, rig, output_dir):
         if slug=="rabbit":
             for side in (-1,1):
                 cupped_pinna(slug,side,face_y,hz,hr,coat,rig,weighted)
+                # Rosy inset, weighted to the head, follows a broad capsule
+                # instead of the previous sharply tapered rabbit ear.
+                ellipsoid(slug+" pink inner ear "+str(side),
+                          (side*(hr*.75+.09),face_y+.003,hz+hr*.60+.35),
+                          (hr*.22,hr*.09,.29),
+                          ear_pink,rig,"Head",28,20)
         elif slug=="hedgehog":
             # Hundreds of spikes in one batched geometry would be too costly;
             # grouped low-count dorsal quills instead of flat texture sprites.
@@ -354,6 +360,10 @@ def make_animal(slug, spec, rig, output_dir):
                 ear_h=.25 if slug=="dog" else .13
                 if slug=="dog":
                     cupped_pinna(slug,side,face_y,hz,hr,coat,rig,weighted)
+                    ellipsoid(slug+" warm floppy inner ear "+str(side),
+                              (side*(hr*.75+.19),face_y+.042,hz+hr*.67-.17),
+                              (hr*.16,hr*.055,.145),
+                              ear_pink,rig,"Head",24,16)
                 else:
                     ellipsoid(slug+" ear "+str(side),
                               (side*hr*.79,face_y-.09,hz+hr*.67),
