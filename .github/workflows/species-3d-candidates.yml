@@ -67,7 +67,7 @@ jobs:
           print("SPECIES_16_DISTINCT_3D_GLBS_PASS")
           PY
       - name: Upload unapproved species visual review artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: all-mypets-3d-species-review
           path: ${{ runner.temp }}/species/
