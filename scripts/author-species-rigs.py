@@ -265,10 +265,10 @@ def make_animal(slug, spec, rig, output_dir):
     else:
         nose=None
     for side in (-1,1):
-        x=(side*w*(.39 if slug=="angelfish" else .60) if kind=="fish"
+        x=(side*w*(.30 if slug=="angelfish" else .35) if kind=="fish"
            else side*hr*head_eye_offset(slug) if kind in ("quadruped","reptile")
            else side*hr*.53)
-        eye_centre=((x,.16,cz+depth*.19) if kind=="fish"
+        eye_centre=((x,.44,cz+depth*.19) if kind=="fish"
                     else (x,face_y+hr*.68,hz+hr*.20))
         side_name=" left" if side<0 else " right"
         # Two-layer eyes with actual iris and pupil rather than a single dark ball.
