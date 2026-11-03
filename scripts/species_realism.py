@@ -110,34 +110,41 @@ def joined_limb_profile(slug, fore, side, x, y, hip, knee, radius, ankle):
     """
     if slug not in ("dog","rabbit"):
         return None
-    backwards=(-.11 if fore else .16 if slug=="rabbit" else .08)
-    reach=.31 if slug=="rabbit" and not fore else .19
-    points=[(x,y,hip+.14),(x,y,hip),
-            (x,y+backwards*.35,knee+.13),
-            (x,y+backwards,knee),
-            (x,y+backwards*.60,ankle+.17),
-            (x,y+reach*.30,ankle+.055),
-            (x,y+reach,ankle*.74)]
-    radii=[(radius*1.08,radius*1.05),(radius,radius),
-           (radius*.89,radius*.82),(radius*.68,radius*.65),
-           (radius*.57,radius*.53),(radius*.74,radius*.76),
-           (radius*.60,radius*.62)]
+    backwards=(-.085 if fore else .14 if slug=="rabbit" else .07)
+    reach=.25 if slug=="rabbit" and not fore else .17
+    # More sculpted bulges and a shorter rounded ankle-to-paw transition.
+    # All vertices remain in ONE skinned limb with smooth Upper/Lower weights.
+    points=[(x,y,hip+.13),(x,y,hip+.015),
+            (x,y+backwards*.25,knee+.16),
+            (x,y+backwards*.65,knee+.07),
+            (x,y+backwards,knee-.02),
+            (x,y+reach*.15,ankle+.14),
+            (x,y+reach*.49,ankle+.075),
+            (x,y+reach,ankle*.72)]
+    radii=[(radius*1.22,radius*1.24),(radius*1.18,radius*1.17),
+           (radius*1.03,radius*.99),(radius*.85,radius*.82),
+           (radius*.78,radius*.76),(radius*.89,radius*.85),
+           (radius*1.05,radius*.92),(radius*.90,radius*.80)]
     return points,radii
 
 
 def cupped_pinna(slug, side, face_y, hz, hr, coat, rig, bind):
     """Tapered curved pinna with a connected triangulable cartilage surface."""
-    height=.52 if slug=="rabbit" else .25
-    width=.13
-    x0=side*hr*.77
-    n,rings=12,10
+    # Original smooth oval capsule profiles: tall rabbit ears, truly
+    # downturned puppy ears. The former sharp cones read as little horns.
+    height=.72 if slug=="rabbit" else .42
+    width=.16 if slug=="rabbit" else .18
+    x0=side*hr*.75
+    n,rings=20,18
     verts=[]
     for row in range(rings):
         t=row/(rings-1)
-        radius=width*(.06+.94*(1-t)**.8)
-        x=x0+side*(.12 if slug=="rabbit" else .07)*t
-        z=hz+hr*.64+height*t
-        y=face_y-.08-.055*t
+        radius=width*(.14+.86*math.sin(math.pi*t)**.78)
+        x=x0+side*(.16 if slug=="rabbit" else .37)*t
+        z=(hz+hr*.60+height*t if slug=="rabbit"
+           else hz+hr*.67-height*t+.06*math.sin(math.pi*t))
+        y=(face_y-.12-.055*t if slug=="rabbit"
+           else face_y-.085+.06*t)
         for i in range(n):
             angle=math.tau*i/n
             verts.append((x+radius*math.cos(angle),
