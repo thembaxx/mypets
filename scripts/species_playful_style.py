@@ -6,6 +6,7 @@ those features to the existing skinned Blender animal rigs. The videos are
 visual references, never embedded playback or 3D reconstruction.
 """
 import math
+from species_anatomy import head_eye_offset
 
 HEROES = {"dog", "rabbit", "fish", "angelfish"}
 PALETTE = {
@@ -36,13 +37,13 @@ def blush_position(slug, kind, side, width, length, centre_z, depth, head_radius
         raise ValueError("Invalid facial side")
     if kind == "fish":
         return (
-            side * width * .68,
-            .14,
+            side * width * .41,
+            .455,
             centre_z - depth * .08,
         )
     return (
-        side * head_radius * (.73 if slug == "dog" else .70),
-        length * .63 + head_radius * .77,
+        side * head_radius * (.54 if slug == "dog" else .56),
+        length * .63 + head_radius * .76,
         head_z - head_radius * .12,
     )
 
@@ -66,8 +67,8 @@ def decorate(slug, spec, rig, ellipsoid, curve_tube, make_material):
         )
         ellipsoid(
             slug + " round contrasting smiling face",
-            (0, -.16 + length * .76, centre_z + depth * .03),
-            (width*.71, radius*.095, depth*.56),
+            (0, -.16 + length * .72, centre_z + depth * .03),
+            (width*.71, radius*.24, depth*.58),
             face_color, rig, "Head", 32, 24,
         )
     for side in (-1, 1):
@@ -86,9 +87,9 @@ def decorate(slug, spec, rig, ellipsoid, curve_tube, make_material):
 
     if kind == "fish":
         # Upturned open smile and warm pink tongue sit on the frontal surface.
-        mouth_y = .37
+        mouth_y = .455
         mouth_z = centre_z - depth * .30
-        x_scale = .12
+        x_scale = width * .30
         tongue = ellipsoid(
             slug + " open happy tongue",
             (0, mouth_y + .024, mouth_z - .022),
@@ -105,7 +106,7 @@ def decorate(slug, spec, rig, ellipsoid, curve_tube, make_material):
     else:
         # Rounded mouth/tongue are separate from skull geometry, but both
         # follow the face armature and jaw during Play and Eat.
-        mouth_y = face_y + radius * (1.43 if slug == "dog" else 1.10)
+        mouth_y = face_y + radius * (.99 if slug == "dog" else .96)
         mouth_z = head_z - radius * .48
         tongue = ellipsoid(
             slug + " joyful open tongue",
@@ -124,9 +125,10 @@ def decorate(slug, spec, rig, ellipsoid, curve_tube, make_material):
     # geometry in the GLB—not baked-on image or browser-only sprites.
     for side in (-1, 1):
         if kind == "fish":
-            centre=(side*width*.59, .17, centre_z+depth*.25)
+            centre=(side*width*.35, .495, centre_z+depth*.23)
         else:
-            centre=(side*radius*.75, face_y+radius*.75, head_z+radius*.25)
+            centre=(side*radius*(head_eye_offset(slug)-.04),
+                    face_y+radius*.835, head_z+radius*.26)
         ellipsoid(
             slug + (" left" if side < 0 else " right") + " sparkling eye highlight",
             centre,
