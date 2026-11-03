@@ -64,6 +64,19 @@ for (const species of ['cat', 'dog', 'rabbit']) {
     species + ' mouth needs real exported expression morphs',
   );
 
+  const eye = meshNodes.find((node) => node.name === species + ' left smiling eye arc');
+  assert.ok(eye, species + ' missing deformable curved eyes');
+  const eyeTargets = gltf.meshes[eye.mesh]?.extras?.targetNames ?? [];
+  assert.ok(
+    eyeTargets.includes('Smile') && eyeTargets.includes('Eye_Wide'),
+    species + ' cheerful and curious eyes must have actual vertex morphs',
+  );
+  const cheek = meshNodes.find((node) => node.name === species + ' cheek -1');
+  assert.ok(cheek, species + ' missing sculpted cheek');
+  assert.ok(
+    (gltf.meshes[cheek.mesh]?.extras?.targetNames ?? []).includes('Cheek_Puff'),
+    species + ' face must support animated cheek emotion',
+  );
   for (const pose of ['idle', 'play', 'jump']) {
     const review = join(directory, species + '-' + pose + '-review.png');
     assert.ok(
