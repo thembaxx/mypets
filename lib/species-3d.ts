@@ -10,6 +10,13 @@ export function candidateModelUrl(id: AnimalCandidateId): string {
     : '/models/candidates/species/' + id + '.glb';
 }
 
+/** Original video-reference-style chibi GLBs. Always opt-in and unapproved. */
+export function chibiCandidateModelUrl(id: AnimalCandidateId): string | null {
+  return id === 'cat' || id === 'dog' || id === 'rabbit'
+    ? '/models/candidates/chibi/' + id + '.glb'
+    : null;
+}
+
 export function candidateDisplayName(id: AnimalCandidateId): string {
   const variantNames: Partial<Record<AnimalCandidateId, string>> = {
     angelfish: 'Angelfish',
