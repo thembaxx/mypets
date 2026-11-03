@@ -1,0 +1,71 @@
+name: Original kawaii 3D hero rig review
+on:
+  push:
+    branches:
+      - feat/playful-pets-video-reference-20261103
+    paths:
+      - scripts/author-chibi-heroes.py
+      - scripts/verify-chibi-heroes.mjs
+      - .github/workflows/chibi-heroes-review.yml
+permissions:
+  contents: write
+concurrency:
+  group: chibi-hero-review
+  cancel-in-progress: true
+jobs:
+  build-hero-rigs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - name: Install headless Blender renderer
+        run: |
+          set -euo pipefail
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender libegl1 libgl1-mesa-dri xvfb
+          blender --version | head -3
+      - name: Check script and verification syntax
+        run: |
+          python3 -m py_compile scripts/author-chibi-heroes.py
+          node --check scripts/verify-chibi-heroes.mjs
+      - name: Generate fully rigged three-species chibi candidates and real pose renders
+        run: |
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-chibi-heroes.py -- --output-dir "$RUNNER_TEMP/chibi"
+      - name: Verify all real GLBs, morphs, named actions and Blender screenshots
+        run: |
+          node scripts/verify-chibi-heroes.mjs "$RUNNER_TEMP/chibi"
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/chibi" --require-assets
+      - name: Upload unapproved source-derived chibi review
+        uses: actions/upload-artifact@v4
+        with:
+          name: mypets-chibi-hero-review
+          path: ${{ runner.temp }}/chibi/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Publish only unapproved generated GLB candidates to feature branch
+        run: |
+          set -euo pipefail
+          branch=feat/playful-pets-video-reference-20261103
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch origin "$branch"
+            if ! git diff --quiet "$GITHUB_SHA" "origin/$branch" -- scripts/author-chibi-heroes.py scripts/verify-chibi-heroes.mjs .github/workflows/chibi-heroes-review.yml; then
+              echo 'Newer source revision exists; do not publish stale renders'
+              exit 0
+            fi
+            git checkout -B chibi-review "origin/$branch"
+            mkdir -p public/models/candidates/chibi
+            cp "$RUNNER_TEMP/chibi/"*.glb public/models/candidates/chibi/
+            git add public/models/candidates/chibi/
+            if git diff --cached --quiet; then
+              echo 'Exact chibi models are already published'
+              exit 0
+            fi
+            git commit -m 'assets(3d): publish three unapproved expressive chibi rigs'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          echo 'Could not publish reviewed hero files without force push' >&2
+          exit 1
