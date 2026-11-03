@@ -32,8 +32,8 @@ from audit_species_contact import audit as audit_species_motion
 # 13 species beyond the independently authored cat, plus breed/colour variants.
 # body width,length,depth; center height; head radius; head height; colours.
 CONFIG = {
-    "dog":         ("quadruped", .49, .85, .42, 1.01, .40, 1.38, (.79,.52,.31), (.99,.90,.73)),
-    "rabbit":      ("quadruped", .40, .68, .42, .76, .35, 1.10, (.95,.79,.57), (.99,.95,.88)),
+    "dog":         ("quadruped", .55, .75, .47, .85, .50, 1.20, (.80,.55,.35), (.99,.89,.71)),
+    "rabbit":      ("quadruped", .46, .65, .44, .72, .44, 1.05, (.94,.78,.60), (.99,.95,.91)),
     "hamster":     ("quadruped", .52, .57, .43, .65, .34, .94, (.85,.55,.28), (.98,.84,.62)),
     "guinea-pig":  ("quadruped", .49, .72, .40, .62, .33, .91, (.68,.45,.30), (.98,.88,.68)),
     "ferret":      ("quadruped", .36, 1.03, .34, .68, .30, 1.04, (.66,.52,.40), (.89,.78,.63)),
@@ -42,8 +42,8 @@ CONFIG = {
     "bird":        ("bird", .37, .62, .40, .94, .22, 1.29, (.26,.57,.76), (.43,.75,.88)),
     "budgie":      ("bird", .37, .62, .40, .94, .22, 1.29, (.39,.73,.35), (.82,.89,.41)),
     "canary":      ("bird", .37, .60, .40, .94, .22, 1.29, (.96,.77,.19), (.99,.88,.38)),
-    "fish":        ("fish", .30, .66, .38, 1.04, .26, 1.10, (.99,.48,.15), (.99,.79,.43)),
-    "angelfish":   ("fish", .30, .49, .60, 1.04, .24, 1.10, (.86,.67,.31), (.97,.89,.61)),
+    "fish":        ("fish", .41, .72, .49, 1.04, .33, 1.10, (.99,.48,.15), (.99,.80,.38)),
+    "angelfish":   ("fish", .37, .51, .63, 1.04, .27, 1.10, (.91,.71,.30), (.99,.89,.64)),
     "snake":       ("snake", .27, 1.18, .27, .54, .28, .76, (.39,.57,.32), (.67,.78,.45)),
     "iguana":      ("reptile", .38, .89, .34, .66, .31, .97, (.42,.59,.34), (.68,.76,.49)),
     "gecko":       ("reptile", .31, .64, .28, .56, .25, .81, (.75,.67,.40), (.92,.83,.57)),
@@ -268,15 +268,19 @@ def make_animal(slug, spec, rig, output_dir):
         x=(side*w*(.39 if slug=="angelfish" else .60) if kind=="fish"
            else side*hr*head_eye_offset(slug) if kind in ("quadruped","reptile")
            else side*hr*.53)
-        eye_centre=((x,.12,cz+depth*.19) if kind=="fish"
+        eye_centre=((x,.16,cz+depth*.19) if kind=="fish"
                     else (x,face_y+hr*.68,hz+hr*.20))
         side_name=" left" if side<0 else " right"
         # Two-layer eyes with actual iris and pupil rather than a single dark ball.
+        # Large glossy eyes are a defining feature of the reference characters.
+        hero=slug in ("dog","rabbit","fish","angelfish")
+        iris_size=.245 if hero else .135
+        pupil_size=.148 if hero else .058
         iris_eye=ellipsoid(slug+side_name+" iris",eye_centre,
-                           (hr*.135,hr*.074,hr*.15),iris,rig,"Head",28,20)
+                           (hr*iris_size,hr*.09,hr*(iris_size*1.05)),iris,rig,"Head",28,20)
         eye=ellipsoid(slug+side_name+" living eye",
-                      (eye_centre[0],eye_centre[1]+hr*.042,eye_centre[2]),
-                      (hr*.058,hr*.032,hr*.115),dark,rig,"Head",24,16)
+                      (eye_centre[0],eye_centre[1]+hr*.077,eye_centre[2]),
+                      (hr*pupil_size,hr*.043,hr*(pupil_size*1.14)),dark,rig,"Head",24,16)
         # Fish and snakes should not squeeze their entire eyeballs shut.
         if kind not in ("fish","snake"):
             for mesh in (iris_eye,eye):
@@ -314,7 +318,8 @@ def make_animal(slug, spec, rig, output_dir):
                 ankle=.065
                 # A rounded, joined paw and limb. Rear haunches are stronger.
                 knee=hip*.56
-                radius=(w*.29 if fore else w*.36)
+                radius=(w*(.33 if fore else .42) if slug in ("dog","rabbit")
+                        else w*(.29 if fore else .36))
                 points=[(x,y,hip+.17),(x,y-.025,hip),
                         (x,y-.035,knee+.11),(x,y,knee),
                         (x,y+.09,ankle+.07),(x,y+.14,ankle)]
@@ -326,6 +331,12 @@ def make_animal(slug, spec, rig, output_dir):
                     points,radii=sculpted
                 tapered_mesh(name+" connected limb",points,radii,coat,rig,
                              name+"_Upper",name+"_Lower","Body")
+                if slug in ("dog","rabbit"):
+                    for digit in (-1,0,1):
+                        ellipsoid(slug+" "+name+" plush toe "+str(digit),
+                                  (x+digit*radius*.50,y+.16,ankle*.82),
+                                  (radius*.36,radius*.45,radius*.29),
+                                  coat,rig,name+"_Lower",16,12)
         if slug=="rabbit":
             for side in (-1,1):
                 cupped_pinna(slug,side,face_y,hz,hr,coat,rig,weighted)
