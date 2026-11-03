@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
-          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender libegl1 libgl1-mesa-dri xvfb
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
           blender --version | head -3
       - name: Check script and verification syntax
         run: |
