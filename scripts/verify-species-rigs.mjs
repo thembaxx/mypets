@@ -155,6 +155,17 @@ for (const [species, kind] of Object.entries(candidates)) {
       (gltf.meshes[mouth.mesh]?.extras?.targetNames ?? []).includes('Smile'),
       species + ' missing actual morph-target cheerful expression',
     );
+    const frontPreview = join(output, species + '-front-review.png');
+    assert.ok(
+      existsSync(frontPreview) && statSync(frontPreview).size > 3000,
+      species + ' missing true front-facing Blender quality preview',
+    );
+    if (species === 'dog' || species === 'rabbit') {
+      const toes = nodes.filter((name) => name.includes(species + ' ') && name.includes(' plush toe '));
+      assert.equal(toes.length, 12, species + ' requires distinct rounded toes on all four skinned paws');
+      const earInners = nodes.filter((name) => name.includes(species + ' ') && name.includes('inner ear'));
+      assert.equal(earInners.length, 2, species + ' requires two anatomically shaped ear insets');
+    }
     if (species === 'fish' || species === 'angelfish') {
       assert.ok(
         nodes.some((name) => name === species + ' round contrasting smiling face'),
