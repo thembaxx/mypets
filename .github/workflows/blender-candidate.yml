@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Install Blender and glTF exporter dependencies
@@ -32,7 +32,7 @@ jobs:
       - name: Verify Blender animation and provenance before upload
         run: node scripts/check-blender-review.mjs paw "$RUNNER_TEMP/blender-review"
       - name: Upload unapproved review pack (no production writes)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: paw-blender-review-pack
           path: ${{ runner.temp }}/blender-review/
