@@ -134,8 +134,18 @@ def happy_eye(slug, side, pigment, rig):
         points.append((side*.265 + .15*u,
                        .604 - .045*u*u,
                        1.57 + .105*(1-u*u)))
-    return line(slug + (" left" if side<0 else " right") + " smiling eye arc",
-                points, .021, pigment, rig, "Head")
+    eye=line(slug + (" left" if side<0 else " right") + " smiling eye arc",
+             points, .021, pigment, rig, "Head")
+    eye.shape_key_add(name="Basis")
+    smile=eye.shape_key_add(name="Smile")
+    wide=eye.shape_key_add(name="Eye_Wide")
+    for base, happy, curious in zip(
+        eye.data.shape_keys.key_blocks["Basis"].data,smile.data,wide.data
+    ):
+        near=max(0.,1-abs(base.co.x-side*.265)/.17)
+        happy.co.z=base.co.z+.038*near
+        curious.co.z=base.co.z+.070
+    return eye
 
 
 def face(slug, rig, materials):
@@ -158,8 +168,13 @@ def face(slug, rig, materials):
 
     for side in (-1,1):
         happy_eye(slug, side, dark, rig)
-        sphere(slug+" cheek "+str(side), (side*.38,.54,1.36),
-               (.17,.034,.11), pink, rig, "Head",24,16)
+        cheek=sphere(slug+" cheek "+str(side), (side*.38,.54,1.36),
+                     (.17,.034,.11), pink, rig, "Head",24,16)
+        cheek.shape_key_add(name="Basis")
+        puff=cheek.shape_key_add(name="Cheek_Puff")
+        for base,target in zip(cheek.data.shape_keys.key_blocks["Basis"].data,puff.data):
+            target.co.x=base.co.x*(1+.09)
+            target.co.y=base.co.y+.017
         # Sculpted separate muzzle puffs create the plush-toy cheek outline.
         sphere(slug+" muzzle puff "+str(side), (side*.115,.548,1.29),
                (.155,.062,.09), fur, rig,"Head",24,16)
