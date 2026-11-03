@@ -24,33 +24,52 @@ for (const species of ['cat', 'dog', 'rabbit']) {
   const meshNodes = nodes.filter((node) => Number.isInteger(node.mesh));
   const clips = (gltf.animations ?? []).map((clip) => clip.name.toLowerCase());
   for (const action of ['idle', 'walk', 'eat', 'play', 'rest', 'groom', 'sniff']) {
-    assert.ok(clips.some((name) => name.includes(action)), species + ' missing ' + action);
+    assert.ok(
+      clips.some((name) => name.includes(action)),
+      species + ' missing ' + action,
+    );
   }
   assert.ok((gltf.skins ?? []).some((skin) => skin.joints.length >= 8));
   const skinned = (gltf.meshes ?? []).flatMap((mesh) => mesh.primitives ?? []);
-  assert.ok(skinned.some((part) =>
-    part.attributes?.JOINTS_0 !== undefined &&
-    part.attributes?.WEIGHTS_0 !== undefined &&
-    part.attributes?.TEXCOORD_0 !== undefined,
-  ), species + ' lacks real UV-mapped skinned geometry');
+  assert.ok(
+    skinned.some(
+      (part) =>
+        part.attributes?.JOINTS_0 !== undefined &&
+        part.attributes?.WEIGHTS_0 !== undefined &&
+        part.attributes?.TEXCOORD_0 !== undefined,
+    ),
+    species + ' lacks real UV-mapped skinned geometry',
+  );
   for (const part of [
-    'oversized plush head', 'round skinned plush torso', 'smiling eye arc',
-    'lifted paw arm L', 'lifted paw arm R', 'tiny rounded foot L',
-    'tiny rounded foot R', 'joyful open mouth', 'pink happy tongue',
+    'oversized plush head',
+    'round skinned plush torso',
+    'smiling eye arc',
+    'lifted paw arm L',
+    'lifted paw arm R',
+    'tiny rounded foot L',
+    'tiny rounded foot R',
+    'joyful open mouth',
+    'pink happy tongue',
   ]) {
-    assert.ok(meshNodes.some((node) => node.name?.includes(part)),
-      species + ' missing chibi character feature: ' + part);
+    assert.ok(
+      meshNodes.some((node) => node.name?.includes(part)),
+      species + ' missing chibi character feature: ' + part,
+    );
   }
   const mouth = meshNodes.find((node) => node.name === species + ' joyful open mouth');
   assert.ok(mouth);
   const targets = gltf.meshes[mouth.mesh]?.extras?.targetNames ?? [];
-  assert.ok(targets.includes('Smile') && targets.includes('Jaw_Open'),
-    species + ' mouth needs real exported expression morphs');
+  assert.ok(
+    targets.includes('Smile') && targets.includes('Jaw_Open'),
+    species + ' mouth needs real exported expression morphs',
+  );
 
   for (const pose of ['idle', 'play', 'jump']) {
     const review = join(directory, species + '-' + pose + '-review.png');
-    assert.ok(existsSync(review) && statSync(review).size > 3000,
-      species + ' missing Blender-rendered ' + pose + ' pose');
+    assert.ok(
+      existsSync(review) && statSync(review).size > 3000,
+      species + ' missing Blender-rendered ' + pose + ' pose',
+    );
   }
   console.log('CHIBI_RIGGED_REVIEW_PASS', species, bytes.length, clips.length);
 }

@@ -3,7 +3,9 @@ import { expect, test } from '@playwright/test';
 
 test.use({ reducedMotion: 'no-preference' });
 
-test('reference-style chibi GLBs are three distinct skinned seven-action animals', async ({ request }) => {
+test('reference-style chibi GLBs are three distinct skinned seven-action animals', async ({
+  request,
+}) => {
   const digests = new Set();
   for (const id of ['cat', 'dog', 'rabbit']) {
     const response = await request.get(
@@ -27,43 +29,48 @@ test('reference-style chibi GLBs are three distinct skinned seven-action animals
 });
 
 for (const id of ['cat', 'dog', 'rabbit']) {
-  test('chibi ' + id + ' has interactive happy Play and safe previous-model toggle', async ({ page }) => {
-    test.setTimeout(120_000);
-    const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('http://127.0.0.1:3000/3d-lab');
-    await page.getByLabel('Choose an animal to review').selectOption(id);
-    const reference = page.getByRole('button', { name: 'Joyful video-reference prototype' });
-    await expect(reference).toHaveAttribute('aria-pressed', 'true');
-    const launch = page.getByRole('button', {
-      name: id === 'cat' ? 'Open the Blender cat studio' : 'Open the Blender animal studio',
-    });
-    await launch.click();
-    const dialog = page.getByRole('dialog', { name: /interactive 3d studio/i });
-    await expect(dialog.getByRole('status')).toContainText('authored 3D animation', {
-      timeout: 25_000,
-    });
-    await dialog.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(dialog.getByRole('button', { name: 'Play', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    const canvas = dialog.locator('canvas');
-    await expect(canvas).toBeVisible();
-    const frame = await canvas.screenshot();
-    await expect.poll(async () => Buffer.compare(frame, await canvas.screenshot()) !== 0).toBe(true);
-    await canvas.screenshot({ path: 'test-results/chibi-' + id + '-mobile-play.png' });
-    await dialog.getByRole('button', { name: 'Close 3D studio' }).click();
-    const previous = page.getByRole('button', { name: 'Previous anatomical study' });
-    await previous.click();
-    await expect(previous).toHaveAttribute('aria-pressed', 'true');
-    await launch.click();
-    const original = page.getByRole('dialog', { name: /interactive 3d studio/i });
-    await expect(original.getByRole('status')).toContainText('authored 3D animation', {
-      timeout: 25_000,
-    });
-    await original.getByRole('button', { name: 'Close 3D studio' }).click();
-    expect(errors).toEqual([]);
-  });
+  test(
+    'chibi ' + id + ' has interactive happy Play and safe previous-model toggle',
+    async ({ page }) => {
+      test.setTimeout(120_000);
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto('http://127.0.0.1:3000/3d-lab');
+      await page.getByLabel('Choose an animal to review').selectOption(id);
+      const reference = page.getByRole('button', { name: 'Joyful video-reference prototype' });
+      await expect(reference).toHaveAttribute('aria-pressed', 'true');
+      const launch = page.getByRole('button', {
+        name: id === 'cat' ? 'Open the Blender cat studio' : 'Open the Blender animal studio',
+      });
+      await launch.click();
+      const dialog = page.getByRole('dialog', { name: /interactive 3d studio/i });
+      await expect(dialog.getByRole('status')).toContainText('authored 3D animation', {
+        timeout: 25_000,
+      });
+      await dialog.getByRole('button', { name: 'Play', exact: true }).click();
+      await expect(dialog.getByRole('button', { name: 'Play', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      const canvas = dialog.locator('canvas');
+      await expect(canvas).toBeVisible();
+      const frame = await canvas.screenshot();
+      await expect
+        .poll(async () => Buffer.compare(frame, await canvas.screenshot()) !== 0)
+        .toBe(true);
+      await canvas.screenshot({ path: 'test-results/chibi-' + id + '-mobile-play.png' });
+      await dialog.getByRole('button', { name: 'Close 3D studio' }).click();
+      const previous = page.getByRole('button', { name: 'Previous anatomical study' });
+      await previous.click();
+      await expect(previous).toHaveAttribute('aria-pressed', 'true');
+      await launch.click();
+      const original = page.getByRole('dialog', { name: /interactive 3d studio/i });
+      await expect(original.getByRole('status')).toContainText('authored 3D animation', {
+        timeout: 25_000,
+      });
+      await original.getByRole('button', { name: 'Close 3D studio' }).click();
+      expect(errors).toEqual([]);
+    },
+  );
 }

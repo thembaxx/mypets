@@ -80,8 +80,8 @@ export default function ThreeDLabPage() {
         </button>
         <p className="cat-lab-disclaimer">
           Video-inspired chibi characters and previous anatomical studies are separately rigged
-          experimental GLBs. Neither is a photoreal reconstruction or motion capture.
-          Original illustrated pets stay unchanged.
+          experimental GLBs. Neither is a photoreal reconstruction or motion capture. Original
+          illustrated pets stay unchanged.
         </p>
       </section>
       {open && (
