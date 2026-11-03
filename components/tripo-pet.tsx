@@ -172,6 +172,7 @@ function AnimalModel({
     [mixer, model],
   );
   const expressiveCandidate =
+    url.includes('/models/candidates/chibi/') ||
     url.endsWith('/nuzzle-calico-rig.glb') ||
     ['dog', 'rabbit', 'fish', 'angelfish'].some((species) =>
       url.endsWith('/models/candidates/species/' + species + '.glb'),
