@@ -32,4 +32,10 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app/3d-lab/page.tsx app/living-cat.css components/tripo-pet.tsx lib/species-3d.ts scripts/verify-chibi-heroes.mjs scripts/verify-species-rigs.mjs tests/chibi-browser.spec.mjs
           git commit -m 'style(3d): apply pinned Oxfmt to playful chibi studio'
-          git push origin HEAD:feat/playful-pets-video-reference-20261103
+          for attempt in 1 2 3; do
+            git fetch origin feat/playful-pets-video-reference-20261103
+            git rebase origin/feat/playful-pets-video-reference-20261103
+            if git push origin HEAD:feat/playful-pets-video-reference-20261103; then exit 0; fi
+          done
+          echo 'Failed to format current branch without force push' >&2
+          exit 1
