@@ -10,8 +10,8 @@ Blender imports are local so curvature profiles can be unit tested on CI.
 import math
 
 LENGTHS = {
-    "dog": 1.57,
-    "rabbit": 1.22,
+    "dog": 1.17,
+    "rabbit": 1.09,
     "hamster": 1.15,
     "guinea-pig": 1.17,
     "ferret": 1.55,
@@ -56,14 +56,19 @@ def contour(slug, u):
             w,h,z = (a[k] + (b[k]-a[k])*v for k in (1,2,3))
             break
     if slug == "dog":
-        w *= 1 - .10 * max(0, (u-.66)/.34)
-        h *= 1.02
+        # The reference puppy has a full domed brow, plush cheeks and a
+        # short softly rounded rostrum, not a long pointy wolf muzzle.
+        w *= 1.08 + .26 * max(0., (u-.57)/.43)
+        h *= 1.13 + .11 * max(0., (u-.58)/.42)
+        z += .04 * max(0., (.76-u)/.76)
     elif slug == "ferret":
         w *= .83
         h *= .84
     elif slug == "rabbit":
-        w *= .93 + .05*max(0., (.58-u)/.58)
-        z += .045*max(0, (.75-u)/.75)
+        # Broad soft facial cheeks and a smaller button nose.
+        w *= 1.10 + .17 * max(0., (u-.53)/.47)
+        h *= 1.08
+        z += .035*max(0, (.75-u)/.75)
     elif slug in SMALL:
         w *= .91
         h *= .84 if slug == "guinea-pig" else .91
