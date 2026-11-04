@@ -74,11 +74,27 @@ def setup_review_camera(low, high, span):
     # Cycles evaluates the generated GLB's actual PBR texture maps. A
     # Workbench screenshot would misleadingly flatten a textured AI model.
     scene.render.engine = "CYCLES"
-    scene.cycles.samples = 24
+    scene.cycles.samples = 48
     scene.render.image_settings.file_format = "PNG"
+    # The Ubuntu Blender build may omit OpenImageDenoiser; retain actual PBR
+    # surfaces and disable only the optional incompatible denoiser.
+    for layer in scene.view_layers:
+        if hasattr(layer, "cycles"):
+            layer.cycles.use_denoising = False
+    scene.render.film_transparent = False
+    if scene.world is None:
+        scene.world = bpy.data.worlds.new("Original-art review studio")
+    scene.world.use_nodes = True
+    background = scene.world.node_tree.nodes.get("Background")
+    if background:
+        background.inputs["Color"].default_value = (.63, .65, .69, 1)
+        background.inputs["Strength"].default_value = .5
+    # Avoid the nearly invisible cream-on-white coats seen in prior chibi
+    # Cycles previews: a legitimate render is not automatically a likeness.
+    scene.view_settings.exposure = -.65
     for name, offset, power in (
-        ("Review key", (0.9, 1.3, 1.8), 600),
-        ("Review fill", (-1.1, -1.0, 0.8), 350),
+        ("Review key", (0.9, 1.3, 1.8), 160),
+        ("Review fill", (-1.1, -1.0, 0.8), 70),
     ):
         lamp_data = bpy.data.lights.new(name, "AREA")
         lamp = bpy.data.objects.new(name, lamp_data)
