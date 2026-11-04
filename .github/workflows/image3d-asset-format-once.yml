@@ -1,0 +1,36 @@
+name: One-shot formatter for published Blender model proof
+on:
+  push:
+    branches: [feat/image-to-3d-blender-studio-20261104]
+    paths: [.github/workflows/image3d-asset-format-once.yml]
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/image-to-3d-blender-studio-20261104
+          persist-credentials: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Format verified binary asset test
+        run: |
+          npx oxfmt tests/chibi-published-artifacts.test.ts
+          npx oxfmt --check tests/chibi-published-artifacts.test.ts
+      - name: Commit only formatter output
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/chibi-published-artifacts.test.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(3d): apply Oxfmt to published asset verification test'
+            git push origin HEAD:feat/image-to-3d-blender-studio-20261104
+          fi
