@@ -421,9 +421,27 @@ export default function TripoPet({
       role="dialog"
       aria-modal="true"
       aria-label={name + ' interactive 3D studio'}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const controls = Array.from(
+          event.currentTarget.querySelectorAll<HTMLElement>(
+            'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
+          ),
+        ).filter((element) => element.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
     >
       <button
         type="button"
+        tabIndex={-1}
         className="tripo-backdrop"
         aria-label="Dismiss 3D studio backdrop"
         onClick={onClose}
@@ -432,7 +450,7 @@ export default function TripoPet({
         <div className="tripo-heading">
           <div>
             <strong>{name} · 3D playroom</strong>
-            <span>Turn with a finger. Pinch to zoom. Choose what happens next.</span>
+            <span>Drag to rotate · pinch to zoom</span>
           </div>
           <button
             type="button"
