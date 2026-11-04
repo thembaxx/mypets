@@ -1103,8 +1103,27 @@ def main():
     # Blender versions differ in glTF animation settings.
     bpy.ops.export_scene.gltf(**kwargs)
     glb = out/"nuzzle-calico-rig.glb"
-    if not glb.is_file() or glb.stat().st_size > 8*1024*1024:
-        raise RuntimeError("Candidate GLB absent or over mobile budget")
+    if not glb.is_file() or glb.stat().st_size < 24:
+        raise RuntimeError("Candidate GLB is missing or truncated")
+    # Save the original cat art *inside the editable Blender project* as an
+    # independent image plate. Do this after GLB export so the plate can never
+    # masquerade as actual skin, geometry, or animation in the runtime GLB.
+    original = Path(__file__).resolve().parent.parent / "assets/animal-originals/cat.jpg"
+    if not original.is_file():
+        raise RuntimeError("The source-of-truth calico illustration is missing")
+    reference = bpy.data.images.load(str(original), check_existing=False)
+    reference.pack()
+    plate = bpy.data.objects.new("REFERENCE ONLY — original calico art", None)
+    bpy.context.scene.collection.objects.link(plate)
+    plate.empty_display_type = "IMAGE"
+    plate.data = reference
+    plate.empty_display_size = 2.4
+    plate.empty_image_depth = "FRONT"
+    plate.location = (-2.8, 0, 1.1)
+    plate.rotation_euler.x = -math.pi / 2
+    plate.hide_render = True
+    bpy.ops.file.pack_all()
+    bpy.ops.wm.save_as_mainfile(filepath=str(out/"nuzzle-calico-rig.blend"))
     manifest = dict(
         model="Nuzzle original calico candidate",
         status="UNAPPROVED",

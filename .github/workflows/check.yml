@@ -22,4 +22,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Verify original-image-to-3D intake and batch tests
+        run: |
+          python3 -m compileall -q scripts/image3d_glb.py scripts/batch-image3d-blender.py scripts/import-image3d-blender.py
+          python3 -m unittest scripts/test_image3d_glb.py scripts/test_batch_image3d.py -v
       - run: npm run build

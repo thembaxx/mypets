@@ -1,0 +1,45 @@
+name: Source-guided chibi character Blender visual review
+on:
+  push:
+    branches:
+      - feat/image-to-3d-blender-studio-20261104
+    paths:
+      - .github/workflows/image3d-chibi-fidelity-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chibi-visual-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Blender for original-style animated chibi characters
+        run: |
+          set -euo pipefail
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
+          blender --version | head -3
+      - name: Author cat, dog and rabbit review-only 3D characters
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/image3d-chibi-review"
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-chibi-heroes.py -- --output-dir "$RUNNER_TEMP/image3d-chibi-review"
+          node scripts/verify-chibi-heroes.mjs "$RUNNER_TEMP/image3d-chibi-review"
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/image3d-chibi-review" --require-assets
+      - name: Include exact original source JPGs for side-by-side likeness QA
+        run: |
+          mkdir -p "$RUNNER_TEMP/image3d-chibi-review/originals"
+          for species in cat dog rabbit; do
+            cp "assets/animal-originals/$species.jpg" "$RUNNER_TEMP/image3d-chibi-review/originals/$species.jpg"
+          done
+      - name: Upload real unapproved rigs, source art and Blender renders
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mypets-source-guided-chibi-fidelity-review
+          path: ${{ runner.temp }}/image3d-chibi-review/
+          if-no-files-found: warn
+          retention-days: 14

@@ -13,7 +13,7 @@ for (const species of ['cat', 'dog', 'rabbit']) {
   assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
   assert.equal(bytes.readUInt32LE(4), 2);
   assert.equal(bytes.readUInt32LE(8), bytes.length);
-  assert.ok(bytes.length > 12000 && bytes.length < 5 * 1024 * 1024);
+  assert.ok(bytes.length > 12000, species + ' missing full-detail GLB');
   const digest = createHash('sha256').update(bytes).digest('hex');
   assert.ok(!digests.has(digest), species + ' is a duplicate animal GLB');
   digests.add(digest);
@@ -64,8 +64,16 @@ for (const species of ['cat', 'dog', 'rabbit']) {
     species + ' mouth needs real exported expression morphs',
   );
 
-  const eye = meshNodes.find((node) => node.name === species + ' left smiling eye arc');
-  assert.ok(eye, species + ' missing deformable curved eyes');
+  const expectedClosedEye =
+    species === 'rabbit' ? ' right smiling eye arc' : ' left smiling eye arc';
+  const eye = meshNodes.find((node) => node.name === species + expectedClosedEye);
+  assert.ok(eye, species + ' missing its source-matched deformable curved eye');
+  if (species === 'rabbit') {
+    assert.ok(
+      meshNodes.some((node) => node.name === 'rabbit original rabbit open cocoa eye'),
+      "Rabbit must preserve the original artwork's one open eye and one closed eye",
+    );
+  }
   const eyeTargets = gltf.meshes[eye.mesh]?.extras?.targetNames ?? [];
   assert.ok(
     eyeTargets.includes('Smile') && eyeTargets.includes('Eye_Wide'),
@@ -77,6 +85,11 @@ for (const species of ['cat', 'dog', 'rabbit']) {
     (gltf.meshes[cheek.mesh]?.extras?.targetNames ?? []).includes('Cheek_Puff'),
     species + ' face must support animated cheek emotion',
   );
+  const editable = join(directory, species + '.blend');
+  assert.ok(
+    existsSync(editable) && statSync(editable).size > 1000,
+    species + ' missing editable Blender rig with packed source art',
+  );
   for (const pose of ['idle', 'play', 'jump']) {
     const review = join(directory, species + '-' + pose + '-review.png');
     assert.ok(
@@ -84,6 +97,11 @@ for (const species of ['cat', 'dog', 'rabbit']) {
       species + ' missing Blender-rendered ' + pose + ' pose',
     );
   }
+  const silhouette = join(directory, species + '-silhouette-review.png');
+  assert.ok(
+    existsSync(silhouette) && statSync(silhouette).size > 5000,
+    species + ' missing independent full-body silhouette evidence',
+  );
   console.log('CHIBI_RIGGED_REVIEW_PASS', species, bytes.length, clips.length);
 }
 assert.equal(digests.size, 3);

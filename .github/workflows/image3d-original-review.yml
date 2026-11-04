@@ -1,0 +1,63 @@
+name: Original-art Blender character review
+on:
+  push:
+    branches:
+      - feat/image-to-3d-blender-studio-20261104
+    paths:
+      - .github/workflows/image3d-original-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-fidelity-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        species: [cat, dog]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install offline Blender tools
+        run: |
+          set -euo pipefail
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
+          blender --version | head -3
+      - name: Generate actual editable rig and render candidates
+        env:
+          SPECIES: ${{ matrix.species }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/original-review"
+          if [ "$SPECIES" = "cat" ]; then
+            LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-calico-rig.py -- --output-dir "$RUNNER_TEMP/original-review"
+            LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 "$RUNNER_TEMP/original-review/nuzzle-calico-rig.blend" --python-exit-code 1 --python scripts/render-calico-review.py -- --output-dir "$RUNNER_TEMP/original-review"
+            node scripts/verify-calico-rig.mjs "$RUNNER_TEMP/original-review/nuzzle-calico-rig.glb"
+          else
+            LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-species-rigs.py -- --species "$SPECIES" --output-dir "$RUNNER_TEMP/original-review"
+          fi
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/original-review" --require-assets
+      - name: Verify source JPG is packed in editable Blender scene
+        env:
+          SPECIES: ${{ matrix.species }}
+        run: |
+          set -euo pipefail
+          if [ "$SPECIES" = "cat" ]; then
+            SOURCE="$RUNNER_TEMP/original-review/nuzzle-calico-rig.blend"
+          else
+            SOURCE="$RUNNER_TEMP/original-review/$SPECIES.blend"
+          fi
+          test -s "$SOURCE"
+          test -s "assets/animal-originals/$SPECIES.jpg"
+          echo "EDITABLE_SOURCE_PRESENT $SPECIES"
+      - name: Publish real, unapproved 3D source and review renders
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: original-art-rig-review-${{ matrix.species }}
+          path: ${{ runner.temp }}/original-review/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,47 @@
+name: Source-image Pixal3D cat pilot (public free demo only)
+on:
+  push:
+    branches: [feat/image-to-3d-blender-studio-20261104]
+    paths:
+      - .github/workflows/image3d-pixal3d-pilot.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-conditioned-cat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install source and public demo clients (no cloud GPU provisioned)
+        run: |
+          python -m pip install 'numpy>=2,<3' 'opencv-python-headless>=4.10,<5' 'Pillow>=11,<13' 'gradio_client>=1.12,<3'
+      - name: Extract the literal original cat art without a baked background
+        run: |
+          python scripts/prepare-image3d-source.py \
+            --original-dir assets/animal-originals \
+            --output-dir "$RUNNER_TEMP/source" \
+            --species cat --size 1024
+      - name: Attempt pixel-aligned reconstruction on public shared GPU
+        run: |
+          python scripts/try-pixal3d-pilot.py \
+            --source "$RUNNER_TEMP/source/cat.png" \
+            --original assets/animal-originals/cat.jpg \
+            --output-dir "$RUNNER_TEMP/pixal3d"
+      - name: Collect actual source-derived candidate or explicit blocked receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unapproved-pixal3d-cat-single-image-pilot
+          path: |
+            ${{ runner.temp }}/pixal3d/
+            ${{ runner.temp }}/source/
+          retention-days: 7
+          if-no-files-found: warn

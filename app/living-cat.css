@@ -5,6 +5,19 @@
   flex-direction: column;
   isolation: isolate;
 }
+/* Keep the heading in its own layout row, never overlay the model's face.
+   The old absolute header obscured ears in the 375px browser QA captures. */
+.tripo-living-dialog > .tripo-heading {
+  position: relative;
+  inset: auto;
+  z-index: 5;
+  flex: 0 0 auto;
+  min-height: 66px;
+  padding: 14px 17px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border, #b6ae9d44);
+  pointer-events: auto;
+}
 .tripo-living-stage {
   position: relative;
   flex: 1 1 auto;
@@ -361,4 +374,60 @@
     gap: 14px;
     border-radius: 24px;
   }
+}
+
+/* Non-interactive artwork plate makes source-match review possible without
+   turning a reference photograph into fake 3D geometry. */
+.tripo-original-reference {
+  position: absolute;
+  z-index: 2;
+  left: clamp(10px, 2vw, 20px);
+  bottom: clamp(10px, 2vw, 20px);
+  width: clamp(108px, 29%, 205px);
+  margin: 0;
+  padding: 8px;
+  border: 1px solid #8f867744;
+  border-radius: 17px;
+  background: #fffaf0f0;
+  box-shadow: 0 12px 34px #3729182e;
+  pointer-events: none;
+}
+.tripo-original-reference img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+.tripo-original-reference figcaption {
+  color: #453b34;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: center;
+}
+.tripo-reference-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 9px;
+}
+.tripo-reference-tools button {
+  border: 1px solid var(--border, #b6ae9d88);
+  border-radius: 12px;
+  padding: 8px 12px;
+  min-height: 44px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink);
+  background: var(--surface);
+  cursor: pointer;
+}
+.tripo-reference-tools button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--surface);
+}
+.tripo-reference-tools button:focus-visible {
+  outline: 3px solid #d59757;
+  outline-offset: 2px;
 }

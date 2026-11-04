@@ -16,7 +16,7 @@ function makeGlb(doc: Record<string, unknown>) {
   return Uint8Array.from(bytes).buffer;
 }
 
-const valid = { asset: { version: '2.0' }, scenes: [{}], buffers: [{ byteLength: 0 }] };
+const valid = { asset: { version: '2.0' }, scenes: [{}], nodes: [], buffers: [{ byteLength: 0 }] };
 
 test('accepts self-contained glTF 2.0 payload', () => {
   assert.doesNotThrow(() => validateLocalGlb(makeGlb(valid)));
@@ -41,16 +41,32 @@ test('rejects external buffers, unsupported extensions and invalid header', () =
   );
   assert.throws(() => validateLocalGlb(new ArrayBuffer(20)), /glTF 2.0 binary/);
 });
-test('enforces mobile vertex limit', () => {
+test('accepts detailed meshes without imposing visual fidelity budgets', () => {
+  assert.doesNotThrow(() =>
+    validateLocalGlb(
+      makeGlb({
+        ...valid,
+        accessors: [{ count: 2_000_001 }],
+        meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+      }),
+    ),
+  );
+});
+test('rejects an invalid accessor even when geometry detail is unrestricted', () => {
   assert.throws(
     () =>
       validateLocalGlb(
         makeGlb({
           ...valid,
-          accessors: [{ count: 160001 }],
-          meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+          accessors: [],
+          meshes: [{ primitives: [{ attributes: { POSITION: 3 } }] }],
         }),
       ),
-    /too detailed/,
+    /invalid mesh POSITION/,
   );
+});
+test('rejects unaligned chunks and misleading file lengths', () => {
+  const bytes = new Uint8Array(makeGlb(valid));
+  new DataView(bytes.buffer).setUint32(12, 3, true);
+  assert.throws(() => validateLocalGlb(bytes.buffer), /Truncated or unaligned/);
 });
