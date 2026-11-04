@@ -14,12 +14,51 @@ import re
 import shutil
 from pathlib import Path
 
+import numpy as np
+
 from gradio_client import Client, handle_file
 from PIL import Image
 
 from image3d_glb import inspect_glb
 
 SPACE = "microsoft/TRELLIS.2"
+LATENT_KEYS = ("shape_slat_feats", "tex_slat_feats", "coords", "res")
+
+
+def persist_latents(state, path: Path, original_hash: str, source_hash: str) -> str:
+    """Persist true GPU-generated sparse latents to survive free GPU quota limits."""
+    if not isinstance(state, dict) or any(key not in state for key in LATENT_KEYS):
+        raise ValueError("Provider returned no restorable TRELLIS.2 latent state")
+    payload = {key: np.asarray(state[key]) for key in LATENT_KEYS}
+    for key, value in payload.items():
+        if value.size == 0 or value.dtype.kind not in "fiu":
+            raise ValueError("Invalid generated latent component: " + key)
+        if value.dtype.kind == "f" and not np.isfinite(value).all():
+            raise ValueError("Non-finite generated latent: " + key)
+    payload["original_sha256"] = np.asarray(original_hash)
+    payload["source_sha256"] = np.asarray(source_hash)
+    np.savez_compressed(path, **payload)
+    return sha256_file(path)
+
+
+def restore_latents(path: Path, original_hash: str, source_hash: str) -> dict:
+    """Verify original and input hashes. Never unpickle an untrusted artifact."""
+    with np.load(path, allow_pickle=False) as source:
+        required = (*LATENT_KEYS, "original_sha256", "source_sha256")
+        if any(key not in source.files for key in required):
+            raise ValueError("Incomplete TRELLIS.2 state archive")
+        if str(source["original_sha256"].item()) != original_hash:
+            raise ValueError("Cached state original JPG hash differs")
+        if str(source["source_sha256"].item()) != source_hash:
+            raise ValueError("Cached state input PNG hash differs")
+        state = {key: source[key].copy() for key in LATENT_KEYS}
+    for key, value in state.items():
+        if value.size == 0 or value.dtype.kind not in "fiu":
+            raise ValueError("Invalid cached latent: " + key)
+        if value.dtype.kind == "f" and not np.isfinite(value).all():
+            raise ValueError("Non-finite cached latent: " + key)
+    state["res"] = int(state["res"].item())
+    return state
 
 
 def sha256_file(path: Path) -> str:
@@ -69,6 +108,10 @@ def main():
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--resolution", choices=("512", "1024", "1536"), default="1024")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--resume-state", type=Path,
+        help="Real generated TRELLIS.2 latents from earlier quota-limited run",
+    )
     args = parser.parse_args()
 
     if not args.source.is_file() or not args.original.is_file():
@@ -101,20 +144,34 @@ def main():
                 ", ".join(sorted(named.keys())[:24])
             )
 
-        report["status"] = "SOURCE_SENT_TO_GENERATION"
-        print("TRELLIS2_START_SOURCE_CONDITIONED_INFERENCE", flush=True)
-        state, preview = client.predict(
-            handle_file(str(input_png)), args.seed, args.resolution,
-            7.5, 0.7, 12, 5.0,
-            7.5, 0.5, 12, 3.0,
-            1.0, 0.0, 12, 3.0,
-            api_name="/image_to_3d",
-        )
-        report["status"] = "GPU_GENERATED_NOT_EXPORTED_OR_APPROVED"
-        report["preview_saved"] = take_preview(preview, out/"trellis2-cat-preview.jpg")
-        receipt.write_text(json.dumps(report, indent=2)+"\n")
-        print("TRELLIS2_GENERATION_COMPLETED_ATTEMPTING_GLB", flush=True)
+        state_file = out / "trellis2-cat-latents.npz"
+        if args.resume_state:
+            state = restore_latents(
+                args.resume_state, report["original_sha256"], report["source_sha256"]
+            )
+            report["status"] = "REAL_GENERATED_STATE_RESTORED_FOR_GLB_EXTRACTION"
+            report["resume_from_sha256"] = sha256_file(args.resume_state)
+            print("TRELLIS2_RESTORED_SOURCE_CONDITIONED_LATENTS", flush=True)
+        else:
+            report["status"] = "SOURCE_SENT_TO_GENERATION"
+            print("TRELLIS2_START_SOURCE_CONDITIONED_INFERENCE", flush=True)
+            state, preview = client.predict(
+                handle_file(str(input_png)), args.seed, args.resolution,
+                7.5, 0.7, 12, 5.0,
+                7.5, 0.5, 12, 3.0,
+                1.0, 0.0, 12, 3.0,
+                api_name="/image_to_3d",
+            )
+            report["status"] = "GPU_GENERATED_NOT_EXPORTED_OR_APPROVED"
+            report["preview_saved"] = take_preview(preview, out/"trellis2-cat-preview.jpg")
+            report["latents_sha256"] = persist_latents(
+                state, state_file, report["original_sha256"], report["source_sha256"]
+            )
+            report["latents_saved_for_separate_free_quota_extraction"] = True
+            receipt.write_text(json.dumps(report, indent=2)+"\n")
+            print("TRELLIS2_GENERATION_COMPLETED_LATENTS_SAVED", flush=True)
 
+        print("TRELLIS2_ATTEMPTING_GLB_EXTRACTION", flush=True)
         result = client.predict(state, 500000, 4096, api_name="/extract_glb")
         downloaded = output_file(result)
         glb = out / "cat.glb"
@@ -130,10 +187,18 @@ def main():
         print("TRELLIS2_GENERATED_REVIEW_GLB", flush=True)
     except Exception as exc:
         reason = str(exc)
+        quota_blocked = any(
+            x in reason.lower()
+            for x in ("zerogpu quota", "quota exceeded", "gpu quota", "quota")
+        )
         report["status"] = (
-            "BLOCKED_ZERO_GPU_QUOTA"
-            if any(x in reason.lower() for x in ("zerogpu quota", "quota exceeded", "gpu quota", "quota"))
+            "BLOCKED_ZERO_GPU_QUOTA_AFTER_GENERATION_LATENTS_PRESERVED"
+            if quota_blocked and (out / "trellis2-cat-latents.npz").exists()
+            else "BLOCKED_ZERO_GPU_QUOTA" if quota_blocked
             else "BLOCKED_PUBLIC_DEMO_OR_INFERENCE_ERROR"
+        )
+        report["latent_state_available_for_resume"] = (
+            (out / "trellis2-cat-latents.npz").exists() or bool(args.resume_state)
         )
         report["error_type"] = type(exc).__name__
         report["reason"] = reason[:800]
