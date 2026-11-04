@@ -33,15 +33,16 @@ These are *complementary* tools. A single-image 3D generator can output a mesh a
    The importer preflights the binary for embedded-only resources, valid headers, bounded source size and sensible geometry. It imports the **actual GLB** and saves:
    - `dog-image3d-review.blend` — editable Blender project with a packed original-image viewport plate
    - `dog-image3d-review.glb` — source-preserving 3D candidate (not auto-approved)
-   - `dog-image3d-review.png` — Blender scene review render
+   - `dog-image3d-{front,three-quarter,side,back}.png` — four real Cycles PBR renders
+   - `dog-fidelity-review.html` — original JPG alongside actual Blender multi-angle renders
    - `dog-image3d-review.json` — SHA-256 provenance, model statistics, and whether skin + animation data actually survived export
 
 4. **Artist review and rigging are still required.** If the input has no skeleton and clips, the output is an unanimated mesh. Do not call it a walking/feeding animal. Sculpt missing geometry, retopologize for continuous deforming anatomy, make proper skin weights, add facial morphs and authored species-appropriate actions. Use the existing `scripts/author-calico-rig.py` and `scripts/author-species-rigs.py` as behavior/skin reference sources rather than blindly binding arbitrary model geometry to a rig.
-5. Before runtime approval, compare the 3D head, coat pattern, silhouette and motions with the original image, then run actual model validators, mobile/desktop QA and physical device tests. The runtime gate limits individual GLBs to 8 MiB and 160,000 vertex positions; the import stage permits larger **authoring** source files, not larger automatic production downloads.
+5. Before runtime approval, compare the 3D head, coat pattern, silhouette and motions with the original image, then run actual model validators, mobile/desktop QA and physical device tests. The authoring importer and on-device review no longer enforce an arbitrary 8 MiB/160k-position fidelity budget; structural GLB validity and embedded-only resources remain enforced. The **current static export host** does have a real **25 MiB per-file** deployment check in `scripts/prepare-pwa.mjs`. Do not bypass the actual host limit by silently compressing or down-resing reference-faithful characters: store high-resolution Blender sources separately and plan a user-approved asset hosting solution for any final oversized GLBs. GitHub also imposes its own repository file limits.
 
 ## Existing Blender character sources
 
-The procedural species authoring script now also saves an editable `<species>.blend` and packs that animal's original JPG as an **image reference plate**. This is not the same as regenerating geometry from the photo. The generated GLBs are already available in `public/models/candidates/species/`, and the cat in `public/models/candidates/nuzzle-calico-rig.glb`. To regenerate editable species sources when Blender is available:
+The procedural species authoring script now also saves an editable `<species>.blend` and packs that animal's original JPG as an **image reference plate**. This is not the same as regenerating geometry from the photo. The existing procedurally generated GLBs are already available in `public/models/candidates/species/`, and the cat in `public/models/candidates/nuzzle-calico-rig.glb`. To regenerate editable species sources when Blender is available:
 
 ```sh
 blender -b --factory-startup --python-exit-code 1 \
@@ -59,3 +60,35 @@ No imported candidate or procedural model is registered in `approvedTripoModels`
 - **Quality:** Test 360-degree orbit, close-up fur/feathers/scales, 3/4 view, actual foot-ground contact, action loop seams and feeding pose.
 - **Mobile:** Check WebGL fallbacks, Safari and Chromium, GPU memory, reduced-motion preferences, idle pausing, offline caching, touch controls and recording.
 - **Release:** No model replaces the 2D source until a human visually approves it and the technical checks pass.
+
+## November 4 continuation — fidelity first, animation preference everywhere
+
+**The original JPG/WebP is the visual specification.** Preserve the exact pet's eye and ear shape, spots, coat markings, facial proportions, pose, material finish and palette. Generated single-view meshes are not guaranteed to match the invisible back, legs or tail. Avoid presenting a generic 3D species model as a source-faithful conversion.
+
+The existing **Settings → Animal animations · 2D and 3D** switch now also applies to `/3d-lab`, where the saved setting is loaded on mount and refreshed on focus/storage updates. When off (or system reduced-motion is on), the studio displays a still 3D model, permits orbit/zoom and original-art comparison, but does not run authored animation clips. It also disables controls that would claim to trigger motion. The preference is stored with the user's existing local app data; no new account or permission is required.
+
+In the studio choose **Compare with original** to keep the supplied illustration visible while rotating the *real* model, or **Reset front view** for repeatable visual inspection. The original artwork is never baked as a fake flat replacement for missing 3D parts.
+
+### Batch all 17 original pets (once source-derived GLBs exist)
+
+Place independently generated, self-contained high-detail image-to-3D GLBs in one local directory using the original names: `cat.glb`, `dog.glb`, `rabbit.glb`, `angelfish.glb`, and so on. No image or GLB is uploaded by this repository. Then run:
+
+```sh
+python3 -m unittest discover -s scripts -p 'test_*image3d*.py' -v
+python3 scripts/batch-image3d-blender.py \
+  --input-dir /path/to/high-resolution-glbs \
+  --output-dir /path/to/review-outputs
+```
+
+The batch script records missing source models as **MISSING_GENERATED_GLB**, processes present models through Blender, exports editable `.blend` plus 3D review GLB and four genuine renders, and creates a browser-viewable comparison HTML alongside a JSON manifest. It exits nonzero if any expected species is missing or failed, rather than claiming to have completed all pets. This command is a preparation and QA tool, *not* automatic image-to-3D inference.
+
+### Visual acceptance criteria before any release
+
+1. Side-by-side compare the original art with the **actual Blender render**, not a generated mockup; verify front facial identity, silhouette and colors.
+2. Inspect left/right sides and rear to find asymmetric ears, broken limbs and invented markings, and review topology before retopology or automatic rig-transfer.
+3. Preserve high-resolution materials, texture atlases, normal/roughness maps and all editable Blender source detail. Do not decimate solely to meet a historical 8 MiB budget.
+4. Demand actual skin weights, working facial shape keys, correct species-specific locomotion, genuine foot-ground contact and distinct eating/play/rest loops; a static generated GLB is not animated.
+5. Validate 3D in a real browser and on a physical phone. If a full-resolution GLB exceeds the static host or the phone's available memory, use on-demand progressive delivery and an approved alternate host, with the supplied 2D art as a stable fallback.
+6. Keep `approvedTripoModels` empty until individual visual approval and both desktop/mobile QA pass.
+
+**Current status:** The new pipeline and controls are committed as a draft PR; there are no new Convert3D-generated animal meshes attached to this branch, and genuine multi-angle renders of those meshes cannot exist until such input GLBs are provided and Blender executes. Do not claim any animal has already reached original-image fidelity.
