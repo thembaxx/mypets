@@ -169,7 +169,7 @@ export function Animal({
           url={modelUrl}
           name={speciesNames[species]}
           onClose={() => setView3d(false)}
-          defaultCandidate={!modelUrl && species !== 'cat'}
+          defaultCandidate={!modelUrl}
           candidateUrl={experimentalModelUrl}
           referenceImageUrl={'/animals/' + asset + '.webp'}
           allowProceduralCat={species === 'cat'}
