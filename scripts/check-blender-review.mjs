@@ -22,7 +22,7 @@ export function verifyReviewPack(dir, preset) {
   const jsonLen = bytes.readUInt32LE(12),
     at = 20 + jsonLen;
   check(
-    jsonLen % 4 === 0 && jsonLen < 1048576 && bytes.readUInt32LE(16) === 0x4e4f534a,
+    jsonLen % 4 === 0 && jsonLen <= bytes.length - 20 && bytes.readUInt32LE(16) === 0x4e4f534a,
     'Invalid JSON chunk',
   );
   check(
