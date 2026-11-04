@@ -1,0 +1,33 @@
+/* Installed Nuzzle: retain the familiar care navigation outside the system bars. */
+:root {
+  --nuzzle-safe-top: env(safe-area-inset-top, 0px);
+  --nuzzle-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nuzzle-safe-left: env(safe-area-inset-left, 0px);
+  --nuzzle-safe-right: env(safe-area-inset-right, 0px);
+}
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  html, body { min-height: 100dvh; }
+  body { overscroll-behavior-y: none; }
+  .app-shell {
+    min-height: 100dvh;
+    padding-bottom: calc(114px + var(--nuzzle-safe-bottom));
+  }
+  .app-header {
+    height: auto;
+    min-height: calc(104px + var(--nuzzle-safe-top));
+    padding-top: var(--nuzzle-safe-top);
+  }
+  .tripo-living-dialog {
+    max-height: calc(100dvh - var(--nuzzle-safe-top) - var(--nuzzle-safe-bottom) - 16px);
+  }
+}
+@media (max-width: 767px) and (display-mode: standalone),
+       (max-width: 767px) and (display-mode: fullscreen) {
+  .app-shell {
+    padding-left: max(16px, var(--nuzzle-safe-left));
+    padding-right: max(16px, var(--nuzzle-safe-right));
+  }
+  .tripo-living-controls {
+    padding-bottom: max(16px, var(--nuzzle-safe-bottom));
+  }
+}
