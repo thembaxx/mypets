@@ -527,7 +527,7 @@ export default function TripoPet({
           <ModelErrorBoundary onClose={onClose} key={activeUrl || 'procedural'}>
             <Canvas
               frameloop={reduced ? 'demand' : 'always'}
-              dpr={[1, 1.5]}
+              dpr={[1, 2]}
               camera={{ position: [0, 1.25, 4.8], fov: 39 }}
               gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
               shadows
