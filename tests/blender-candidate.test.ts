@@ -25,6 +25,6 @@ test('candidate review stays on-device and checks GLB bounds', () => {
   assert.ok(html.includes('id="candidate"'));
   assert.ok(script.includes('candidateInput.files?.[0]'));
   assert.ok(script.includes('file.arrayBuffer()'));
-  assert.match(script, /file\.size\s*>\s*MAX_FILE/);
+  assert.match(script, /file\.size\s*<\s*28/);
   assert.ok(!script.includes('FormData('));
 });
