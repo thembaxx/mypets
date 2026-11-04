@@ -64,8 +64,15 @@ for (const species of ['cat', 'dog', 'rabbit']) {
     species + ' mouth needs real exported expression morphs',
   );
 
-  const eye = meshNodes.find((node) => node.name === species + ' left smiling eye arc');
-  assert.ok(eye, species + ' missing deformable curved eyes');
+  const expectedClosedEye = species === 'rabbit' ? ' right smiling eye arc' : ' left smiling eye arc';
+  const eye = meshNodes.find((node) => node.name === species + expectedClosedEye);
+  assert.ok(eye, species + ' missing its source-matched deformable curved eye');
+  if (species === 'rabbit') {
+    assert.ok(
+      meshNodes.some((node) => node.name === 'rabbit original rabbit open cocoa eye'),
+      'Rabbit must preserve the original artwork\'s one open eye and one closed eye',
+    );
+  }
   const eyeTargets = gltf.meshes[eye.mesh]?.extras?.targetNames ?? [];
   assert.ok(
     eyeTargets.includes('Smile') && eyeTargets.includes('Eye_Wide'),
