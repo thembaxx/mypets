@@ -159,3 +159,15 @@ python scripts/try-trellis2-pilot.py \
   --original assets/animal-originals/cat.jpg \
   --output-dir /tmp/mypets-trellis-result --resolution 1024 --seed 42
 ```
+
+### Resume a completed generation without paying for it twice
+
+The [initial official TRELLIS.2 attempt, run 41864088115](https://github.com/thembaxx/mypets/actions/runs/41864088115) was still **queued** when the recovery work was added. Queueing is not proof of a completed GPU generation, a passing workflow, or a quota denial. Multiple ordinary GitHub Actions jobs were also queued. Do not claim a completed model until the actual artifact and provider logs prove it.
+
+**Daily free ZeroGPU allowances:** 2 minutes for anonymous users, 5 minutes for an authenticated free account, subject to provider availability. The TRELLIS.2 demo separately reserves GPU time for **generation** and **GLB extraction**. If the first step succeeds and the second is quota-blocked, `scripts/try-trellis2-pilot.py` now writes the actual GPU-generated sparse latent arrays to `trellis2-cat-latents.npz` in its review artifact, and marks the receipt as waiting for GLB export. This is a **generated-state checkpoint, not a 3D GLB**.
+
+The workflow is now **manual-only** to avoid repeatedly using the daily free GPU allowance. When a completed prior TRELLIS.2 run contains that .npz file, choose **Run workflow** and enter its run ID in the optional `resume_from_run_id` field. The action downloads that exact prior review artifact, checks the original JPG and prepared input SHA-256 checksums without unpickling untrusted state, and skips geometry generation. It calls only the official GLB extraction endpoint. Do **not** supply a run ID with no genuine generated latent archive; this is not a shortcut for a never-generated model.
+
+Optionally, create a free Hugging Face account and add a personal **read-only token** as the GitHub repository Actions secret `HF_TOKEN` under **Settings → Secrets and variables → Actions**. The workflow then uses that free account's 5-minute ZeroGPU allowance; with no secret it stays on the anonymous 2-minute quota. Do not put tokens in commit messages, prompts, workflow logs, or artifacts. This does **not** enable paid inference and does not provision GPU infrastructure. Free-tier requests may still be queued or denied.
+
+After a real GLB exists, first compare geometry and PBR texture against the original cat in multiple views and verify an actual deforming skeleton and action clips; only then proceed to dog, rabbit, and the remaining 14 pets. Passing structural GLB tests, having a latent checkpoint, or passing general app CI is **not** likeness or animation approval.
