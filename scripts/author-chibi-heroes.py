@@ -417,41 +417,79 @@ def animate(slug, rig):
 
 
 def review(slug, rig, out):
-    scene=bpy.context.scene
-    scene.render.engine="BLENDER_WORKBENCH"
-    scene.display.shading.light="STUDIO"
-    scene.display.shading.color_type="MATERIAL"
-    scene.display.shading.show_cavity=True
-    # Workbench shadow projection from a large floor creates false wedges;
-    # grounding is checked in the real WebGL stage, not with fake shadow bands.
-    scene.display.shading.show_shadows=False
-    scene.render.resolution_x=900
-    scene.render.resolution_y=900
-    scene.render.resolution_percentage=100
-    scene.render.image_settings.file_format="PNG"
-    scene.display.shading.background_type="WORLD"
-    scene.world.color=(1.0,1.0,1.0)
-    scene.render.film_transparent=False
-    # Neutral studio colour retains an honest silhouette without adding
-    # shadow artifacts to this materials-only Blender review.
-    camera_data=bpy.data.cameras.new("Kawaii hero review camera")
-    camera=bpy.data.objects.new("Kawaii hero review camera",camera_data)
-    bpy.context.collection.objects.link(camera)
-    camera.location=(0,5.0,2.45)
-    look=Vector((0,0,1.24))
-    camera.rotation_euler=(look-camera.location).to_track_quat("-Z","Y").to_euler()
-    camera_data.type="ORTHO"
-    camera_data.ortho_scale=3.40 if slug=="rabbit" else 3.25
-    scene.camera=camera
-    for name, frame in (("idle",9),("play",13),("jump",37)):
-        for track in rig.animation_data.nla_tracks:
-            track.mute=track.name!=("Idle" if name=="idle" else "Play")
-        scene.frame_set(frame)
-        scene.render.filepath=str(out/(slug+"-"+name+"-review.png"))
-        bpy.ops.render.render(write_still=True)
-    # Neither the camera nor render objects belong to the exported GLB.
-    bpy.data.objects.remove(camera,do_unlink=True)
+    """Render source-fidelity checks with the actual PBR colours.
 
+    Workbench shaded the original's cream coats grey and hid whether colour
+    choices matched the reference. This review-only Cycles studio doesn't
+    change the export mesh or claim approval.
+    """
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 24
+    scene.render.resolution_x = 800
+    scene.render.resolution_y = 800
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.film_transparent = False
+    scene.view_settings.view_transform = "Standard"
+    scene.view_settings.look = "Medium High Contrast"
+    scene.world.use_nodes = True
+    background = scene.world.node_tree.nodes.get("Background")
+    background.inputs["Color"].default_value = (.94, .94, .94, 1)
+    background.inputs["Strength"].default_value = .9
+
+    floor_mat = bpy.data.materials.new("Review only — warm-white studio floor")
+    floor_mat.diffuse_color = (.96, .96, .94, 1)
+    floor_mat.use_nodes = True
+    shader = floor_mat.node_tree.nodes.get("Principled BSDF")
+    shader.inputs["Base Color"].default_value = (.96, .96, .94, 1)
+    shader.inputs["Roughness"].default_value = .94
+    bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, -.05))
+    floor = bpy.context.object
+    floor.name = "REVIEW ONLY — studio shadow catcher"
+    floor.data.materials.append(floor_mat)
+
+    camera_data = bpy.data.cameras.new("Original illustration comparison camera")
+    camera = bpy.data.objects.new("Original illustration comparison camera", camera_data)
+    bpy.context.collection.objects.link(camera)
+    camera.location = (0, 5.5, 2.7)
+    look = Vector((0, 0, 1.17))
+    camera.rotation_euler = (look - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera_data.type = "ORTHO"
+    camera_data.ortho_scale = 3.50 if slug == "rabbit" else 3.30
+    scene.camera = camera
+
+    def area_light(name, xyz, energy, size):
+        data = bpy.data.lights.new(name, "AREA")
+        lamp = bpy.data.objects.new(name, data)
+        bpy.context.collection.objects.link(lamp)
+        lamp.location = xyz
+        lamp.rotation_euler = (look - lamp.location).to_track_quat("-Z", "Y").to_euler()
+        data.energy = energy
+        data.shape = "DISK"
+        data.size = size
+        return lamp
+
+    lamps = [
+        area_light("Review only — soft key", (2.7, 4.4, 5.2), 450, 4.5),
+        area_light("Review only — frontal fill", (-3.1, 3.1, 3.8), 230, 3.5),
+        area_light("Review only — soft rear rim", (0, -3.5, 4.0), 190, 3.0),
+    ]
+    try:
+        for name, frame in (("idle", 9), ("play", 13), ("jump", 37)):
+            for track in rig.animation_data.nla_tracks:
+                track.mute = track.name != ("Idle" if name == "idle" else "Play")
+            scene.frame_set(frame)
+            scene.render.filepath = str(out / (slug + "-" + name + "-review.png"))
+            bpy.ops.render.render(write_still=True)
+    finally:
+        # These render-only lights and the shadow floor are NOT part of the
+        # authored character's GLB. Keep the review camera in the editable
+        # source scene to make the exact reference shots reproducible.
+        for lamp in lamps:
+            bpy.data.objects.remove(lamp, do_unlink=True)
+        bpy.data.objects.remove(floor, do_unlink=True)
 
 def build(slug,out):
     for obj in list(bpy.data.objects):
