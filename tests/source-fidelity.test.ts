@@ -72,3 +72,11 @@ test('mobile 3D viewing keeps the entire animated character in frame', () => {
   assert.match(viewer, /controls\.target\.set\(0, targetY, 0\)/);
   assert.match(viewer, /frameloop=\{reduced \? 'demand' : 'always'\}/);
 });
+
+test('mobile 3D header never overlays the original character or controls', () => {
+  const css = source('app/living-cat.css');
+  assert.match(css, /\.tripo-living-dialog > \.tripo-heading/);
+  assert.match(css, /position: relative;/);
+  assert.match(css, /flex: 0 0 auto;/);
+  assert.match(css, /z-index: 5;/);
+});
