@@ -1,0 +1,24 @@
+name: One-time original animal references for visual QA
+on:
+  push:
+    branches: [feat/image-to-3d-blender-studio-20261104]
+    paths: [.github/workflows/image3d-original-reference-pack.yml]
+permissions:
+  contents: read
+jobs:
+  source-reference-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify 17 original animal JPGs
+        run: |
+          set -euo pipefail
+          test "$(find assets/animal-originals -maxdepth 1 -name '*.jpg' | wc -l)" -eq 17
+          sha256sum assets/animal-originals/*.jpg > original-sha256.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: image3d-original-references
+          path: |
+            assets/animal-originals/*.jpg
+            original-sha256.txt
+          retention-days: 7
