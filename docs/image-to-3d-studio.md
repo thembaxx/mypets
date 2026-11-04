@@ -92,3 +92,16 @@ The batch script records missing source models as **MISSING_GENERATED_GLB**, pro
 6. Keep `approvedTripoModels` empty until individual visual approval and both desktop/mobile QA pass.
 
 **Current status:** The new pipeline and controls are committed as a draft PR; there are no new Convert3D-generated animal meshes attached to this branch, and genuine multi-angle renders of those meshes cannot exist until such input GLBs are provided and Blender executes. Do not claim any animal has already reached original-image fidelity.
+
+
+### Hosting source-faithful GLBs beyond the current static file limit
+
+The `scripts/prepare-pwa.mjs` static exporter currently rejects files over **25 MiB**, a host constraint rather than an artistic quality target. Never silently downscale the source-quality model to satisfy it. The project now accepts a build-time `NEXT_PUBLIC_MYPETS_3D_ASSET_ORIGIN` to load the distinct candidate GLBs from a separately approved **HTTPS** asset server:
+
+```sh
+NEXT_PUBLIC_MYPETS_3D_ASSET_ORIGIN=https://your-approved-asset-origin.example npm run build
+```
+
+The server must expose the same `/models/candidates/...` paths and allow cross-origin GET requests from MyPets. When the variable is absent or not HTTPS, existing local candidate paths remain unchanged. A hosting destination is **not** provisioned by this feature, no high-resolution files have been uploaded, and no recurring charges are incurred. The new asset domain must be inspected for privacy, CORS, reliability, licenses and delivery cost before enabling it. Massive GLBs may still exceed an individual device's decoding/GPU memory even when the source is preserved uncompressed; show the original 2D artwork on failure.
+
+Avoid committing oversized binaries into `public/` while the static exporter still has that deployment constraint. Keep the master `.blend` and highest-quality GLB as separate authoring/review assets; ship only explicitly accepted models from a hosting strategy that supports them.
