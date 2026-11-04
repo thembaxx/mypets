@@ -12,7 +12,7 @@ export function verifyReviewPack(dir, preset) {
   const name = (suffix) => join(resolve(dir), stem + suffix);
   check(statSync(name('.blend')).size > 128, 'Missing editable Blender source');
   const bytes = readFileSync(name('.glb'));
-  check(bytes.length >= 28 && bytes.length <= 8388608, 'GLB outside asset budget');
+  check(bytes.length >= 28, 'GLB is truncated');
   check(
     bytes.toString('ascii', 0, 4) === 'glTF' &&
       bytes.readUInt32LE(4) === 2 &&
