@@ -8,6 +8,16 @@
   const stem = stage.dataset.modelStem;
   const prefix = '/models/original/' + stem;
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function animationsAllowed() {
+    if (preference.matches) return false;
+    try {
+      const saved = window.localStorage.getItem('mypets-v1');
+      return !saved || JSON.parse(saved).animalAnimations !== false;
+    } catch {
+      // Invalid or blocked local storage must not prevent manual inspection.
+      return true;
+    }
+  }
   const gl = canvas.getContext('webgl2', {
     alpha: true,
     antialias: true,
@@ -458,16 +468,18 @@
     startAnimation();
   }
   function updatePlayButton() {
-    animationButton.disabled = !resource?.clips.length || preference.matches;
+    animationButton.disabled = !resource?.clips.length || !animationsAllowed();
     animationButton.setAttribute('aria-pressed', String(playing));
     animationButton.textContent = preference.matches
       ? 'Reduced motion'
-      : playing
-        ? 'Pause animation'
-        : 'Play animation';
+      : !animationsAllowed()
+        ? 'Animations off in Settings'
+        : playing
+          ? 'Pause animation'
+          : 'Play animation';
   }
   function setPlaying(next) {
-    if (!resource?.clips.length || preference.matches) next = false;
+    if (!resource?.clips.length || !animationsAllowed()) next = false;
     if (playing) clockElapsed = Math.max(0, (performance.now() - clockStart) / 1000);
     playing = next;
     stopAnimation();
@@ -511,7 +523,7 @@
           resource.clips.length +
           ' animation clips',
       );
-      setPlaying(resource.clips.length > 0 && !preference.matches);
+      setPlaying(resource.clips.length > 0 && animationsAllowed());
     } catch (error) {
       if (error.name !== 'AbortError') inform('Preview unavailable: ' + error.message);
     }
@@ -545,7 +557,7 @@
           resource.clips.length +
           ' clips · never uploaded',
       );
-      setPlaying(resource.clips.length > 0 && !preference.matches);
+      setPlaying(resource.clips.length > 0 && animationsAllowed());
     } catch (error) {
       inform('Candidate unavailable: ' + error.message);
     } finally {
@@ -645,9 +657,13 @@
       startAnimation();
     }
   });
-  preference.addEventListener('change', () =>
-    setPlaying(!preference.matches && !!resource?.clips.length),
-  );
+  const syncAnimationSetting = () => {
+    if (!animationsAllowed()) setPlaying(false);
+    else updatePlayButton();
+  };
+  preference.addEventListener('change', syncAnimationSetting);
+  window.addEventListener('storage', syncAnimationSetting);
+  window.addEventListener('focus', syncAnimationSetting);
   window.addEventListener('pagehide', () => {
     stopAnimation();
     currentController?.abort();
