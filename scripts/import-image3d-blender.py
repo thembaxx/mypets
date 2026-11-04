@@ -65,10 +65,23 @@ def setup_review_camera(low, high, span):
     camera_data.ortho_scale = span * 2.25
     bpy.context.scene.camera = camera
     scene = bpy.context.scene
-    scene.render.engine = "BLENDER_WORKBENCH"
-    scene.display.shading.color_type = "MATERIAL"
-    scene.display.shading.light = "STUDIO"
-    scene.display.shading.show_shadows = True
+    # Cycles evaluates the generated GLB's actual PBR texture maps. A
+    # Workbench screenshot would misleadingly flatten a textured AI model.
+    scene.render.engine = "CYCLES"
+    scene.cycles.samples = 24
+    scene.render.image_settings.file_format = "PNG"
+    for name, offset, power in (
+        ("Review key", (0.9, 1.3, 1.8), 600),
+        ("Review fill", (-1.1, -1.0, 0.8), 350),
+    ):
+        lamp_data = bpy.data.lights.new(name, "AREA")
+        lamp = bpy.data.objects.new(name, lamp_data)
+        bpy.context.scene.collection.objects.link(lamp)
+        lamp.location = centre + Vector(offset) * max(span, 0.25)
+        lamp.rotation_euler = (centre - lamp.location).to_track_quat("-Z", "Y").to_euler()
+        lamp_data.energy = power * max(span, 0.4) ** 2
+        lamp_data.shape = "DISK"
+        lamp_data.size = span * 2
     scene.render.resolution_x = 800
     scene.render.resolution_y = 800
     scene.render.resolution_percentage = 100
