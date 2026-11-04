@@ -1,6 +1,43 @@
-MyPets replacement animal credits
+MyPets replacement previews — no asset is approved for production
 
-No third-party replacement model is approved in this foundation release.
-Original MyPets illustrations remain available for all 17 animal categories.
-Individual replacement provenance and license records accompany the preview assets.
-See docs/replacement-animals.md in https://github.com/thembaxx/mypets.
+CAT — Bicolor Cat
+Author/rig/rebuild: kenchoo (https://sketchfab.com/kenchoo)
+Source: https://sketchfab.com/3d-models/bicolor-cat-e623a618ca344a8393d7ba4d63ec23cf
+Redistributed GLB: https://github.com/code4fukui/vr-cats/blob/main/bicolor_cat.glb
+Based on “3d modelling my cat: Fripouille” by guillaume bolis
+Base source: https://skfb.ly/6TKqH
+Both works: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+https://creativecommons.org/licenses/by/4.0/legalcode
+Commercial use and redistribution permitted with attribution, license link and indication of changes.
+Changes: GLB unmodified; editable Blender import provided (not the artist's native source).
+The downloaded GLB contains one skeletal idle clip named Animation, not six behaviors.
+
+RABBIT — Rabbit
+Author: CDmir; collaborator: TinyWorlds
+Source: https://opengameart.org/content/rabbit-0
+Original editable source: https://opengameart.org/sites/default/files/rabbit.blend
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Attribution voluntary. The author explicitly confirms commercial use of model AND animations in comments.
+Changes: modern PBR materials, original normal map, coarse legacy fur cards removed,
+unit presentation parent; retained Guarding, Jump, Running and Sitting.000 skeletal clips.
+Death/bind actions excluded. Original and converted editable Blender projects provided.
+
+BIRD — European robin
+Publisher: Grab3D / Alexander Popov, Hannover, Germany
+Source: https://grab3d.com/models/animals/bird/
+Full master: https://grab3d.com/dl/bird/bird.blend
+Individual license: https://grab3d.com/dl/bird/LICENSE.txt
+Manifest: https://grab3d.com/dl/bird/manifest.json
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+Attribution voluntary. AI-ASSISTED: Meshy draft mesh/textures, cleaned and checked in Blender by Grab3D.
+Not a handmade professional character or a photogrammetric scan.
+Changes by MyPets: runtime density runtime derivative, original resolution textures,
+custom weighted Head/Chest/Root armature, subtle Idle breathing/head motion and one-shot Touch head tilt.
+No walking, wing articulation, feeding, blinking or flight clips are claimed.
+Full-quality original master and separate rigged derivative editable Blender source retained.
+
+All three are EXPERIMENTAL, only available in the explicitly marked /3d-pets/ preview.
+All original MyPets illustrations remain available. Individual hashes/clip inventories
+are source-controlled in lib/pet-replacements.ts. See docs/replacement-preview-review.md.
