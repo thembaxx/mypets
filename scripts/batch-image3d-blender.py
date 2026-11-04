@@ -68,8 +68,9 @@ def run_batch(root, input_dir, output_dir, blender_bin="blender", species=None):
                 "status": "READY_FOR_HUMAN_FIDELITY_REVIEW",
                 "render_gallery": str(destination / receipt["fidelity_review_gallery"]),
                 "blender_file": str(destination / (slug + "-image3d-review.blend")),
-                "skinned": receipt["exported_geometry"]["skins"] > 0,
-                "has_animation_clips": bool(receipt["exported_geometry"]["animations"]),
+                "skinned": receipt["exported_geometry"]["weighted_mesh_nodes"] > 0,
+                "has_animation_clips": receipt["exported_geometry"]["animation_channel_count"] > 0,
+                "rigged_and_animated": receipt["exported_geometry"]["rigged_and_animated"],
                 "likeness_approved": False,
             })
         except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
