@@ -183,7 +183,17 @@ def face(slug, rig, materials):
                     face_poly.material_index = 1
 
     for side in (-1,1):
-        happy_eye(slug, side, dark, rig)
+        if slug == "rabbit" and side < 0:
+            # From the original rabbit JPG: the viewer-right eye is open
+            # while the viewer-left eye smiles closed.
+            sphere(slug+" original rabbit open cocoa eye",
+                   (side*.285,.642,1.585),(.071,.036,.079),
+                   dark,rig,"Head",48,32)
+            sphere(slug+" original rabbit eye catchlight",
+                   (side*.268,.680,1.616),(.019,.009,.021),
+                   materials["belly"],rig,"Head",24,18)
+        else:
+            happy_eye(slug, side, dark, rig)
         # Thin surface blush reads as a cheek tint rather than a loose ball.
         cheek=sphere(slug+" cheek "+str(side),
                      (side*.425,.60,1.36),(.17,.017,.115),
@@ -265,12 +275,18 @@ def ears(slug, rig, mats):
     if slug=="rabbit":
         for side in (-1,1):
             bone="Ear_L" if side<0 else "Ear_R"
+            # The supplied rabbit has one wide, sideways floppy ear and one
+            # mostly upright ear, not identical vertical bunny antennae.
+            floppy=side<0
+            tilt=-.98 if floppy else .14
+            x=-.57 if floppy else .39
+            z=2.04 if floppy else 2.12
             sphere(slug+" soft standing ear "+str(side),
-                   (side*.43,.06,2.12),(.165,.126,.45),
-                   mats["fur"],rig,bone,64,42,tilt=-side*.18)
+                   (x,.06,z),(.178,.125,.48),
+                   mats["fur"],rig,bone,80,56,tilt=tilt)
             sphere(slug+" warm inner ear "+str(side),
-                   (side*.44,.173,2.13),(.105,.035,.34),
-                   inner,rig,bone,52,38,tilt=-side*.18)
+                   (x,.177,z+.013),(.113,.034,.365),
+                   inner,rig,bone,64,42,tilt=tilt)
     elif slug=="dog":
         for side in (-1,1):
             bone="Ear_L" if side<0 else "Ear_R"
