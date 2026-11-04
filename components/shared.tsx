@@ -171,6 +171,7 @@ export function Animal({
           onClose={() => setView3d(false)}
           defaultCandidate={!modelUrl && species !== 'cat'}
           candidateUrl={experimentalModelUrl}
+          referenceImageUrl={'/animals/' + asset + '.webp'}
           allowProceduralCat={species === 'cat'}
         />
       )}
