@@ -1,0 +1,83 @@
+name: Publish unapproved full-detail chibi candidates to PR branch
+on:
+  push:
+    branches: [feat/image-to-3d-blender-studio-20261104]
+    paths: [.github/workflows/image3d-publish-reviewed-candidates.yml]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/image-to-3d-blender-studio-20261104
+          persist-credentials: true
+      - name: Fetch exact successful Blender artifact and provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_RUN: '41858388785'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/source-chibi"
+          gh run download "$REVIEW_RUN" --repo "$GITHUB_REPOSITORY" --name source-faithful-chibi-model-review --dir "$RUNNER_TEMP/source-chibi"
+          source_sha="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REVIEW_RUN" --jq '.head_sha')"
+          git fetch --quiet origin "$source_sha"
+          if ! git diff --quiet "$source_sha" HEAD -- scripts/author-chibi-heroes.py scripts/verify-chibi-heroes.mjs; then
+            echo 'Blender generator or verifier changed after reviewed source revision; regenerate instead of publishing stale models.' >&2
+            exit 1
+          fi
+          echo "SOURCE_RENDER_SHA=$source_sha" >> "$GITHUB_ENV"
+      - name: Validate actual 3D assets, 7 clips, facial morphs and original references
+        run: |
+          set -euo pipefail
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/source-chibi" --require-assets
+          node scripts/verify-chibi-heroes.mjs "$RUNNER_TEMP/source-chibi"
+          for animal in cat dog rabbit; do
+            cmp "assets/animal-originals/$animal.jpg" "$RUNNER_TEMP/source-chibi/$animal.jpg"
+            test -s "$RUNNER_TEMP/source-chibi/$animal.blend"
+          done
+      - name: Publish only opt-in GLBs and editable Blender masters, never approved art
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch=feat/image-to-3d-blender-studio-20261104
+          git fetch --quiet origin "$branch"
+          if ! git diff --quiet HEAD "origin/$branch" -- scripts/author-chibi-heroes.py scripts/verify-chibi-heroes.mjs; then
+            echo 'Latest source differs; refusing to publish stale Blender artifact.' >&2
+            exit 1
+          fi
+          git checkout -B reviewed-chibi "origin/$branch"
+          mkdir -p public/models/candidates/chibi assets/blender-source/chibi
+          for animal in cat dog rabbit; do
+            cp "$RUNNER_TEMP/source-chibi/$animal.glb" "public/models/candidates/chibi/$animal.glb"
+            cp "$RUNNER_TEMP/source-chibi/$animal.blend" "assets/blender-source/chibi/$animal.blend"
+          done
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const hash = path => createHash('sha256').update(readFileSync(path)).digest('hex');
+          const sources = Object.fromEntries(['cat','dog','rabbit'].map(species => [species, {
+            image: hash(`assets/animal-originals/${species}.jpg`),
+            blender: hash(`assets/blender-source/chibi/${species}.blend`),
+            glb: hash(`public/models/candidates/chibi/${species}.glb`),
+          }]));
+          writeFileSync('assets/blender-source/chibi/review-manifest.json', JSON.stringify({
+            status: 'EXPERIMENTAL_UNAPPROVED',
+            modelOrigin: 'Original-art-guided procedural Blender rig (NOT an image-to-mesh reconstruction)',
+            sourceBlenderRun: 41858388785,
+            sourceBlenderCommit: process.env.SOURCE_RENDER_SHA,
+            defaultIllustrationsReplaced: false,
+            originalImageSHA256AndEditableSources: sources,
+          }, null, 2) + '\n');
+          NODE
+          git add public/models/candidates/chibi assets/blender-source/chibi
+          if git diff --cached --quiet; then
+            echo 'Experimental GLBs already exactly match the source review artifact.'
+            exit 0
+          fi
+          git commit -m 'assets(3d): update only unapproved source-guided chibi GLBs and editable Blender masters'
+          git push origin HEAD:"$branch"
