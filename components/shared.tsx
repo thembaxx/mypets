@@ -2,6 +2,7 @@
 import { createContext, useContext, useRef, useState, useEffect, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { approvedTripoModels, type AnimalAsset } from '@/lib/tripo-models';
+import { candidateModelUrl, type AnimalCandidateId } from '@/lib/species-3d';
 const TripoPet = dynamic(() => import('./tripo-pet'), { ssr: false });
 import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'motion/react';
 import {
@@ -98,6 +99,7 @@ export function Animal({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const asset = animalAsset(species, breed);
   const modelUrl = approvedTripoModels[asset as AnimalAsset];
+  const experimentalModelUrl = candidateModelUrl(asset as AnimalCandidateId);
   const animated = enabled && !reduced && !photo;
   const swimmer = ['fish', 'snake', 'salamander'].includes(species);
   const flier = ['bird', 'chicken'].includes(species);
@@ -154,9 +156,36 @@ export function Animal({
     </motion.div>
   );
 
-  // Keep the same footprint even when the illustration is entirely still.
+  // Every supplied animal illustration has an opt-in rigged prototype.
+  // Keep the 2D image as the default and never imply a generic prototype was
+  // reconstructed from a private, user-uploaded pet photo.
+  const studio = !photo ? (
+    <>
+      <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
+        {modelUrl ? 'Explore in 3D' : 'Explore experimental 3D'}
+      </button>
+      {view3d && (
+        <TripoPet
+          url={modelUrl}
+          name={speciesNames[species]}
+          onClose={() => setView3d(false)}
+          defaultCandidate={!modelUrl && species !== 'cat'}
+          candidateUrl={experimentalModelUrl}
+          allowProceduralCat={species === 'cat'}
+        />
+      )}
+    </>
+  ) : null;
+
+  // Reduced-motion users can still inspect and rotate a paused model.
   if (!interactive) return graphic;
-  if (!animated) return <div className="animal-interaction is-static">{graphic}</div>;
+  if (!animated)
+    return (
+      <>
+        <div className="animal-interaction is-static">{graphic}</div>
+        {studio}
+      </>
+    );
 
   return (
     <>
@@ -196,14 +225,7 @@ export function Animal({
           )}
         </AnimatePresence>
       </motion.button>
-      {(modelUrl || species === 'cat') && (
-        <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
-          {modelUrl ? 'Explore in 3D' : 'Meet the 3D cat prototype'}
-        </button>
-      )}
-      {view3d && (modelUrl || species === 'cat') && (
-        <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
-      )}
+      {studio}
     </>
   );
 }
