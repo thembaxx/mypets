@@ -57,9 +57,9 @@ class Image3DPreflightTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "external resources"):
             self.check(sample_glb(images=[{"uri": "https://example.org/pet.png"}]))
 
-    def test_rejects_oversized_geometry(self):
-        with self.assertRaisesRegex(ValueError, "2-million-vertex"):
-            self.check(sample_glb(accessors=[{"count": 2_000_001}]))
+    def test_accepts_high_detail_source_meshes(self):
+        info = self.check(sample_glb(accessors=[{"count": 2_000_001}]))
+        self.assertEqual(info["vertices"], 2_000_001)
 
     def test_rejects_truncated_binary(self):
         with self.assertRaisesRegex(ValueError, "header or file length"):
