@@ -61,22 +61,46 @@ def inspect_glb(path):
             raise ValueError("Source GLB contains external resources; embed them before import")
     accessors = document.get("accessors", [])
     vertex_count = 0
-    for mesh in document["meshes"]:
+    skinned_meshes = set()
+    for mesh_index, mesh in enumerate(document["meshes"]):
         for primitive in mesh.get("primitives", []):
-            index = primitive.get("attributes", {}).get("POSITION")
+            attributes = primitive.get("attributes", {})
+            index = attributes.get("POSITION")
             if not isinstance(index, int) or index < 0 or index >= len(accessors):
                 raise ValueError("Mesh primitive has invalid POSITION accessor")
             count = accessors[index].get("count", -1)
             if not isinstance(count, int) or count < 3:
                 raise ValueError("Mesh has an invalid POSITION count")
             vertex_count += count
+            # A declared glTF skin is NOT evidence that geometry is weighted.
+            # Only count mesh primitives with both joint indices and weights.
+            if all(name in attributes for name in ("JOINTS_0", "WEIGHTS_0")):
+                skinned_meshes.add(mesh_index)
     if vertex_count == 0:
         raise ValueError("No mesh vertices found")
+
+    skins = document.get("skins", [])
+    weighted_nodes = sum(
+        1 for node in document["nodes"]
+        if isinstance(node.get("skin"), int) and 0 <= node["skin"] < len(skins)
+        and node.get("mesh") in skinned_meshes
+    )
+    channel_count = sum(
+        1 for animation in document.get("animations", [])
+        for channel in animation.get("channels", [])
+        if channel.get("target", {}).get("path") in ("rotation", "translation", "scale", "weights")
+        and isinstance(channel.get("target", {}).get("node"), int)
+        and 0 <= channel["target"]["node"] < len(document["nodes"])
+    )
+    truly_rigged = weighted_nodes > 0 and channel_count > 0
     return {
         "bytes": size,
         "meshes": len(document["meshes"]),
         "vertices": vertex_count,
-        "skins": len(document.get("skins", [])),
+        "skins": len(skins),
+        "weighted_mesh_nodes": weighted_nodes,
+        "animation_channel_count": channel_count,
+        "rigged_and_animated": truly_rigged,
         "animations": [item.get("name", "(unnamed)") for item in document.get("animations", [])],
         "morph_targets": sum(len(primitive.get("targets", []))
                              for mesh in document["meshes"]
