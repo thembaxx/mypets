@@ -507,6 +507,23 @@ def review(slug, rig, out):
             scene.frame_set(frame)
             scene.render.filepath = str(out / (slug + "-" + name + "-review.png"))
             bpy.ops.render.render(write_still=True)
+            # Do not accept a technically successful render that is almost
+            # entirely white. Sample the central pet-facing area; the
+            # reference artwork has a clear readable expression and body.
+            rendered = bpy.data.images.load(scene.render.filepath, check_existing=False)
+            try:
+                width, height = rendered.size
+                central = []
+                for frac_y in (.38, .44, .50, .56, .62):
+                    for frac_x in (.40, .45, .50, .55, .60):
+                        base = 4 * (int(height * frac_y) * width + int(width * frac_x))
+                        central.append(sum(rendered.pixels[base:base+3]) / 3.0)
+                if sum(central) / len(central) > .965:
+                    raise RuntimeError(
+                        "Source-fidelity PBR render is overexposed: subject is unreadable"
+                    )
+            finally:
+                bpy.data.images.remove(rendered)
     finally:
         # These render-only lights and the shadow floor are NOT part of the
         # authored character's GLB. Keep the review camera in the editable
