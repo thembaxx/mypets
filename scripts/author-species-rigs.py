@@ -636,6 +636,25 @@ def build(slug, out):
     # Report the *deformed*, world-space stance drift in the authored clip.
     # This is diagnostic only; curves are not a real foot-locking solver.
     audit_species_motion(slug, spec[0], rig, out)
+    # Save editable Blender sources for every generated candidate, not just GLBs.
+    # Keep the original illustration packed as a viewport comparison reference,
+    # never as fake geometry or an automatically approved photo reconstruction.
+    reference = Path(__file__).resolve().parent.parent / "assets" / "animal-originals" / (slug + ".jpg")
+    if not reference.is_file():
+        raise RuntimeError("Missing source illustration for Blender review: " + slug)
+    image = bpy.data.images.load(str(reference), check_existing=False)
+    image.pack()
+    plate = bpy.data.objects.new("REFERENCE ONLY - " + slug + " original", None)
+    bpy.context.scene.collection.objects.link(plate)
+    plate.empty_display_type = "IMAGE"
+    plate.data = image
+    plate.empty_display_size = max(spec[1] * 2, spec[2] * 2, 1.4)
+    plate.empty_image_depth = "FRONT"
+    plate.location = (-2.8, 0, 1.0)
+    plate.rotation_euler.x = -math.pi / 2
+    plate.hide_render = True
+    bpy.ops.file.pack_all()
+    bpy.ops.wm.save_as_mainfile(filepath=str(out / (slug + ".blend")))
     return {"species":slug,"kind":spec[0],"bytes":path.stat().st_size,
             "sha256":hashlib.sha256(path.read_bytes()).hexdigest(),
             "status":"EXPERIMENTAL_REVIEW_ONLY","clips":list(ACTIONS)}
