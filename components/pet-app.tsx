@@ -126,7 +126,9 @@ export default function PetApp() {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await document.documentElement.requestFullscreen();
     } catch {
-      notify('Fullscreen is unavailable here. Add Nuzzle to your home screen for an app-like view.');
+      notify(
+        'Fullscreen is unavailable here. Add Nuzzle to your home screen for an app-like view.',
+      );
     }
   };
   useEffect(() => {
