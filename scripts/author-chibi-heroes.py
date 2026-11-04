@@ -159,7 +159,7 @@ def face(slug, rig, materials):
     fur, patch, dark, pink, mouth, tongue = (materials[k] for k in
         ("fur", "patch", "dark", "pink", "mouth", "tongue"))
     dimensions = (.73, .57, .61) if slug == "dog" else (.67, .55, .61)
-    head = sphere(slug+" large continuous reference-proportion head",
+    head = sphere(slug+" oversized plush head",
                   (0, .13, 1.45), dimensions, fur, rig, "Head", 104, 76)
     head.data.materials.append(patch)
     head.data.materials.append(materials["secondary"])
@@ -185,7 +185,7 @@ def face(slug, rig, materials):
     for side in (-1,1):
         happy_eye(slug, side, dark, rig)
         # Thin surface blush reads as a cheek tint rather than a loose ball.
-        cheek=sphere(slug+" gentle rosy cheek "+str(side),
+        cheek=sphere(slug+" cheek "+str(side),
                      (side*.425,.60,1.36),(.17,.017,.115),
                      materials["blush"], rig, "Head", 42, 28)
         cheek.shape_key_add(name="Basis")
