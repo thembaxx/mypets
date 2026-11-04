@@ -225,38 +225,68 @@ def face(slug, rig, materials):
                      .010,dark,rig,"Head")
     return opening
 
+def triangular_ear(name, side, material_outer, material_inner, rig):
+    """Rounded triangular source-like calico pinna with true mesh depth."""
+    x = side * .45
+    zbase, tip = 1.83, 2.28
+    def prism(label, points, depth, material):
+        front = [(px, py, pz) for px, py, pz in points]
+        back = [(px, py-depth, pz) for px, py, pz in points]
+        mesh = bpy.data.meshes.new(label)
+        mesh.from_pydata(front+back, [], [
+            (0, 2, 1), (3, 4, 5),
+            (0, 1, 4, 3), (1, 2, 5, 4), (2, 0, 3, 5),
+        ])
+        mesh.update()
+        obj = bpy.data.objects.new(label, mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.data.materials.append(material)
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bevel = obj.modifiers.new("Hand-rounded ear edge", "BEVEL")
+        bevel.width = .027 if depth > .04 else .008
+        bevel.segments = 4
+        bpy.ops.object.modifier_apply(modifier=bevel.name)
+        for polygon in obj.data.polygons:
+            polygon.use_smooth = True
+        bone = "Ear_L" if side < 0 else "Ear_R"
+        return bind(obj, rig, bone)
+    prism(name+" silhouette",
+          [(x-.20,.18,zbase), (x+.20,.18,zbase),
+           (x+side*.12,.21,tip)], .12, material_outer)
+    prism(name+" inset",
+          [(x-.118,.253,zbase+.075), (x+.118,.253,zbase+.075),
+           (x+side*.103,.272,tip-.095)], .010, material_inner)
+
+
 def ears(slug, rig, mats):
-    main=mats["patch"] if slug=="dog" else mats["fur"]
     inner=mats["pink"]
     if slug=="rabbit":
         for side in (-1,1):
             bone="Ear_L" if side<0 else "Ear_R"
             sphere(slug+" soft standing ear "+str(side),
                    (side*.43,.06,2.12),(.165,.126,.45),
-                   main,rig,bone,32,24,tilt=-side*.18)
+                   mats["fur"],rig,bone,64,42,tilt=-side*.18)
             sphere(slug+" warm inner ear "+str(side),
                    (side*.44,.173,2.13),(.105,.035,.34),
-                   inner,rig,bone,28,20,tilt=-side*.18)
+                   inner,rig,bone,52,38,tilt=-side*.18)
     elif slug=="dog":
         for side in (-1,1):
             bone="Ear_L" if side<0 else "Ear_R"
-            sphere(slug+" floppy soft ear "+str(side),
-                   (side*.66,.075,1.57),(.245,.158,.32),
-                   main,rig,bone,32,24,tilt=side*.81)
-            sphere(slug+" pink floppy ear lining "+str(side),
-                   (side*.66,.212,1.54),(.15,.039,.22),
-                   inner,rig,bone,28,18,tilt=side*.81)
+            sphere(slug+" soft wide floppy ear "+str(side),
+                   (side*.81,.045,1.82),(.38,.15,.245),
+                   mats["secondary"],rig,bone,76,50,tilt=side*.77)
+            sphere(slug+" curved ear lining "+str(side),
+                   (side*.79,.171,1.77),(.22,.035,.178),
+                   inner,rig,bone,54,38,tilt=side*.77)
     else:
         for side in (-1,1):
-            bone="Ear_L" if side<0 else "Ear_R"
-            sphere(slug+" tapered cat ear "+str(side),
-                   (side*.43,.09,1.99),(.19,.13,.315),
-                   mats["secondary"] if side>0 else mats["patch"],
-                   rig,bone,30,20,tilt=side*.16)
-            sphere(slug+" curved pink cat ear inset "+str(side),
-                   (side*.43,.205,2.01),(.11,.033,.235),
-                   inner,rig,bone,24,16,tilt=side*.16)
-
+            # Frontal view: positive X is viewer-left (orange);
+            # negative X is viewer-right (cocoa).
+            outer = mats["patch"] if side>0 else mats["secondary"]
+            triangular_ear(slug+" reference-shaped calico ear "+str(side),
+                           side, outer, inner, rig)
 
 def body_and_limbs(slug, rig, mats):
     fur=mats["fur"]
@@ -425,7 +455,7 @@ def build(slug,out):
         "nose": material(slug+" coral cat nose",(.96,.36,.36),.51),
         "mouth": material(slug+" joyful mouth",(.38,.065,.085),.44),
         "tongue": material(slug+" coral tongue",(.99,.38,.44),.48),
-        "collar": material(slug+" festive collar",(.93,.69,.30),.36),
+        "collar": material(slug+" actual leather brown collar",(.36,.20,.14),.60),
         "gold": material(slug+" bell",(.95,.68,.21),.20),
     }
     body_and_limbs(slug,rig,mats)
