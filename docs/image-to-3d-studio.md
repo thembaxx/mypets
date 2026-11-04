@@ -139,3 +139,23 @@ A single **cat-only** attempt against the public shared GPU Pixal3D Space ran in
 Next unblocked production-quality process: generate a **genuinely image-conditioned** textured GLB, preserve its detailed mesh/materials, import into Blender with `scripts/import-image3d-blender.py`, visually compare front/three-quarter/side/rear against the original, manually correct topology/markings, retopologize and skin the source-derived model to a deforming species-specific skeleton, author distinct Idle/Walk/Eat/Play/Groom/Rest/Sniff actions, and test on mobile GPU. Do not mark any model approved until its geometry, source likeness, skinning, actual clips, animation preference and device performance pass human review.
 
 A high-fidelity image-to-3D mesh may be entirely static. A GLB containing skin joints and named animation clips is necessary for current authored action playback; its 3D likeness and deformation quality are independent review gates.
+
+## Fallback: official TRELLIS.2 public ZeroGPU attempt
+
+Source-conditioned reconstruction is first attempted on one animal (cat), rather than rerendering any rejected generic procedural mesh. The official **microsoft/TRELLIS.2** Hugging Face Space uses a shared ZeroGPU NVIDIA GPU, performs distinct geometry and texture generation, and can export a PBR GLB. Its GPU generation and extraction endpoints each request up to **120 seconds** of the free GPU pool. Because the public **unauthenticated** quota is limited, either stage may be rejected; the repository does not provision paid compute or silently use a developer billing account.
+
+A one-shot, public shared-GPU evaluation runs in [GitHub Actions TRELLIS.2 cat pilot](https://github.com/thembaxx/mypets/actions/workflows/image3d-trellis2-pilot.yml). It packages the original cat input (with transparency prepared using actual source pixels), a real GPU-generated preview if one exists, the actual output GLB only if returned and structurally verified, and a JSON receipt with source/model hashes. The model is always **UNAPPROVED** for production. The script intentionally stops on quota/API failure rather than claiming a fake GLB.
+
+The latest source and status should be checked against the run's artifact and logs. TRELLIS.2 output is not automatically a deformable or animated character: source fidelity, facial expressions, editable rigging, skin weights, movement, and mobile QA remain independent review requirements. Do not merge the opt-in experimental models as approved until those requirements pass.
+
+Manual local reproducer, using only the existing free Space:
+
+```sh
+python -m pip install 'numpy>=2,<3' 'opencv-python-headless>=4.10,<5' 'Pillow>=11,<13' 'gradio_client>=2,<3'
+python scripts/prepare-image3d-source.py --original-dir assets/animal-originals \
+  --output-dir /tmp/mypets-trellis-source --species cat --size 1024
+python scripts/try-trellis2-pilot.py \
+  --source /tmp/mypets-trellis-source/cat.png \
+  --original assets/animal-originals/cat.jpg \
+  --output-dir /tmp/mypets-trellis-result --resolution 1024 --seed 42
+```
