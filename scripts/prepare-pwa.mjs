@@ -33,7 +33,16 @@ for (const file of collect(path.join(root, '_next/static'))) {
 // fidelity and avoids the real 25 MiB/file deployment cap. No files are
 // deleted from source control; only the generated out/ directory is affected.
 const external3DOrigin = process.env.NEXT_PUBLIC_MYPETS_3D_ASSET_ORIGIN ?? '';
-if (external3DOrigin.startsWith('https://')) {
+if (external3DOrigin) {
+  let parsed;
+  try {
+    parsed = new URL(external3DOrigin);
+  } catch {
+    throw new Error('Invalid NEXT_PUBLIC_MYPETS_3D_ASSET_ORIGIN URL');
+  }
+  if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password) {
+    throw new Error('3D asset origin must be a credential-free HTTPS URL');
+  }
   fs.rmSync(path.join(root, 'models/candidates'), { recursive: true, force: true });
   console.log('3D candidates are configured for approved external HTTPS hosting.');
 }
