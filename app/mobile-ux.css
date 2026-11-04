@@ -67,3 +67,27 @@ body {
     transition: none;
   }
 }
+
+/* A compact disclosure keeps the 3D controls visible while preserving caveats. */
+.tripo-living-disclosure {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 4px;
+}
+.tripo-living-disclosure summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tripo-living-disclosure summary:focus-visible {
+  outline: 3px solid #d59757;
+  outline-offset: 2px;
+}
+.tripo-living-disclosure .tripo-living-note {
+  margin-top: 4px;
+  line-height: 1.5;
+}
