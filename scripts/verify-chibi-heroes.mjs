@@ -97,6 +97,11 @@ for (const species of ['cat', 'dog', 'rabbit']) {
       species + ' missing Blender-rendered ' + pose + ' pose',
     );
   }
+  const silhouette = join(directory, species + '-silhouette-review.png');
+  assert.ok(
+    existsSync(silhouette) && statSync(silhouette).size > 5000,
+    species + ' missing independent full-body silhouette evidence',
+  );
   console.log('CHIBI_RIGGED_REVIEW_PASS', species, bytes.length, clips.length);
 }
 assert.equal(digests.size, 3);
