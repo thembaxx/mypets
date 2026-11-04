@@ -63,3 +63,12 @@ test('opt-in cat dog rabbit previews prioritize source-style chibi rigs', () => 
   const urls = source('lib/species-3d.ts');
   assert.match(urls, /id === 'cat' \|\| id === 'dog' \|\| id === 'rabbit'/);
 });
+
+test('mobile 3D viewing keeps the entire animated character in frame', () => {
+  const viewer = source('components/tripo-pet.tsx');
+  assert.match(viewer, /size\.width <= 520 \|\| size\.height <= 450/);
+  assert.match(viewer, /const distance = compact \? 6\.1 : 4\.8/);
+  assert.match(viewer, /const targetY = compact \? 1\.2 : 0\.91/);
+  assert.match(viewer, /controls\.target\.set\(0, targetY, 0\)/);
+  assert.match(viewer, /frameloop=\{reduced \? 'demand' : 'always'\}/);
+});
