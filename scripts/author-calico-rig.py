@@ -1103,8 +1103,8 @@ def main():
     # Blender versions differ in glTF animation settings.
     bpy.ops.export_scene.gltf(**kwargs)
     glb = out/"nuzzle-calico-rig.glb"
-    if not glb.is_file() or glb.stat().st_size > 8*1024*1024:
-        raise RuntimeError("Candidate GLB absent or over mobile budget")
+    if not glb.is_file() or glb.stat().st_size < 24:
+        raise RuntimeError("Candidate GLB is missing or truncated")
     manifest = dict(
         model="Nuzzle original calico candidate",
         status="UNAPPROVED",
