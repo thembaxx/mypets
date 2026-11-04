@@ -1,0 +1,24 @@
+{
+  "status": "EXPERIMENTAL_UNAPPROVED",
+  "modelOrigin": "Original-art-guided procedural Blender rig (NOT an image-to-mesh reconstruction)",
+  "sourceBlenderRun": 41858388785,
+  "sourceBlenderCommit": "aa7e7160653978c7ca2103eea349618ba25eedc6",
+  "defaultIllustrationsReplaced": false,
+  "originalImageSHA256AndEditableSources": {
+    "cat": {
+      "image": "fff67c20427377dd02e600d992bba5350465edb567895072880901c40421efed",
+      "blender": "6a487c7609d6d84f56ad14640411631b5c20ed8c4dce36d923e044855075e1a4",
+      "glb": "452b4ffa9b0604c65f7244847511d864e3d4378b11cc815c80dc38697f45a9af"
+    },
+    "dog": {
+      "image": "ebb25cb77b133e8fec046a057f739415142de8338fe8b1dc5c8b19d08b798aaf",
+      "blender": "8d2cf903747ad25fcb08b6baa415c0c37802d40089b869b43a9c06e878fc9762",
+      "glb": "14ea90410f6c9a8ed93eff38bead99cb71beebf1e0abc867e26db3166d30a0b2"
+    },
+    "rabbit": {
+      "image": "147e2f45955e695f202bdaaf812e5898029ec0ea0067332b2cb9bfdf7d24acf8",
+      "blender": "9ae171cde4a3193e293f4d8685fb76db1f5cfa8f53d2df66c77a595f85f35e6c",
+      "glb": "6fcf351112764d8228340735a2ba8defa4f49ea5c8662dc9887ced625d284324"
+    }
+  }
+}
