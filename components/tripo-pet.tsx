@@ -280,6 +280,7 @@ export default function TripoPet({
   allowProceduralCat?: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const animationEnabled = useContext(AnimalAnimationContext);
   const systemReduced = !!useReducedMotion();
   const [activity, setActivity] = useState<CatActivity>('idle');
@@ -312,7 +313,27 @@ export default function TripoPet({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !viewerRef.current) return;
+      const root = viewerRef.current;
+      const controls = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
+        ),
+      ).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !root.contains(document.activeElement))) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !root.contains(document.activeElement))) {
+        event.preventDefault();
+        first?.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     closeRef.current?.focus();
@@ -417,27 +438,11 @@ export default function TripoPet({
     : 'Original 3D calico study. The illustrated pet remains unchanged.';
   return createPortal(
     <div
+      ref={viewerRef}
       className="tripo-viewer"
       role="dialog"
       aria-modal="true"
       aria-label={name + ' interactive 3D studio'}
-      onKeyDown={(event) => {
-        if (event.key !== 'Tab') return;
-        const controls = Array.from(
-          event.currentTarget.querySelectorAll<HTMLElement>(
-            'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
-          ),
-        ).filter((element) => element.getClientRects().length > 0);
-        const first = controls[0];
-        const last = controls[controls.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }}
     >
       <button
         type="button"
