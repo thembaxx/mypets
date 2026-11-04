@@ -1,0 +1,93 @@
+/* Pet care controls remain usable when the 3D viewer is mounted on a phone.
+   No change to the model, animation rig, gestures or original illustrations. */
+body {
+  font-size: 16px;
+}
+.tripo-viewer {
+  isolation: isolate;
+}
+.tripo-living-dialog {
+  min-width: 0;
+  max-height: calc(100dvh - 20px);
+}
+.tripo-living-stage {
+  z-index: 0;
+}
+.tripo-living-controls {
+  z-index: 5;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+.tripo-heading {
+  z-index: 6;
+}
+.tripo-activity-picker button,
+.tripo-motion-toggle {
+  font-size: 14px;
+}
+.tripo-living-settings label {
+  font-size: 14px;
+}
+.tripo-activity-picker {
+  scroll-padding-inline: 12px;
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
+    font-size: 16px !important; /* Prevent unintended iOS input focus zoom. */
+  }
+  .tripo-activity-picker button,
+  .tripo-motion-toggle,
+  .tripo-living-settings select {
+    min-height: 44px;
+  }
+}
+@media (max-width: 600px) {
+  .tripo-viewer {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+  .tripo-living-dialog {
+    width: 100%;
+    height: min(90dvh, 800px);
+    border-radius: 22px;
+  }
+  .tripo-living-controls {
+    max-height: 46dvh;
+    padding: 14px 14px max(16px, env(safe-area-inset-bottom));
+  }
+  .tripo-heading {
+    padding: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tripo-activity-picker button,
+  .tripo-motion-toggle {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* A compact disclosure keeps the 3D controls visible while preserving caveats. */
+.tripo-living-disclosure {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 4px;
+}
+.tripo-living-disclosure summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tripo-living-disclosure summary:focus-visible {
+  outline: 3px solid #d59757;
+  outline-offset: 2px;
+}
+.tripo-living-disclosure .tripo-living-note {
+  margin-top: 4px;
+  line-height: 1.5;
+}

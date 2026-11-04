@@ -280,6 +280,7 @@ export default function TripoPet({
   allowProceduralCat?: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const animationEnabled = useContext(AnimalAnimationContext);
   const systemReduced = !!useReducedMotion();
   const [activity, setActivity] = useState<CatActivity>('idle');
@@ -312,7 +313,33 @@ export default function TripoPet({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !viewerRef.current) return;
+      const root = viewerRef.current;
+      const controls = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
+        ),
+      ).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first || !root.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last?.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last || !root.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first?.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     closeRef.current?.focus();
@@ -417,6 +444,7 @@ export default function TripoPet({
     : 'Original 3D calico study. The illustrated pet remains unchanged.';
   return createPortal(
     <div
+      ref={viewerRef}
       className="tripo-viewer"
       role="dialog"
       aria-modal="true"
@@ -424,6 +452,7 @@ export default function TripoPet({
     >
       <button
         type="button"
+        tabIndex={-1}
         className="tripo-backdrop"
         aria-label="Dismiss 3D studio backdrop"
         onClick={onClose}
@@ -432,7 +461,7 @@ export default function TripoPet({
         <div className="tripo-heading">
           <div>
             <strong>{name} · 3D playroom</strong>
-            <span>Turn with a finger. Pinch to zoom. Choose what happens next.</span>
+            <span>Drag to rotate · pinch to zoom</span>
           </div>
           <button
             type="button"
@@ -610,17 +639,22 @@ export default function TripoPet({
           <p className="tripo-living-status" role="status">
             {recordError || status}
           </p>
-          {candidateMode && !localPreview && (
-            <p className="tripo-living-note">
-              Experimental species-specific Blender rig. Compare its anatomy, appearance and motion
-              with the original illustration before considering adoption.
-            </p>
-          )}
-          {!activeUrl && (
-            <p className="tripo-living-note">
-              This is an articulated 3D character prototype with simulated movement and collisions,
-              not a photo-accurate reconstruction, motion capture, or a physically exact animal.
-            </p>
+          {((candidateMode && !localPreview) || !activeUrl) && (
+            <details className="tripo-living-disclosure">
+              <summary>About this 3D model</summary>
+              {candidateMode && !localPreview && (
+                <p className="tripo-living-note">
+                  Experimental Blender rig. Compare anatomy and motion with the original
+                  illustration before adopting the model.
+                </p>
+              )}
+              {!activeUrl && (
+                <p className="tripo-living-note">
+                  This articulated 3D prototype simulates movement and collisions. It is not a
+                  photo-accurate reconstruction or physically exact animal.
+                </p>
+              )}
+            </details>
           )}
         </div>
       </div>
