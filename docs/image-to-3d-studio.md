@@ -4,7 +4,7 @@
 
 References:
 
-- [Fursund's 3 November 2026 demonstration](https://x.com/fursund/status/2117550901250412957) shows local WebGPU image-to-3D using a model called Idol and links to [Convert3D](https://convert3d.org/image-to-3d).
+- [Fursund's 3 November 2026 example](https://x.com/fursund/status/2117550901250412957) suggests an image-to-3D route. For the referenced [Speridlabs Idol model](https://github.com/speridlabs/idol-sdk), note that its actual output is a **3D Gaussian-splat PLY**, *not* a riggable triangle-mesh GLB. [Convert3D](https://convert3d.org/image-to-3d) offers a separate browser image-to-3D workflow, but generated model capability and quality require per-asset verification.
 - [Ithielix's 2 November 2026 post](https://x.com/ithielix/status/2117127490208485397) links a seven-minute AI-assisted responsive 3D website tutorial. It informs the interactive viewer, not the modeling or rigging process.
 
 These are _complementary_ tools. A single-image 3D generator can output a mesh and surface appearance, but cannot reliably reconstruct hidden anatomical surfaces or invent real animal biomechanics, rigging, facial shapes and animation from one view.
@@ -15,6 +15,12 @@ These are _complementary_ tools. A single-image 3D generator can output a mesh a
 2. Rotate, pinch-zoom, choose **Walk**, **Eat**, **Play**, **Groom** or **Sniff**, or tap directly on the animal / press **Pet** to trigger its _existing_ authored Play clip when present.
 3. Use **Review a downloaded Blender GLB (on-device only)** to inspect any self-contained GLB exported by an image-to-3D generator or Blender. It stays local to the device. A model with no authored animation can be rotated, but cannot genuinely walk or eat.
 4. All supplied WebP illustrations remain the default art; personally uploaded pet photos are not sent to Convert3D or assigned a generic species-specific mesh.
+
+## Important: Gaussian splats are visual references, not skeletal characters
+
+Idol's official SDK generates `.ply` files containing 3D Gaussians and an estimated input camera from a single image. It needs a compatible GPU (the official documentation reports roughly 7.2 GB VRAM for inference); this is **not** a standard animated triangle mesh. A Gaussian splat may preserve the look of the source illustration from multiple angles, but cannot be directly skin-weighted to the Blender armature in this repository. Do **not** rename `.ply` to `.glb`, treat its points as watertight geometry, or imply that rigid rotation is organic character animation.
+
+For fidelity work, use the Idol splat as an optional high-detail *visual target*. The animated model still needs a retopologized, textured **mesh** with bones, deforming skin and facial shapes. The current `scripts/import-image3d-blender.py` and the batch workflow accept actual GLB triangle meshes, not Idol PLYs. Follow the supplied chibi illustrations as the final likeness reference, not a generic realistic cat or dog.
 
 ## Turn an original illustration into an editable Blender candidate
 
@@ -104,3 +110,9 @@ NEXT_PUBLIC_MYPETS_3D_ASSET_ORIGIN=https://your-approved-asset-origin.example np
 The server must expose the same `/models/candidates/...` paths and allow cross-origin GET requests from MyPets. When the variable is absent or not HTTPS, existing local candidate paths remain unchanged. A hosting destination is **not** provisioned by this feature, no high-resolution files have been uploaded, and no recurring charges are incurred. The new asset domain must be inspected for privacy, CORS, reliability, licenses and delivery cost before enabling it. Massive GLBs may still exceed an individual device's decoding/GPU memory even when the source is preserved uncompressed; show the original 2D artwork on failure.
 
 Avoid committing oversized binaries into `public/` while the static exporter still has that deployment constraint. Keep the master `.blend` and highest-quality GLB as separate authoring/review assets; ship only explicitly accepted models from a hosting strategy that supports them.
+
+## November 4 actual Blender review results
+
+The offline source-guided procedural cat and dog rigs were generated as real editable Blender assets in [workflow 41853390250](https://github.com/thembaxx/mypets/actions/runs/41853390250). The previous chibi rig renders from an existing workflow and higher-polygon source-inspired chibi candidates were also built in [workflow 41855236783](https://github.com/thembaxx/mypets/actions/runs/41855236783). All retain the original art as source reference, but their shapes still have clear likeness gaps: oversized separate limb balls, angular border between coat materials, flat facial blush, and less dynamic play/jump poses than the artwork. These completed Blender builds prove the pipeline works, **not** the required source-image fidelity.
+
+The real render packs remain unapproved and are not automatically inserted into `approvedTripoModels`. The front view and three-quarter original art comparisons must be reviewed before any final model reaches the production page. Preserve the larger editable .blend files and runtime-optional GLBs rather than forcing a low-detail model simply because of historic 8 MiB budgets.
