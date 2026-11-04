@@ -707,15 +707,20 @@ export default function PetApp() {
               <p>
                 <a href="/about/">About Nuzzle, sources & privacy</a>
               </p>
-              {fullscreenAvailable && <div className="settings-row">
+              {fullscreenAvailable && (
+                <div className="settings-row">
                 <div>
                   <strong>Immersive app view</strong>
                   <span>Expand Nuzzle to use more of your screen.</span>
                 </div>
-                <IconButton label={fullscreenActive ? 'Exit fullscreen' : 'Enter fullscreen'} onClick={() => void toggleFullscreen()}>
-                  {fullscreenActive ? <CornersInIcon size={22} /> : <CornersOutIcon size={22} />}
-                </IconButton>
-              </div>}
+                  <IconButton
+                    label={fullscreenActive ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    onClick={() => void toggleFullscreen()}
+                  >
+                    {fullscreenActive ? <CornersInIcon size={22} /> : <CornersOutIcon size={22} />}
+                  </IconButton>
+                </div>
+              )}
               <div className="settings-row">
                 <div>
                   <strong>Offline companion</strong>
