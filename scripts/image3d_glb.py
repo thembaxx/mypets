@@ -1,14 +1,13 @@
-"""Pure-Python, offline preflight for untrusted image-to-3D GLB exports.
+"""Offline structural preflight for user-supplied image-to-3D GLB exports.
 
-Rejects external resource URLs, oversized or malformed buffers and unreasonable
-vertex counts before Blender imports a mesh. This is NOT a mesh/rig-quality gate.
+This scans GLB chunk headers and its JSON scene without copying the entire
+binary texture/geometry payload into memory. Fidelity-first: no arbitrary
+mesh polygon or authoring-byte cap. GLB 2.0 itself uses a 32-bit file length.
+It does not establish visual likeness, sound rigging or safe GPU memory usage.
 """
 import json
 import struct
 from pathlib import Path
-
-MAX_SOURCE_BYTES = 64 * 1024 * 1024
-MAX_SOURCE_VERTICES = 2_000_000
 
 
 def inspect_glb(path):
@@ -16,32 +15,40 @@ def inspect_glb(path):
     if source.suffix.lower() != ".glb":
         raise ValueError("Supply a local, self-contained .glb file")
     size = source.stat().st_size
-    if size < 24 or size > MAX_SOURCE_BYTES:
-        raise ValueError("Source GLB must be between 24 bytes and 64 MiB")
-    data = source.read_bytes()
-    magic, version, declared = struct.unpack_from("<4sII", data, 0)
-    if magic != b"glTF" or version != 2 or declared != len(data):
-        raise ValueError("Invalid glTF 2.0 binary header or file length")
-    offset = 12
+    if size < 24 or size > 0xFFFFFFFF:
+        raise ValueError("Source size is outside the binary glTF 2.0 specification")
+
     document = None
     binary_chunks = 0
-    while offset < len(data):
-        if offset + 8 > len(data):
-            raise ValueError("Truncated GLB chunk header")
-        length, kind = struct.unpack_from("<II", data, offset)
-        offset += 8
-        if length % 4 or offset + length > len(data):
-            raise ValueError("Truncated or unaligned GLB chunk")
-        if kind == 0x4E4F534A:
-            if document is not None or offset != 20:
-                raise ValueError("GLB JSON chunk must appear exactly once, first")
-            try:
-                document = json.loads(data[offset:offset + length])
-            except (ValueError, UnicodeDecodeError) as exc:
-                raise ValueError("Invalid GLB JSON") from exc
-        if kind == 0x004E4942:
-            binary_chunks += 1
-        offset += length
+    with source.open("rb") as stream:
+        header = stream.read(12)
+        if len(header) != 12:
+            raise ValueError("Truncated GLB header")
+        magic, version, declared = struct.unpack("<4sII", header)
+        if magic != b"glTF" or version != 2 or declared != size:
+            raise ValueError("Invalid glTF 2.0 binary header or file length")
+        offset = 12
+        while offset < size:
+            chunk_header = stream.read(8)
+            if len(chunk_header) != 8:
+                raise ValueError("Truncated GLB chunk header")
+            length, kind = struct.unpack("<II", chunk_header)
+            offset += 8
+            if length % 4 or length > size - offset:
+                raise ValueError("Truncated or unaligned GLB chunk")
+            if kind == 0x4E4F534A:
+                if document is not None or offset != 20:
+                    raise ValueError("GLB JSON chunk must appear exactly once, first")
+                try:
+                    document = json.loads(stream.read(length))
+                except (ValueError, UnicodeDecodeError) as exc:
+                    raise ValueError("Invalid GLB JSON") from exc
+            else:
+                stream.seek(length, 1)
+                if kind == 0x004E4942:
+                    binary_chunks += 1
+            offset += length
+
     if not isinstance(document, dict) or document.get("asset", {}).get("version") != "2.0":
         raise ValueError("Missing glTF 2.0 JSON scene")
     if binary_chunks != 1:
@@ -63,8 +70,6 @@ def inspect_glb(path):
             if not isinstance(count, int) or count < 3:
                 raise ValueError("Mesh has an invalid POSITION count")
             vertex_count += count
-    if vertex_count > MAX_SOURCE_VERTICES:
-        raise ValueError("Mesh exceeds the 2-million-vertex authoring safety limit")
     if vertex_count == 0:
         raise ValueError("No mesh vertices found")
     return {
