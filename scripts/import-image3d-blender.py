@@ -8,6 +8,7 @@ blender -b --factory-startup --python-exit-code 1 \
   --species cat --input-glb /path/to/downloaded-cat.glb --output-dir /tmp/cat-review
 """
 import argparse
+import base64
 import hashlib
 import json
 import sys
@@ -21,7 +22,12 @@ from image3d_glb import inspect_glb
 
 
 def digest(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    # Large original-quality GLBs should not be copied into RAM for hashing.
+    result = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            result.update(chunk)
+    return result.hexdigest()
 
 
 def bounds_for(objects):
@@ -87,6 +93,61 @@ def setup_review_camera(low, high, span):
     scene.render.resolution_percentage = 100
 
 
+def render_fidelity_views(output, species, reference, low, high, span):
+    """Render actual geometry from several directions for human likeness review.
+
+    +Y is only an initial camera assumption: generated image-to-3D sources can
+    use arbitrary orientation. Reviewers must align front in Blender first.
+    """
+    camera = bpy.context.scene.camera
+    centre = (low + high) / 2
+    bpy.context.scene.frame_set(1)
+    poses = {
+        "front": (0, 1.7, .2),
+        "three-quarter": (.9, 1.5, .55),
+        "side": (1.7, 0, .2),
+        "back": (0, -1.7, .2),
+    }
+    views = []
+    for name, direction in poses.items():
+        camera.location = centre + Vector(direction) * span
+        camera.rotation_euler = (centre - camera.location).to_track_quat("-Z", "Y").to_euler()
+        filename = species + "-image3d-" + name + ".png"
+        bpy.context.scene.render.filepath = str(output / filename)
+        bpy.ops.render.render(write_still=True)
+        views.append((name, filename))
+    # Restore the editable Blender project to the three-quarter view.
+    camera.location = centre + Vector(poses["three-quarter"]) * span
+    camera.rotation_euler = (centre - camera.location).to_track_quat("-Z", "Y").to_euler()
+    original_image = base64.b64encode(reference.read_bytes()).decode("ascii")
+    cards = "".join(
+        '<figure><img src="' + filename + '" alt="' + name + ' camera view">'
+        '<figcaption>' + name.title() + '</figcaption></figure>'
+        for name, filename in views
+    )
+    gallery = output / (species + "-fidelity-review.html")
+    gallery.write_text(
+        '<!doctype html><html lang="en"><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<title>' + species + ' original-to-3D review</title>'
+        '<style>body{font:16px system-ui;margin:0 auto;padding:24px;max-width:1250px;'
+        'background:#f5f3ed;color:#302d2b}main{display:grid;'
+        'grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px}'
+        'figure{margin:0;background:white;border-radius:18px;padding:14px}'
+        'img{display:block;width:100%;aspect-ratio:1;object-fit:contain}'
+        'figcaption{padding:12px 0 2px;font-weight:650}</style>'
+        '<h1>Original-to-3D fidelity review: ' + species + '</h1>'
+        '<p>Inspect silhouette, markings, eye and muzzle shape, proportions,'
+        ' fur and hidden anatomy. Camera front orientation is provisional.'
+        ' These are actual Blender renders, not photo projections.'
+        ' No model has been approved or auto-rigged.</p><main>'
+        '<figure><img src="data:image/jpeg;base64,' + original_image + '"'
+        ' alt="Original supplied animal image"><figcaption>Original image'
+        ' — source of truth</figcaption></figure>' + cards + '</main></html>',
+        encoding="utf-8")
+    return [filename for _, filename in views], gallery.name
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser()
@@ -134,12 +195,10 @@ def main():
     # Keep the full editable scene with the *actual original* image packed in.
     attach_packed_original(args.species, reference, low, high, span)
     setup_review_camera(low, high, span)
+    views, gallery = render_fidelity_views(output, args.species, reference, low, high, span)
     bpy.ops.file.pack_all()
     blend = output / (args.species + "-image3d-review.blend")
     bpy.ops.wm.save_as_mainfile(filepath=str(blend))
-
-    bpy.context.scene.render.filepath = str(output / (args.species + "-image3d-review.png"))
-    bpy.ops.render.render(write_still=True)
 
     # The source model is not necessarily skinned; no animation is invented.
     # Never allow this report to be mistaken for human visual approval.
@@ -152,6 +211,9 @@ def main():
         "candidate_glb_sha256": digest(candidate),
         "source_geometry": source_metrics,
         "exported_geometry": exported,
+        "review_views": views,
+        "fidelity_review_gallery": gallery,
+        "likeness_approved": False,
         "rigged_and_animated": bool(exported["skins"] and exported["animations"]),
         "needs_artistic_rigging": not bool(exported["skins"] and exported["animations"]),
         "note": "Static image-to-3D meshes do not animate automatically. Compare original likeness, sculpt, retopologize, rig, animate and manually review before any release.",
