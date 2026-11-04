@@ -24,6 +24,8 @@ jobs:
     timeout-minutes: 35
     env:
       HF_HUB_DISABLE_TELEMETRY: '1'
+      # Optional read-only Hugging Face token; when missing, anonymous tier.
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
