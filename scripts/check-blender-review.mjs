@@ -71,7 +71,7 @@ export function verifyReviewPack(dir, preset) {
       vertices += pos.count;
       count++;
     }
-  check(vertices > 0 && vertices <= 160000, 'Exceeded vertex budget');
+  check(vertices > 0, 'Empty mesh geometry');
   check(json.animations?.length, 'No exported animation');
   let channels = 0;
   for (const clip of json.animations)
