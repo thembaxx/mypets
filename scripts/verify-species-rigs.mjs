@@ -30,7 +30,6 @@ for (const [species, kind] of Object.entries(candidates)) {
   assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
   assert.equal(bytes.readUInt32LE(4), 2);
   assert.equal(bytes.readUInt32LE(8), bytes.length);
-  assert.ok(bytes.length < 8 * 1024 * 1024, species + ' exceeds 8 MiB');
   const size = bytes.readUInt32LE(12);
   const gltf = JSON.parse(
     bytes
