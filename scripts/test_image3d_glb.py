@@ -47,11 +47,27 @@ class Image3DPreflightTests(unittest.TestCase):
         self.assertEqual(info["skins"], 0)
         self.assertEqual(info["animations"], [])
 
-    def test_real_rig_and_animation_are_reported(self):
+    def test_skin_and_clip_names_alone_do_not_prove_animation(self):
         info = self.check(sample_glb(skins=[{"joints": [0]}],
                                      animations=[{"name": "Walk"}]))
         self.assertEqual(info["skins"], 1)
         self.assertEqual(info["animations"], ["Walk"])
+        self.assertFalse(info["rigged_and_animated"])
+        self.assertEqual(info["weighted_mesh_nodes"], 0)
+        self.assertEqual(info["animation_channel_count"], 0)
+
+    def test_weighted_mesh_and_real_animation_channels_count_as_rigged(self):
+        mesh = [{"primitives": [{"attributes": {
+            "POSITION": 0, "JOINTS_0": 1, "WEIGHTS_0": 2}}]}]
+        nodes = [{"mesh": 0, "skin": 0}]
+        animations = [{"name": "Walk", "channels": [
+            {"target": {"node": 0, "path": "rotation"}}]}]
+        info = self.check(sample_glb(meshes=mesh, nodes=nodes,
+                                     skins=[{"joints": [0]}],
+                                     animations=animations))
+        self.assertEqual(info["weighted_mesh_nodes"], 1)
+        self.assertEqual(info["animation_channel_count"], 1)
+        self.assertTrue(info["rigged_and_animated"])
 
     def test_rejects_external_urls(self):
         with self.assertRaisesRegex(ValueError, "external resources"):
