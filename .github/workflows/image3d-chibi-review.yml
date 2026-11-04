@@ -22,7 +22,7 @@ jobs:
           timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
           timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
           python3 -m py_compile scripts/author-chibi-heroes.py
-      - name: Render source-guided characters with PBR materials in Cycles
+      - name: Render source-guided PBR characters without optional denoiser
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/source-chibi"
