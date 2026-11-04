@@ -455,18 +455,19 @@ def review(slug, rig, out):
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"
     scene.render.film_transparent = False
-    scene.view_settings.view_transform = "Standard"
+    scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = "Medium High Contrast"
+    scene.view_settings.exposure = -1.0
     scene.world.use_nodes = True
     background = scene.world.node_tree.nodes.get("Background")
-    background.inputs["Color"].default_value = (.94, .94, .94, 1)
-    background.inputs["Strength"].default_value = .9
+    background.inputs["Color"].default_value = (.82, .82, .82, 1)
+    background.inputs["Strength"].default_value = .40
 
     floor_mat = bpy.data.materials.new("Review only — warm-white studio floor")
-    floor_mat.diffuse_color = (.96, .96, .94, 1)
+    floor_mat.diffuse_color = (.91, .91, .89, 1)
     floor_mat.use_nodes = True
     shader = floor_mat.node_tree.nodes.get("Principled BSDF")
-    shader.inputs["Base Color"].default_value = (.96, .96, .94, 1)
+    shader.inputs["Base Color"].default_value = (.91, .91, .89, 1)
     shader.inputs["Roughness"].default_value = .94
     bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, -.05))
     floor = bpy.context.object
@@ -495,9 +496,9 @@ def review(slug, rig, out):
         return lamp
 
     lamps = [
-        area_light("Review only — soft key", (2.7, 4.4, 5.2), 450, 4.5),
-        area_light("Review only — frontal fill", (-3.1, 3.1, 3.8), 230, 3.5),
-        area_light("Review only — soft rear rim", (0, -3.5, 4.0), 190, 3.0),
+        area_light("Review only — soft key", (2.7, 4.4, 5.2), 100, 4.5),
+        area_light("Review only — frontal fill", (-3.1, 3.1, 3.8), 55, 3.5),
+        area_light("Review only — soft rear rim", (0, -3.5, 4.0), 40, 3.0),
     ]
     try:
         for name, frame in (("idle", 9), ("play", 13), ("jump", 37)):
