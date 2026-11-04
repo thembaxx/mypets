@@ -524,6 +524,21 @@ def review(slug, rig, out):
                     )
             finally:
                 bpy.data.images.remove(rendered)
+        # Independently prove complete silhouette and limbs, even when PBR
+        # exposure or pale materials mask the actual 3D geometry.
+        scene.render.engine = "BLENDER_WORKBENCH"
+        scene.display.shading.light = "STUDIO"
+        scene.display.shading.color_type = "MATERIAL"
+        scene.display.shading.show_cavity = True
+        scene.display.shading.show_shadows = False
+        scene.display.shading.background_type = "WORLD"
+        scene.world.color = (.42, .45, .50)
+        for track in rig.animation_data.nla_tracks:
+            track.mute = track.name != "Play"
+        scene.frame_set(13)
+        scene.render.filepath = str(out / (slug + "-silhouette-review.png"))
+        bpy.ops.render.render(write_still=True)
+        scene.render.engine = "CYCLES"
     finally:
         # These render-only lights and the shadow floor are NOT part of the
         # authored character's GLB. Keep the review camera in the editable
