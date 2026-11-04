@@ -53,3 +53,13 @@ test('high-detail Blender source reconstruction requires human approval', () => 
   assert.match(batch, /READY_FOR_HUMAN_FIDELITY_REVIEW/);
   assert.doesNotMatch(validator, /8 \* 1024 \* 1024|160000/);
 });
+
+test('opt-in cat dog rabbit previews prioritize source-style chibi rigs', () => {
+  const shared = source('components/shared.tsx');
+  assert.match(shared, /chibiCandidateModelUrl\(asset as AnimalCandidateId\)/);
+  assert.match(shared, /candidateModelUrl\(asset as AnimalCandidateId\)/);
+  assert.match(shared, /const experimentalModelUrl/);
+  assert.match(shared, /candidateUrl=\{experimentalModelUrl\}/);
+  const urls = source('lib/species-3d.ts');
+  assert.match(urls, /id === 'cat' \|\| id === 'dog' \|\| id === 'rabbit'/);
+});
