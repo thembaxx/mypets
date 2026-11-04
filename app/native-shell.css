@@ -6,8 +6,13 @@
   --nuzzle-safe-right: env(safe-area-inset-right, 0px);
 }
 @media (display-mode: standalone), (display-mode: fullscreen) {
-  html, body { min-height: 100dvh; }
-  body { overscroll-behavior-y: none; }
+  html,
+  body {
+    min-height: 100dvh;
+  }
+  body {
+    overscroll-behavior-y: none;
+  }
   .app-shell {
     min-height: 100dvh;
     padding-bottom: calc(114px + var(--nuzzle-safe-bottom));
@@ -22,7 +27,7 @@
   }
 }
 @media (max-width: 767px) and (display-mode: standalone),
-       (max-width: 767px) and (display-mode: fullscreen) {
+  (max-width: 767px) and (display-mode: fullscreen) {
   .app-shell {
     padding-left: max(16px, var(--nuzzle-safe-left));
     padding-right: max(16px, var(--nuzzle-safe-right));
