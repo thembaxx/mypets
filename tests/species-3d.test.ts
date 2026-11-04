@@ -21,6 +21,9 @@ test('every actual MyPets species has an isolated unapproved rigged GLB candidat
 test('real illustration breed variants resolve to distinct candidates', () => {
   assert.equal(animalAsset('fish', 'angelfish'), 'angelfish');
   assert.equal(animalAsset('bird', 'English budgie'), 'budgie');
+  assert.equal(animalAsset('bird', 'Budgerigar'), 'budgie');
+  assert.equal(animalAsset('bird', 'English Budgerigar'), 'budgie');
+  assert.equal(animalAsset('bird', 'Cockatiel'), 'bird');
   assert.equal(animalAsset('bird', 'canary'), 'canary');
   for (const variant of ['angelfish', 'budgie', 'canary'] as const) {
     assert.ok(candidateModelUrl(variant).includes('/' + variant + '.glb'));

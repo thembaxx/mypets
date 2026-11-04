@@ -34,7 +34,7 @@ import LivingCat, { FeedingBowl } from './living-cat';
 import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
 
-type ModelReport = { clips: string[]; morphs: string[] };
+type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
   idle: /idle|stand|breath|sit/i,
   walk: /walk|gait|locomotion|trot/i,
@@ -134,10 +134,11 @@ function AnimalModel({
   }, [morphTargets]);
   useEffect(() => {
     onReport({
+      url,
       clips: gltf.animations.map((clip) => clip.name),
       morphs: morphTargets.map((target) => target.name),
     });
-  }, [gltf.animations, morphTargets, onReport]);
+  }, [gltf.animations, morphTargets, onReport, url]);
   useEffect(() => {
     if (!gltf.animations.length) {
       running.current?.stop();
@@ -433,15 +434,24 @@ export default function TripoPet({
       setRecordError('This device could not start a 3D video recording.');
     }
   };
-  const namedClip = report ? findPetClip(report.clips, activity) : null;
-  const supportedAction = !activeUrl || activity === 'idle' || namedClip !== null;
-  const status = activeUrl
-    ? !report
-      ? 'Loading the rigged 3D model.'
-      : supportedAction
-        ? `Playing an authored 3D animation: ${namedClip ?? 'Idle'} (${report.clips.length} clips).`
-        : 'This model has no ' + activity + ' animation. Showing its idle pose.'
-    : 'Original 3D calico study. The illustrated pet remains unchanged.';
+  const currentReport = report?.url === activeUrl ? report : null;
+  const namedClip = currentReport ? findPetClip(currentReport.clips, activity) : null;
+  const idleClip = currentReport ? findPetClip(currentReport.clips, 'idle') : null;
+  const playingClip =
+    namedClip ?? idleClip ?? (activity === 'idle' ? currentReport?.clips[0] : null);
+  const status = motionBlocked
+    ? 'Animations are off in Settings or reduced-motion preferences. Rotation remains available.'
+    : paused || !pageVisible
+      ? 'Animation is paused. Rotation remains available.'
+      : activeUrl
+        ? !currentReport
+          ? 'Loading the rigged 3D model.'
+          : !playingClip
+            ? 'This model has no supported ' + activity + ' animation. Showing its current pose.'
+            : namedClip || activity === 'idle'
+              ? `Playing an authored 3D animation: ${playingClip} (${currentReport.clips.length} clips).`
+              : 'This model has no ' + activity + ' animation. Playing ' + playingClip + ' instead.'
+        : 'Original 3D calico study. The illustrated pet remains unchanged.';
   return createPortal(
     <div
       ref={viewerRef}
