@@ -4,7 +4,7 @@ import { Component, Suspense, useContext, useEffect, useMemo, useRef, useState }
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useReducedMotion } from 'motion/react';
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from '@react-three/fiber';
 import {
   AnimationMixer,
   Box3,
@@ -234,7 +234,7 @@ function AnimalModel({
     <primitive
       object={model}
       dispose={null}
-      onClick={(event) => {
+      onClick={(event: ThreeEvent<MouseEvent>) => {
         event.stopPropagation();
         onPet();
       }}
