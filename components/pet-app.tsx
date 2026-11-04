@@ -17,6 +17,8 @@ import {
   SunIcon,
   MoonIcon,
   DeviceMobileIcon,
+  CornersOutIcon,
+  CornersInIcon,
   ChatCircleDotsIcon,
   SparkleIcon,
 } from '@phosphor-icons/react';
@@ -99,6 +101,8 @@ export default function PetApp() {
   const [editPet, setEditPet] = useState<Pet | undefined>();
   const [toast, setToast] = useState('');
   const [offline, setOffline] = useState(false);
+  const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
+  const [fullscreenActive, setFullscreenActive] = useState(false);
   const [install, setInstall] = useState<InstallPrompt | null>(null);
   const [storageError, setStorageError] = useState(false);
   const notificationKeys = useRef(new Set<string>());
@@ -108,6 +112,25 @@ export default function PetApp() {
   const notify = useCallback((message: string) => {
     setToast(message);
   }, []);
+  useEffect(() => {
+    const sync = () => {
+      setFullscreenAvailable(document.fullscreenEnabled === true);
+      setFullscreenActive(Boolean(document.fullscreenElement));
+    };
+    sync();
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+  const toggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch {
+      notify(
+        'Fullscreen is unavailable here. Add Nuzzle to your home screen for an app-like view.',
+      );
+    }
+  };
   useEffect(() => {
     const saved = readData();
     setData(saved ?? createDemoData());
@@ -686,6 +709,20 @@ export default function PetApp() {
               <p>
                 <a href="/about/">About Nuzzle, sources & privacy</a>
               </p>
+              {fullscreenAvailable && (
+                <div className="settings-row">
+                  <div>
+                    <strong>Immersive app view</strong>
+                    <span>Expand Nuzzle to use more of your screen.</span>
+                  </div>
+                  <IconButton
+                    label={fullscreenActive ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    onClick={() => void toggleFullscreen()}
+                  >
+                    {fullscreenActive ? <CornersInIcon size={22} /> : <CornersOutIcon size={22} />}
+                  </IconButton>
+                </div>
+              )}
               <div className="settings-row">
                 <div>
                   <strong>Offline companion</strong>
