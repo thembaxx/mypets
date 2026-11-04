@@ -23,8 +23,9 @@ COLORS = {
         "secondary": (.34, .22, .21), "inner": (.99, .55, .59),
     },
     "dog": {
-        "fur": (.99, .93, .79), "patch": (.72, .43, .27),
-        "secondary": (.78, .54, .35), "inner": (.96, .57, .59),
+        # Cream muzzle, caramel crown and deep brown floppy ears from dog.jpg.
+        "fur": (.99, .94, .83), "patch": (.91, .61, .38),
+        "secondary": (.43, .25, .19), "inner": (.98, .51, .49),
     },
     "rabbit": {
         "fur": (.99, .97, .94), "patch": (.93, .68, .42),
@@ -55,7 +56,7 @@ def bind(mesh, rig, bone):
     return mesh
 
 
-def sphere(name, xyz, radii, mat, rig, bone, segments=32, rings=24, tilt=0):
+def sphere(name, xyz, radii, mat, rig, bone, segments=64, rings=48, tilt=0):
     bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings)
     obj = bpy.context.object
     obj.name = name
@@ -131,11 +132,11 @@ def happy_eye(slug, side, pigment, rig):
     points = []
     for i in range(19):
         u = -1 + 2*i/18
-        points.append((side*.265 + .15*u,
-                       .604 - .045*u*u,
-                       1.57 + .105*(1-u*u)))
+        points.append((side*.285 + .165*u,
+                       .630 - .042*u*u,
+                       1.59 + .115*(1-u*u)))
     eye=line(slug + (" left" if side<0 else " right") + " smiling eye arc",
-             points, .021, pigment, rig, "Head")
+             points, .025, pigment, rig, "Head")
     eye.shape_key_add(name="Basis")
     smile=eye.shape_key_add(name="Smile")
     wide=eye.shape_key_add(name="Eye_Wide")
@@ -149,59 +150,80 @@ def happy_eye(slug, side, pigment, rig):
 
 
 def face(slug, rig, materials):
+    """High-detail chibi face with actual surface coat patterns, not floating decals.
+
+    The supplied originals show enormous soft heads, raised closed-eye smiles,
+    a smaller button nose, a bright open mouth and subtle cheek blush.
+    Material regions are on the *same skinned head mesh* and survive GLB export.
+    """
     fur, patch, dark, pink, mouth, tongue = (materials[k] for k in
         ("fur", "patch", "dark", "pink", "mouth", "tongue"))
-    sphere(slug+" oversized plush head", (0, .13, 1.44),
-           (.58, .47, .56), fur, rig, "Head", 48, 34)
-    # A restrained patch conforms to the domed frontal silhouette.
-    if slug == "cat":
-        sphere(slug+" amber calico forehead", (-.32,.355,1.80),
-               (.24,.037,.19), patch, rig,"Head",28,20,tilt=.22)
-        sphere(slug+" cocoa calico temple", (.39,.32,1.73),
-               (.15,.030,.19), materials["secondary"], rig, "Head")
-    elif slug == "dog":
-        sphere(slug+" puppy caramel forehead", (-.30,.355,1.79),
-               (.26,.037,.21), patch, rig,"Head")
-    else:
-        sphere(slug+" peach crown patch", (.30,.33,1.85),
-               (.22,.035,.17), patch, rig,"Head")
+    dimensions = (.73, .57, .61) if slug == "dog" else (.67, .55, .61)
+    head = sphere(slug+" large continuous reference-proportion head",
+                  (0, .13, 1.45), dimensions, fur, rig, "Head", 104, 76)
+    head.data.materials.append(patch)
+    head.data.materials.append(materials["secondary"])
+    # Front is +Y. From a frontal camera world +X is viewer left.
+    # Coat regions are baked into distinct polygons rather than detached
+    # ellipsoids hovering above the skin.
+    if slug in ("cat", "dog"):
+        for face_poly in head.data.polygons:
+            pos = face_poly.center
+            if pos.y < .10 or pos.z < 1.54:
+                continue
+            if slug == "cat":
+                if pos.x > .16 and pos.z > 1.69:
+                    face_poly.material_index = 1
+                elif pos.x < -.24 and pos.z > 1.68:
+                    face_poly.material_index = 2
+            else:
+                if pos.x > .10 and pos.z > 1.61:
+                    face_poly.material_index = 1
+                elif pos.x < -.53 and pos.z > 1.76:
+                    face_poly.material_index = 1
 
     for side in (-1,1):
         happy_eye(slug, side, dark, rig)
-        cheek=sphere(slug+" cheek "+str(side), (side*.38,.54,1.36),
-                     (.17,.034,.11), pink, rig, "Head",24,16)
+        # Thin surface blush reads as a cheek tint rather than a loose ball.
+        cheek=sphere(slug+" gentle rosy cheek "+str(side),
+                     (side*.425,.60,1.36),(.17,.017,.115),
+                     materials["blush"], rig, "Head", 42, 28)
         cheek.shape_key_add(name="Basis")
         puff=cheek.shape_key_add(name="Cheek_Puff")
         for base,target in zip(cheek.data.shape_keys.key_blocks["Basis"].data,puff.data):
-            target.co.x=base.co.x*(1+.09)
-            target.co.y=base.co.y+.017
-        # Sculpted separate muzzle puffs create the plush-toy cheek outline.
-        sphere(slug+" muzzle puff "+str(side), (side*.115,.548,1.29),
-               (.155,.062,.09), fur, rig,"Head",24,16)
+            target.co.x=base.co.x*(1+.06)
+            target.co.y=base.co.y+.014
+        sphere(slug+" continuous-shaped muzzle cushion "+str(side),
+               (side*.115,.675,1.29),(.132,.047,.092),fur,rig,"Head",48,32)
 
-    sphere(slug+" button nose", (0,.622,1.40),
-           (.067,.037,.048), dark,rig,"Head",22,14)
-    opening=sphere(slug+" joyful open mouth", (0,.596,1.205),
-           (.19,.058,.144),mouth,rig,"Jaw",32,24)
+    nose_material = materials["nose"] if slug == "cat" else dark
+    sphere(slug+" small soft nose",(0,.710,1.405),
+           (.064,.032,.041),nose_material,rig,"Head",32,24)
+    opening=sphere(slug+" joyful open mouth", (0,.672,1.205),
+           (.235,.047,.168),mouth,rig,"Jaw",56,40)
     opening.shape_key_add(name="Basis")
     smile=opening.shape_key_add(name="Smile")
     wide=opening.shape_key_add(name="Jaw_Open")
     for basis, target_smile, target_wide in zip(
         opening.data.shape_keys.key_blocks["Basis"].data,smile.data,wide.data
     ):
-        edge=min(1.,abs(basis.co.x)/.2)
-        target_smile.co.z=basis.co.z+.03*edge
-        target_smile.co.x=basis.co.x*1.10
-        target_wide.co.z=1.205+(basis.co.z-1.205)*1.30
-    sphere(slug+" pink happy tongue",(0,.645,1.137),
-           (.105,.027,.058),tongue,rig,"Jaw",22,16)
-    # Nose-to-mouth smile bridges are geometry, moving with the Head bone.
+        edge=min(1.,abs(basis.co.x)/.235)
+        target_smile.co.z=basis.co.z+.035*edge
+        target_smile.co.x=basis.co.x*1.07
+        target_wide.co.z=1.205+(basis.co.z-1.205)*1.25
+    sphere(slug+" pink happy tongue",(0,.718,1.125),
+           (.137,.026,.077),tongue,rig,"Jaw",42,26)
     for side in (-1,1):
-        line(slug+" upturned smile crease "+str(side),
-             [(side*.15,.636,1.235),(side*.23,.590,1.29)],
-             .012,dark,rig,"Head")
+        line(slug+" little happy smile edge "+str(side),
+             [(side*.17,.708,1.240),(side*.239,.665,1.304)],
+             .010,dark,rig,"Head")
+        if slug == "cat":
+            for offset in (-1,1):
+                line(slug+" short cheek whisker "+str(side)+" "+str(offset),
+                     [(side*.50,.595,1.345+offset*.038),
+                      (side*.61,.562,1.343+offset*.070)],
+                     .010,dark,rig,"Head")
     return opening
-
 
 def ears(slug, rig, mats):
     main=mats["patch"] if slug=="dog" else mats["fur"]
@@ -399,6 +421,8 @@ def build(slug,out):
         "pink": material(slug+" rosy inner ear and paw",base["inner"]),
         "belly": material(slug+" ivory plush",(.995,.98,.93)),
         "dark": material(slug+" chocolate expression",(.26,.11,.10),.40),
+        "blush": material(slug+" soft blush",(.99,.67,.66),.94),
+        "nose": material(slug+" coral cat nose",(.96,.36,.36),.51),
         "mouth": material(slug+" joyful mouth",(.38,.065,.085),.44),
         "tongue": material(slug+" coral tongue",(.99,.38,.44),.48),
         "collar": material(slug+" festive collar",(.93,.69,.30),.36),
