@@ -799,11 +799,11 @@ export default function PetApp() {
               </div>
               <div className="settings-row">
                 <div>
-                  <strong>Playful animal illustrations</strong>
+                  <strong>Animal animations · 2D and 3D</strong>
                   <span>
                     {data.animalAnimations === false
-                      ? 'Original illustrations, completely still.'
-                      : 'Gentle movement, little reactions and drag to play.'}
+                      ? 'Animations are off. Images and 3D models can still be inspected.'
+                      : 'Animate illustrations and authored 3D movements. Toggle off anytime.'}
                   </span>
                 </div>
                 <button
@@ -811,7 +811,7 @@ export default function PetApp() {
                   className={'text-toggle ' + (data.animalAnimations !== false ? 'on' : '')}
                   role="switch"
                   aria-checked={data.animalAnimations !== false}
-                  aria-label="Playful animal illustrations"
+                  aria-label="Animal animations, including 3D"
                   onClick={() => {
                     setData((previous) => ({
                       ...previous,
