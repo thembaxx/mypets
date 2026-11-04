@@ -422,10 +422,38 @@ def build(slug,out):
         export_nla_strips=True,export_materials="EXPORT",
         export_yup=True,
     )
-    if not model.exists() or model.stat().st_size > 5*1024*1024:
-        raise RuntimeError("Missing or oversized new 3D chibi candidate: "+slug)
-    review(slug,rig,out)
-    return {"species":slug,"status":"EXPERIMENTAL_REVIEW_ONLY","bytes":model.stat().st_size}
+    if not model.exists() or model.stat().st_size < 24:
+        raise RuntimeError("Missing or truncated new 3D chibi candidate: "+slug)
+    review(slug, rig, out)
+    # Save independently editable Blender scenes with the exact original JPG
+    # packed as a viewport image. The reference plate is intentionally added
+    # AFTER GLB export, so it is not confused with actual model geometry.
+    source = Path(__file__).resolve().parent.parent / "assets/animal-originals" / (slug + ".jpg")
+    if not source.is_file():
+        raise RuntimeError("Original illustration missing for " + slug)
+    original = bpy.data.images.load(str(source), check_existing=False)
+    original.pack()
+    plate = bpy.data.objects.new("REFERENCE ONLY - original " + slug + " illustration", None)
+    bpy.context.scene.collection.objects.link(plate)
+    plate.empty_display_type = "IMAGE"
+    plate.data = original
+    plate.empty_display_size = 2.1
+    plate.empty_image_depth = "FRONT"
+    plate.location = (-2.25, 0, 1.15)
+    plate.rotation_euler.x = -math.pi / 2
+    plate.hide_render = True
+    for track in rig.animation_data.nla_tracks:
+        track.mute = track.name != "Play"
+    bpy.context.scene.frame_set(13)
+    bpy.ops.file.pack_all()
+    bpy.ops.wm.save_as_mainfile(filepath=str(out / (slug + ".blend")))
+    return {
+        "species": slug,
+        "status": "EXPERIMENTAL_REVIEW_ONLY",
+        "source_reference": "assets/animal-originals/" + slug + ".jpg",
+        "editable_blender": slug + ".blend",
+        "bytes": model.stat().st_size,
+    }
 
 
 def main():
