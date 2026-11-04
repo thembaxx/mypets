@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { useState } from 'react';
 import { ArrowLeftIcon, CubeTransparentIcon, PawPrintIcon } from '@phosphor-icons/react';
 import {
@@ -56,6 +57,18 @@ export default function ThreeDLabPage() {
             </option>
           ))}
         </select>
+        <figure aria-label="Original supplied animal illustration for 3D comparison">
+          <Image
+            src={'/animals/' + selected + '.webp'}
+            alt={'Original ' + candidateDisplayName(selected).toLowerCase() + ' artwork'}
+            width={200}
+            height={200}
+            style={{ display: 'block', width: 'min(200px, 100%)', height: 'auto', marginInline: 'auto', objectFit: 'contain' }}
+          />
+          <figcaption className="cat-lab-disclaimer">
+            Original 2D reference — compare the 3D model against this artwork.
+          </figcaption>
+        </figure>
         {videoStyleUrl && (
           <div className="cat-lab-style-picker" role="group" aria-label="Choose 3D character style">
             <button
