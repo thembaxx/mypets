@@ -2,7 +2,11 @@
 import { createContext, useContext, useRef, useState, useEffect, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { approvedTripoModels, type AnimalAsset } from '@/lib/tripo-models';
-import { candidateModelUrl, type AnimalCandidateId } from '@/lib/species-3d';
+import {
+  candidateModelUrl,
+  chibiCandidateModelUrl,
+  type AnimalCandidateId,
+} from '@/lib/species-3d';
 const TripoPet = dynamic(() => import('./tripo-pet'), { ssr: false });
 import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'motion/react';
 import {
@@ -99,7 +103,12 @@ export function Animal({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const asset = animalAsset(species, breed);
   const modelUrl = approvedTripoModels[asset as AnimalAsset];
-  const experimentalModelUrl = candidateModelUrl(asset as AnimalCandidateId);
+  // The supplied cat, dog and rabbit art has a plush chibi silhouette.
+  // Their chibi studies are a closer opt-in starting point than anatomical
+  // four-legged rigs. Neither is approved to replace the original image.
+  const experimentalModelUrl =
+    chibiCandidateModelUrl(asset as AnimalCandidateId) ??
+    candidateModelUrl(asset as AnimalCandidateId);
   const animated = enabled && !reduced && !photo;
   const swimmer = ['fish', 'snake', 'salamander'].includes(species);
   const flier = ['bird', 'chicken'].includes(species);
