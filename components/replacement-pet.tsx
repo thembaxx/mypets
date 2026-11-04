@@ -92,6 +92,7 @@ function PetScene({
   command,
   onTouch,
   onContextLost,
+  onIdle,
 }: {
   gltf: GLTF;
   asset: PetReplacement;
@@ -101,6 +102,7 @@ function PetScene({
   command: ViewCommand;
   onTouch: () => void;
   onContextLost: () => void;
+  onIdle: () => void;
 }) {
   const { camera, gl, scene, size, invalidate } = useThree();
   const prepared = useMemo(
@@ -116,6 +118,7 @@ function PetScene({
     [gltf, asset.aliases],
   );
   const controls = useRef<OrbitControls | null>(null);
+  const frameSize = useRef('');
   useEffect(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
     orbit.enablePan = false;
@@ -142,7 +145,10 @@ function PetScene({
     camera.far = distance * 30;
     orbit.minDistance = distance * 0.6;
     orbit.maxDistance = distance * 2;
-    if (command.type === 'reset' || command.sequence === 0) {
+    const nextSize = size.width + 'x' + size.height;
+    const resized = frameSize.current !== nextSize;
+    frameSize.current = nextSize;
+    if (resized || command.type === 'reset' || command.sequence === 0) {
       camera.position
         .copy(sphere.center)
         .add(new Vector3(0.65, 0.3, 1).normalize().multiplyScalar(distance));
@@ -174,6 +180,21 @@ function PetScene({
     controller.setActivity(activity, activity === 'touch');
     invalidate();
   }, [activity, touchSequence, controller, invalidate]);
+  useEffect(() => {
+    const finished = () => {
+      if (
+        activity === 'touch' &&
+        resolvePetClip(
+          gltf.animations.map((clip) => clip.name),
+          'idle',
+          asset.aliases,
+        )
+      )
+        onIdle();
+    };
+    controller.mixer.addEventListener('finished', finished);
+    return () => controller.mixer.removeEventListener('finished', finished);
+  }, [controller, activity, gltf.animations, asset.aliases, onIdle]);
   useEffect(() => () => controller.dispose(), [controller]);
   useEffect(() => {
     const generator = new PMREMGenerator(gl);
@@ -398,7 +419,7 @@ export default function ReplacementPet({
           ) : gltf ? (
             <RenderBoundary asset={asset}>
               <Canvas
-                frameloop={enabled ? 'always' : 'demand'}
+                frameloop={enabled && selectedClip.clip ? 'always' : 'demand'}
                 dpr={[1, 1.75]}
                 shadows
                 camera={{ position: [0, 1, 5], fov: 38 }}
@@ -419,8 +440,9 @@ export default function ReplacementPet({
                   asset={asset}
                   activity={activity}
                   touchSequence={touchSequence}
-                  enabled={enabled}
+                  enabled={enabled && !!selectedClip.clip}
                   command={command}
+                  onIdle={() => setActivity('idle')}
                   onTouch={touch}
                   onContextLost={() => setFailed(true)}
                 />

@@ -1,0 +1,25 @@
+{
+  "note": "Editable Blender masters; original files and derived rig/PBR files are explicitly named. Source/license credits in README.md.",
+  "files": {
+    "bird-original.blend": {
+      "bytes": 36513696,
+      "sha256": "f9de3eddfa6b2a72cc2bdc23c49510136616808703a353b36565570b09447504"
+    },
+    "bird-rigged.blend": {
+      "bytes": 11145851,
+      "sha256": "613e5a0d52415ae8c3a08fd2dc9304204549116a7c871ce4caca898fae453d3a"
+    },
+    "cat-imported.blend": {
+      "bytes": 2201871,
+      "sha256": "2cbc5bc56266dab5c8230c1f2f3ecc355361d3051fd0a9fff4a9de3fa0691bd4"
+    },
+    "rabbit-original.blend": {
+      "bytes": 5996916,
+      "sha256": "bb6deef1ee91b21380355138374cae87946451ce864502b1af68eb60f4750843"
+    },
+    "rabbit-runtime.blend": {
+      "bytes": 5351136,
+      "sha256": "c120dc3665d6ea829a13edf5dace1b4af7908b88bb0c76b4692a7a1ac31a47c7"
+    }
+  }
+}
