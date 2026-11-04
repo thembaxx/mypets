@@ -709,10 +709,10 @@ export default function PetApp() {
               </p>
               {fullscreenAvailable && (
                 <div className="settings-row">
-                <div>
-                  <strong>Immersive app view</strong>
-                  <span>Expand Nuzzle to use more of your screen.</span>
-                </div>
+                  <div>
+                    <strong>Immersive app view</strong>
+                    <span>Expand Nuzzle to use more of your screen.</span>
+                  </div>
                   <IconButton
                     label={fullscreenActive ? 'Exit fullscreen' : 'Enter fullscreen'}
                     onClick={() => void toggleFullscreen()}
