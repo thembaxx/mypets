@@ -1,7 +1,7 @@
 """Create LIMITED skeletal idle/touch studies from CC0 Grab3D meshes.
 Never authors locomotion, feeding or species behavior it cannot support.
 Run: blender -b -t 4 --python scripts/rig-replacement-studies.py -- bird INPUT.glb OUTPUT_DIR
-Source masters must be retained separately. Runtime mesh uses runtime density geometry;
+Source masters must be retained separately. Runtime mesh uses an explicit density ratio (default 0.125) after measured software-GPU limits;
 textures stay at source resolution. These outputs remain experimental.
 """
 import bpy, math, sys
