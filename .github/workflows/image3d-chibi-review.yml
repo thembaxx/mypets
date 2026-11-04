@@ -5,6 +5,8 @@ on:
       - feat/image-to-3d-blender-studio-20261104
     paths:
       - .github/workflows/image3d-chibi-review.yml
+      - scripts/author-chibi-heroes.py
+      - scripts/verify-chibi-heroes.mjs
   workflow_dispatch:
 
 permissions:
