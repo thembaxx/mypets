@@ -242,7 +242,7 @@ function AnimalModel({
   );
 }
 
-function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
+function PetOrbit({ reducedMotion, resetView }: { reducedMotion: boolean; resetView: number }) {
   const { camera, gl, invalidate } = useThree();
   const controls = useMemo(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
@@ -263,6 +263,13 @@ function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
       controls.dispose();
     };
   }, [controls, invalidate]);
+  useEffect(() => {
+    if (!resetView) return;
+    camera.position.set(0, 1.25, 4.8);
+    controls.target.set(0, 0.91, 0);
+    controls.update();
+    invalidate();
+  }, [resetView, camera, controls, invalidate]);
   useFrame(() => controls.update());
   return null;
 }
@@ -284,6 +291,7 @@ export default function TripoPet({
   defaultCandidate = false,
   candidateUrl = '/models/candidates/nuzzle-calico-rig.glb',
   allowProceduralCat = true,
+  referenceImageUrl,
 }: {
   url?: string;
   name: string;
@@ -291,11 +299,13 @@ export default function TripoPet({
   defaultCandidate?: boolean;
   candidateUrl?: string;
   allowProceduralCat?: boolean;
+  referenceImageUrl?: string;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const animationEnabled = useContext(AnimalAnimationContext);
   const systemReduced = !!useReducedMotion();
+  const motionBlocked = systemReduced || !animationEnabled;
   const [activity, setActivity] = useState<CatActivity>('idle');
   const [mood, setMood] = useState<CatMood>('happy');
   const [paused, setPaused] = useState(false);
@@ -309,6 +319,8 @@ export default function TripoPet({
   const localPreviewRef = useRef<string | null>(null);
   const [previewError, setPreviewError] = useState('');
   const [touchFeedback, setTouchFeedback] = useState('');
+  const [showReference, setShowReference] = useState(false);
+  const [frontReset, setFrontReset] = useState(0);
   const [candidateMode, setCandidateMode] = useState(defaultCandidate);
   const [pageVisible, setPageVisible] = useState(true);
   useEffect(() => {
@@ -319,6 +331,10 @@ export default function TripoPet({
   }, []);
   const activeUrl = localPreview ?? (candidateMode ? candidateUrl : url);
   const petAnimal = () => {
+    if (motionBlocked || paused) {
+      setTouchFeedback('Animations are turned off or paused. You can still rotate the model.');
+      return;
+    }
     setMood('happy');
     const canPlay = !activeUrl || (report !== null && findPetClip(report.clips, 'play') !== null);
     if (canPlay) setActivity('play');
@@ -332,7 +348,6 @@ export default function TripoPet({
   };
   // Sleeping background WebGL views saves GPU/battery on iPhone. Resume the
   // existing mixer position instead of restarting an action on visibility.
-  const motionBlocked = systemReduced || !animationEnabled;
   const reduced = motionBlocked || paused || !pageVisible;
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
@@ -462,7 +477,9 @@ export default function TripoPet({
   };
   const namedClip = report ? findPetClip(report.clips, activity) : null;
   const supportedAction = !activeUrl || activity === 'idle' || namedClip !== null;
-  const status = activeUrl
+  const status = motionBlocked
+    ? 'Animations are off in Settings or reduced-motion preferences. Rotation remains available.'
+    : activeUrl
     ? !report
       ? 'Loading the rigged 3D model.'
       : supportedAction
@@ -501,6 +518,12 @@ export default function TripoPet({
           </button>
         </div>
         <div className="tripo-living-stage">
+          {showReference && referenceImageUrl && (
+            <figure className="tripo-original-reference">
+              <img src={referenceImageUrl} alt={'Original ' + name + ' illustration'} />
+              <figcaption>Original reference</figcaption>
+            </figure>
+          )}
           <ModelErrorBoundary onClose={onClose} key={activeUrl || 'procedural'}>
             <Canvas
               frameloop={reduced ? 'demand' : 'always'}
@@ -567,11 +590,25 @@ export default function TripoPet({
                 )}
               </Suspense>
               {activeUrl && activity === 'eat' && <FeedingBowl distance={1.05} />}
-              <PetOrbit reducedMotion={reduced} />
+              <PetOrbit reducedMotion={reduced} resetView={frontReset} />
             </Canvas>
           </ModelErrorBoundary>
         </div>
         <div className="tripo-living-controls">
+          <div className="tripo-reference-tools" role="group" aria-label="Reference matching tools">
+            {referenceImageUrl && (
+              <button
+                type="button"
+                aria-pressed={showReference}
+                onClick={() => setShowReference((current) => !current)}
+              >
+                {showReference ? 'Hide original' : 'Compare with original'}
+              </button>
+            )}
+            <button type="button" onClick={() => setFrontReset((n) => n + 1)}>
+              Reset front view
+            </button>
+          </div>
           {!url && allowProceduralCat && (
             <button
               type="button"
@@ -615,7 +652,7 @@ export default function TripoPet({
             <button
               type="button"
               onClick={petAnimal}
-              disabled={recording}
+              disabled={recording || motionBlocked || paused}
               aria-label={'Pet ' + name + ' to start a playful animation'}
             >
               <PawPrintIcon size={19} aria-hidden="true" />
@@ -628,7 +665,7 @@ export default function TripoPet({
                 aria-pressed={activity === next}
                 className={activity === next ? 'active' : ''}
                 onClick={() => { setTouchFeedback(''); setActivity(next); }}
-                disabled={recording}
+                disabled={recording || motionBlocked}
               >
                 <Icon size={19} aria-hidden="true" />
                 {label}
