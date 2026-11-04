@@ -77,7 +77,7 @@ In the studio choose **Compare with original** to keep the supplied illustration
 
 ### Batch all 17 original pets (once source-derived GLBs exist)
 
-Place independently generated, self-contained high-detail image-to-3D GLBs in one local directory using the original names: `cat.glb`, `dog.glb`, `rabbit.glb`, `angelfish.glb`, and so on. No image or GLB is uploaded by this repository. Then run:
+Place independently generated, self-contained high-detail image-to-3D GLBs in one local directory using the original names: `cat.glb`, `dog.glb`, `rabbit.glb`, `angelfish.glb`, and so on. The offline batch command does not upload images or GLBs. The separate optional public Pixal3D pilot deliberately sends only a public original animal illustration's prepared PNG to a third-party demo; it does not send users' personal pet photos. Then run:
 
 ```sh
 python3 -m unittest discover -s scripts -p 'test_*image3d*.py' -v
@@ -116,3 +116,26 @@ Avoid committing oversized binaries into `public/` while the static exporter sti
 The offline source-guided procedural cat and dog rigs were generated as real editable Blender assets in [workflow 41853390250](https://github.com/thembaxx/mypets/actions/runs/41853390250). The previous chibi rig renders from an existing workflow and higher-polygon source-inspired chibi candidates were also built in [workflow 41855236783](https://github.com/thembaxx/mypets/actions/runs/41855236783). All retain the original art as source reference, but their shapes still have clear likeness gaps: oversized separate limb balls, angular border between coat materials, flat facial blush, and less dynamic play/jump poses than the artwork. These completed Blender builds prove the pipeline works, **not** the required source-image fidelity.
 
 The real render packs remain unapproved and are not automatically inserted into `approvedTripoModels`. The front view and three-quarter original art comparisons must be reviewed before any final model reaches the production page. Preserve the larger editable .blend files and runtime-optional GLBs rather than forcing a low-detail model simply because of historic 8 MiB budgets.
+
+## November 4: corrected reconstruction-first retry
+
+The procedural and chibi rig renders were **rejected for poor resemblance** to the original cat, dog, and rabbit artwork. Rerendering those generic rigs is not a reconstruction strategy. Their skeletons and authored actions remain experimental behavior references only. The 17 original JPGs and production 2D illustrations remain unchanged.
+
+The new `scripts/prepare-image3d-source.py` extracts the actual original illustrated pets into cropped, transparency-matted RGBA PNGs for **image-conditioned 3D inference**. It also handles the checkerboard pattern baked into several source JPGs, which is not genuine transparency. The inputs need human edge/hair/whisker inspection; they are not models. To recreate all 17:
+
+```sh
+python3 -m pip install 'numpy>=2,<3' 'opencv-python-headless>=4.10,<5' 'Pillow>=11,<13'
+python3 -m unittest scripts/test_prepare_image3d_source.py -v
+python3 scripts/prepare-image3d-source.py \
+  --original-dir assets/animal-originals \
+  --output-dir /tmp/mypets-real-source-inputs \
+  --size 1024
+```
+
+The source-pack workflow [41860677723](https://github.com/thembaxx/mypets/actions/runs/41860677723) passed for **all 17** and produced review-only PNG artifacts. These are actual source image pixels, **not** recreated artwork, output 3D geometry, a rig, or evidence of 3D fidelity.
+
+A single **cat-only** attempt against the public shared GPU Pixal3D Space ran in [workflow 41860920358](https://github.com/thembaxx/mypets/actions/runs/41860920358). The original artwork already exists publicly in this repository. The external Space's ZeroGPU free-tier quota blocked the real geometry-generation stage; **no Pixal3D GLB was generated**. No GPU purchases, API keys, paid service, hosting, or recurring charges were provisioned. Never replace this blocked result with procedural chibi rigs or report the job as successful. Future requests to run paid GPU inference require explicit approval; the pilot is manual after its initial single-commit run.
+
+Next unblocked production-quality process: generate a **genuinely image-conditioned** textured GLB, preserve its detailed mesh/materials, import into Blender with `scripts/import-image3d-blender.py`, visually compare front/three-quarter/side/rear against the original, manually correct topology/markings, retopologize and skin the source-derived model to a deforming species-specific skeleton, author distinct Idle/Walk/Eat/Play/Groom/Rest/Sniff actions, and test on mobile GPU. Do not mark any model approved until its geometry, source likeness, skinning, actual clips, animation preference and device performance pass human review.
+
+A high-fidelity image-to-3D mesh may be entirely static. A GLB containing skin joints and named animation clips is necessary for current authored action playback; its 3D likeness and deformation quality are independent review gates.
