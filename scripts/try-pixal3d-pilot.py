@@ -17,6 +17,14 @@ from image3d_glb import inspect_glb
 SPACE = "TencentARC/Pixal3D"
 
 
+def digest_file(path: Path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, required=True)
@@ -68,15 +76,20 @@ def main():
         details = inspect_glb(glb)
         report.update({
             "status": "GENERATED_SOURCE_CONDITIONED_GL_BUT_NOT_APPROVED",
-            "glb_sha256": hashlib.sha256(glb.read_bytes()).hexdigest(),
+            "glb_sha256": digest_file(glb),
             "model_properties": details,
             "rigged": details.get("rigged_and_animated", False),
         })
         print("SOURCE_CONDITIONED_GLB_CANDIDATE", json.dumps(report), flush=True)
     except Exception as exc:
-        report["status"] = "BLOCKED_PUBLIC_DEMO_UNAVAILABLE"
+        detail = str(exc)
+        report["status"] = (
+            "BLOCKED_FREE_ZERO_GPU_QUOTA"
+            if "ZeroGPU quota" in detail
+            else "BLOCKED_PUBLIC_DEMO_UNAVAILABLE"
+        )
         report["error_type"] = type(exc).__name__
-        report["reason"] = str(exc)[:700]
+        report["reason"] = detail[:700]
         raise
     finally:
         receipt.write_text(json.dumps(report, indent=2)+"\n", encoding="utf-8")
