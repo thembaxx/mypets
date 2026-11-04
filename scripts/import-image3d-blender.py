@@ -214,8 +214,8 @@ def main():
         "review_views": views,
         "fidelity_review_gallery": gallery,
         "likeness_approved": False,
-        "rigged_and_animated": bool(exported["skins"] and exported["animations"]),
-        "needs_artistic_rigging": not bool(exported["skins"] and exported["animations"]),
+        "rigged_and_animated": exported["rigged_and_animated"],
+        "needs_artistic_rigging": not exported["rigged_and_animated"],
         "note": "Static image-to-3D meshes do not animate automatically. Compare original likeness, sculpt, retopologize, rig, animate and manually review before any release.",
     }
     (output / (args.species + "-image3d-review.json")).write_text(
