@@ -7,12 +7,12 @@ References:
 - [Fursund's 3 November 2026 demonstration](https://x.com/fursund/status/2117550901250412957) shows local WebGPU image-to-3D using a model called Idol and links to [Convert3D](https://convert3d.org/image-to-3d).
 - [Ithielix's 2 November 2026 post](https://x.com/ithielix/status/2117127490208485397) links a seven-minute AI-assisted responsive 3D website tutorial. It informs the interactive viewer, not the modeling or rigging process.
 
-These are *complementary* tools. A single-image 3D generator can output a mesh and surface appearance, but cannot reliably reconstruct hidden anatomical surfaces or invent real animal biomechanics, rigging, facial shapes and animation from one view.
+These are _complementary_ tools. A single-image 3D generator can output a mesh and surface appearance, but cannot reliably reconstruct hidden anatomical surfaces or invent real animal biomechanics, rigging, facial shapes and animation from one view.
 
 ## What you can try immediately
 
 1. Open `/3d-lab` to inspect the 17 original animal designs using the existing cat candidate plus 16 species-specific rigged Blender GLBs. On interactive pet cards, choose **Explore experimental 3D**.
-2. Rotate, pinch-zoom, choose **Walk**, **Eat**, **Play**, **Groom** or **Sniff**, or tap directly on the animal / press **Pet** to trigger its *existing* authored Play clip when present.
+2. Rotate, pinch-zoom, choose **Walk**, **Eat**, **Play**, **Groom** or **Sniff**, or tap directly on the animal / press **Pet** to trigger its _existing_ authored Play clip when present.
 3. Use **Review a downloaded Blender GLB (on-device only)** to inspect any self-contained GLB exported by an image-to-3D generator or Blender. It stays local to the device. A model with no authored animation can be rotated, but cannot genuinely walk or eat.
 4. All supplied WebP illustrations remain the default art; personally uploaded pet photos are not sent to Convert3D or assigned a generic species-specific mesh.
 
@@ -67,7 +67,7 @@ No imported candidate or procedural model is registered in `approvedTripoModels`
 
 The existing **Settings → Animal animations · 2D and 3D** switch now also applies to `/3d-lab`, where the saved setting is loaded on mount and refreshed on focus/storage updates. When off (or system reduced-motion is on), the studio displays a still 3D model, permits orbit/zoom and original-art comparison, but does not run authored animation clips. It also disables controls that would claim to trigger motion. The preference is stored with the user's existing local app data; no new account or permission is required.
 
-In the studio choose **Compare with original** to keep the supplied illustration visible while rotating the *real* model, or **Reset front view** for repeatable visual inspection. The original artwork is never baked as a fake flat replacement for missing 3D parts.
+In the studio choose **Compare with original** to keep the supplied illustration visible while rotating the _real_ model, or **Reset front view** for repeatable visual inspection. The original artwork is never baked as a fake flat replacement for missing 3D parts.
 
 ### Batch all 17 original pets (once source-derived GLBs exist)
 
@@ -80,7 +80,7 @@ python3 scripts/batch-image3d-blender.py \
   --output-dir /path/to/review-outputs
 ```
 
-The batch script records missing source models as **MISSING_GENERATED_GLB**, processes present models through Blender, exports editable `.blend` plus 3D review GLB and four genuine renders, and creates a browser-viewable comparison HTML alongside a JSON manifest. It exits nonzero if any expected species is missing or failed, rather than claiming to have completed all pets. This command is a preparation and QA tool, *not* automatic image-to-3D inference.
+The batch script records missing source models as **MISSING_GENERATED_GLB**, processes present models through Blender, exports editable `.blend` plus 3D review GLB and four genuine renders, and creates a browser-viewable comparison HTML alongside a JSON manifest. It exits nonzero if any expected species is missing or failed, rather than claiming to have completed all pets. This command is a preparation and QA tool, _not_ automatic image-to-3D inference.
 
 ### Visual acceptance criteria before any release
 
@@ -92,7 +92,6 @@ The batch script records missing source models as **MISSING_GENERATED_GLB**, pro
 6. Keep `approvedTripoModels` empty until individual visual approval and both desktop/mobile QA pass.
 
 **Current status:** The new pipeline and controls are committed as a draft PR; there are no new Convert3D-generated animal meshes attached to this branch, and genuine multi-angle renders of those meshes cannot exist until such input GLBs are provided and Blender executes. Do not claim any animal has already reached original-image fidelity.
-
 
 ### Hosting source-faithful GLBs beyond the current static file limit
 

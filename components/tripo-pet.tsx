@@ -480,12 +480,12 @@ export default function TripoPet({
   const status = motionBlocked
     ? 'Animations are off in Settings or reduced-motion preferences. Rotation remains available.'
     : activeUrl
-    ? !report
-      ? 'Loading the rigged 3D model.'
-      : supportedAction
-        ? `Playing an authored 3D animation: ${namedClip ?? 'Idle'} (${report.clips.length} clips).`
-        : 'This model has no ' + activity + ' animation. Showing its idle pose.'
-    : 'Original 3D calico study. The illustrated pet remains unchanged.';
+      ? !report
+        ? 'Loading the rigged 3D model.'
+        : supportedAction
+          ? `Playing an authored 3D animation: ${namedClip ?? 'Idle'} (${report.clips.length} clips).`
+          : 'This model has no ' + activity + ' animation. Showing its idle pose.'
+      : 'Original 3D calico study. The illustrated pet remains unchanged.';
   return createPortal(
     <div
       ref={viewerRef}
@@ -664,7 +664,10 @@ export default function TripoPet({
                 type="button"
                 aria-pressed={activity === next}
                 className={activity === next ? 'active' : ''}
-                onClick={() => { setTouchFeedback(''); setActivity(next); }}
+                onClick={() => {
+                  setTouchFeedback('');
+                  setActivity(next);
+                }}
                 disabled={recording || motionBlocked}
               >
                 <Icon size={19} aria-hidden="true" />

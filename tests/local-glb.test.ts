@@ -54,11 +54,14 @@ test('accepts detailed meshes without imposing visual fidelity budgets', () => {
 });
 test('rejects an invalid accessor even when geometry detail is unrestricted', () => {
   assert.throws(
-    () => validateLocalGlb(makeGlb({
-      ...valid,
-      accessors: [],
-      meshes: [{ primitives: [{ attributes: { POSITION: 3 } }] }],
-    })),
+    () =>
+      validateLocalGlb(
+        makeGlb({
+          ...valid,
+          accessors: [],
+          meshes: [{ primitives: [{ attributes: { POSITION: 3 } }] }],
+        }),
+      ),
     /invalid mesh POSITION/,
   );
 });

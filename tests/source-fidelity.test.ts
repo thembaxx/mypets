@@ -6,10 +6,12 @@ const source = (relative: string) =>
   readFileSync(new URL('../' + relative, import.meta.url), 'utf8');
 
 test('all original animals stay source-of-truth during optional 3D preview', () => {
-  const originals = readdirSync(new URL('../assets/animal-originals/', import.meta.url))
-    .filter((file) => file.endsWith('.jpg'));
-  const illustrations = readdirSync(new URL('../public/animals/', import.meta.url))
-    .filter((file) => file.endsWith('.webp'));
+  const originals = readdirSync(new URL('../assets/animal-originals/', import.meta.url)).filter(
+    (file) => file.endsWith('.jpg'),
+  );
+  const illustrations = readdirSync(new URL('../public/animals/', import.meta.url)).filter((file) =>
+    file.endsWith('.webp'),
+  );
   assert.equal(originals.length, 17);
   for (const file of originals) {
     assert.ok(illustrations.includes(file.replace(/\.jpg$/, '.webp')), file);

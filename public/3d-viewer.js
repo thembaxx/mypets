@@ -115,8 +115,7 @@
     ];
   }
   function readGlb(array) {
-    if (array.byteLength < 28)
-      throw Error('The source GLB is truncated.');
+    if (array.byteLength < 28) throw Error('The source GLB is truncated.');
     const v = new DataView(array);
     if (
       v.getUint32(0, true) !== 0x46546c67 ||
@@ -531,8 +530,7 @@
     inform('Opening local review file…');
     try {
       if (!/\.glb$/i.test(file.name)) throw Error('Choose a .glb model file.');
-      if (file.size < 28)
-        throw Error('The GLB file is truncated.');
+      if (file.size < 28) throw Error('The GLB file is truncated.');
       const bytes = await file.arrayBuffer();
       resource = readGlb(bytes);
       clockElapsed = 0;
