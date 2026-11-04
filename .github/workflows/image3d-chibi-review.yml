@@ -1,12 +1,7 @@
-name: Source-faithful chibi Blender review
+# This pipeline is historical/procedural and failed visual likeness review.
+# Never auto-run it or treat an exported GLB as an original-art reconstruction.
+name: Rejected procedural chibi studies (manual diagnostic only)
 on:
-  push:
-    branches:
-      - feat/image-to-3d-blender-studio-20261104
-    paths:
-      - .github/workflows/image3d-chibi-review.yml
-      - scripts/author-chibi-heroes.py
-      - scripts/verify-chibi-heroes.mjs
   workflow_dispatch:
 
 permissions:
