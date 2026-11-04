@@ -14,8 +14,6 @@
     preserveDrawingBuffer: true,
     powerPreference: 'low-power',
   });
-  const MAX_FILE = 8 * 1024 * 1024;
-  const MAX_VERTICES = 160000;
   let resource = null;
   let currentController = null;
   let frame = 0;
@@ -117,8 +115,8 @@
     ];
   }
   function readGlb(array) {
-    if (array.byteLength < 28 || array.byteLength > MAX_FILE)
-      throw Error('Asset exceeds size budget or is truncated.');
+    if (array.byteLength < 28)
+      throw Error('The source GLB is truncated.');
     const v = new DataView(array);
     if (
       v.getUint32(0, true) !== 0x46546c67 ||
@@ -127,7 +125,7 @@
     )
       throw Error('Not a GLB 2.0 asset.');
     const jlen = v.getUint32(12, true);
-    if (jlen > 1024 * 1024 || jlen % 4 !== 0 || v.getUint32(16, true) !== 0x4e4f534a)
+    if (jlen > array.byteLength - 20 || jlen % 4 !== 0 || v.getUint32(16, true) !== 0x4e4f534a)
       throw Error('Invalid JSON chunk.');
     const offset = 20 + jlen;
     if (offset + 8 > array.byteLength) throw Error('Missing embedded mesh data.');
@@ -195,15 +193,12 @@
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(array, 28 + jlen, blen), gl.STATIC_DRAW);
     const meshes = [];
-    let totalPositions = 0;
     for (const mesh of json.meshes) {
       const parts = [];
       for (const prim of mesh.primitives || []) {
         if ((prim.mode ?? 4) !== 4) throw Error('Only triangle meshes are supported.');
         const position = getAccessor(prim.attributes?.POSITION);
         if (position.a.type !== 'VEC3') throw Error('Position format unsupported.');
-        totalPositions += position.a.count;
-        if (totalPositions > MAX_VERTICES) throw Error('Asset exceeds geometry budget.');
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -500,8 +495,6 @@
     try {
       const response = await fetch(path, { credentials: 'same-origin', signal: controller.signal });
       if (!response.ok) throw Error('HTTP ' + response.status);
-      if (Number(response.headers.get('content-length') || 0) > MAX_FILE)
-        throw Error('Model exceeds size budget.');
       const buffer = await response.arrayBuffer();
       if (controller.signal.aborted) return;
       resource = readGlb(buffer);
@@ -538,8 +531,8 @@
     inform('Opening local review file…');
     try {
       if (!/\.glb$/i.test(file.name)) throw Error('Choose a .glb model file.');
-      if (file.size < 28 || file.size > MAX_FILE)
-        throw Error('The GLB exceeds the 8 MiB review limit.');
+      if (file.size < 28)
+        throw Error('The GLB file is truncated.');
       const bytes = await file.arrayBuffer();
       resource = readGlb(bytes);
       clockElapsed = 0;
