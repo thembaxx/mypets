@@ -289,44 +289,60 @@ def ears(slug, rig, mats):
                            side, outer, inner, rig)
 
 def body_and_limbs(slug, rig, mats):
-    fur=mats["fur"]
-    accent=mats["patch"]
-    pink=mats["pink"]
-    sphere(slug+" round skinned plush torso", (0,-.08,.80),
-           (.41,.345,.46),fur,rig,"Body",42,30)
-    sphere(slug+" soft pale belly",(0,.235,.77),
-           (.315,.092,.34), mats["belly"],rig,"Body",30,22)
+    """Source-inspired large-head, small-body anatomy with visible paw pads."""
+    fur, accent, pink = mats["fur"], mats["patch"], mats["pink"]
+    body=sphere(slug+" round skinned plush torso", (0,-.08,.79),
+                (.40,.345,.44),fur,rig,"Body",80,60)
+    if slug in ("cat","dog"):
+        body.data.materials.append(accent)
+        for poly in body.data.polygons:
+            pos=poly.center
+            if pos.y > 0 and pos.z > .82 and pos.x > .22:
+                poly.material_index=1
+    sphere(slug+" soft pale belly",(0,.25,.74),
+           (.298,.075,.325),mats["belly"],rig,"Body",60,40)
     if slug=="dog":
-        sphere(slug+" neck collar", (0,.03,1.11),
-               (.34,.34,.074),mats["collar"],rig,"Body",34,16)
-        sphere(slug+" little golden collar tag",(0,.393,1.095),
-               (.09,.038,.10),mats["gold"],rig,"Body",20,16)
+        sphere(slug+" dark leather neck collar",(0,.02,1.095),
+               (.355,.35,.067),mats["collar"],rig,"Body",64,32)
+        sphere(slug+" golden round collar bell",(0,.407,1.065),
+               (.129,.047,.145),mats["gold"],rig,"Body",52,38)
+        sphere(slug+" gold bell glint",(0,.459,1.110),
+               (.039,.014,.052),mats["belly"],rig,"Body",28,20)
     for side in (-1,1):
         suffix="L" if side<0 else "R"
-        # Short plump articulated arms: raised by the actual Arm bones.
         sphere(slug+" lifted paw arm "+suffix,
-               (side*.44,.17,1.02),(.19,.19,.245),fur,rig,"Arm_"+suffix,32,20,
-               tilt=-side*.24)
+               (side*.444,.16,1.027),(.188,.186,.224),
+               fur,rig,"Arm_"+suffix,68,48,tilt=-side*.24)
+        sphere(slug+" raised paw pink pad "+suffix,
+               (side*.457,.343,1.04),(.103,.022,.087),
+               pink,rig,"Arm_"+suffix,36,28)
+        for digit in (-1,0,1):
+            sphere(slug+" raised paw toe "+suffix+" "+str(digit),
+                   (side*.455+digit*.065,.357,1.145),
+                   (.033,.012,.032),pink,rig,"Arm_"+suffix,24,18)
         sphere(slug+" plump planted haunch "+suffix,
-               (side*.24,-.005,.38),(.21,.19,.27),fur,rig,"Leg_"+suffix,32,22)
+               (side*.24,-.010,.39),(.198,.175,.245),
+               fur,rig,"Leg_"+suffix,64,40)
         sphere(slug+" tiny rounded foot "+suffix,
-               (side*.24,.18,.16),(.235,.265,.165),fur,rig,"Leg_"+suffix,32,22)
+               (side*.24,.160,.174),(.215,.218,.144),
+               fur,rig,"Leg_"+suffix,64,40)
         sphere(slug+" heart paw pad "+suffix,
-               (side*.24,.434,.16),(.105,.027,.075),pink,rig,"Leg_"+suffix,22,14)
+               (side*.24,.375,.157),(.105,.020,.077),
+               pink,rig,"Leg_"+suffix,36,24)
         for digit in (-1,0,1):
             sphere(slug+" paw digit "+suffix+" "+str(digit),
-                   (side*.24+digit*.095,.414,.085),
-                   (.052,.032,.041),pink,rig,"Leg_"+suffix,16,12)
+                   (side*.24+digit*.083,.373,.075),
+                   (.040,.019,.039),pink,rig,"Leg_"+suffix,24,18)
     if slug=="rabbit":
         sphere(slug+" cotton puff tail",(0,-.46,.77),
-               (.22,.23,.22),mats["belly"],rig,"Tail",26,18)
+               (.22,.23,.22),mats["belly"],rig,"Tail",50,34)
     else:
         line(slug+" curved expressive tail",
-             [(0,-.36,.83),(0,-.56,.82),(0,-.72,1.01),
-              (.15,-.77,1.18)],.125,accent,rig,"Tail")
+             [(0,-.35,.83),(0,-.54,.79),(0,-.76,.99),
+              (.18,-.78,1.19)],.120,accent,rig,"Tail")
         sphere(slug+" ivory fluffy tail tip",
-               (.15,-.77,1.18),(.15,.15,.15),mats["belly"],rig,"Tail",20,14)
-
+               (.18,-.78,1.19),(.157,.15,.157),
+               mats["belly"],rig,"Tail",44,32)
 
 def animate(slug, rig):
     rig.animation_data_create()
@@ -409,23 +425,23 @@ def review(slug, rig, out):
     # Workbench shadow projection from a large floor creates false wedges;
     # grounding is checked in the real WebGL stage, not with fake shadow bands.
     scene.display.shading.show_shadows=False
-    scene.render.resolution_x=600
-    scene.render.resolution_y=600
+    scene.render.resolution_x=900
+    scene.render.resolution_y=900
     scene.render.resolution_percentage=100
     scene.render.image_settings.file_format="PNG"
-    scene.display.shading.background_type="VIEWPORT"
-    scene.display.shading.background_color=(.96,.95,.93)
+    scene.display.shading.background_type="WORLD"
+    scene.world.color=(1.0,1.0,1.0)
     scene.render.film_transparent=False
     # Neutral studio colour retains an honest silhouette without adding
     # shadow artifacts to this materials-only Blender review.
     camera_data=bpy.data.cameras.new("Kawaii hero review camera")
     camera=bpy.data.objects.new("Kawaii hero review camera",camera_data)
     bpy.context.collection.objects.link(camera)
-    camera.location=(2.4,5.0,2.45)
+    camera.location=(0,5.0,2.45)
     look=Vector((0,0,1.24))
     camera.rotation_euler=(look-camera.location).to_track_quat("-Z","Y").to_euler()
     camera_data.type="ORTHO"
-    camera_data.ortho_scale=3.40 if slug=="rabbit" else 3.0
+    camera_data.ortho_scale=3.40 if slug=="rabbit" else 3.25
     scene.camera=camera
     for name, frame in (("idle",9),("play",13),("jump",37)):
         for track in rig.animation_data.nla_tracks:
