@@ -628,7 +628,7 @@ export default function TripoPet({
           <p className="tripo-living-status" role="status">
             {recordError || status}
           </p>
-          {(candidateMode && !localPreview || !activeUrl) && (
+          {((candidateMode && !localPreview) || !activeUrl) && (
             <details className="tripo-living-disclosure">
               <summary>About this 3D model</summary>
               {candidateMode && !localPreview && (
@@ -639,8 +639,8 @@ export default function TripoPet({
               )}
               {!activeUrl && (
                 <p className="tripo-living-note">
-                  This articulated 3D prototype simulates movement and collisions. It is not
-                  a photo-accurate reconstruction or physically exact animal.
+                  This articulated 3D prototype simulates movement and collisions. It is not a
+                  photo-accurate reconstruction or physically exact animal.
                 </p>
               )}
             </details>
