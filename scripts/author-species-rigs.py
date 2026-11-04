@@ -619,8 +619,8 @@ def build(slug, out):
         export_nla_strips=True,export_materials="EXPORT",
         export_yup=True,
     )
-    if not path.is_file() or path.stat().st_size>8*1024*1024:
-        raise RuntimeError("Missing or oversized species GLB: "+slug)
+    if not path.is_file() or path.stat().st_size<24:
+        raise RuntimeError("Missing or truncated species GLB: "+slug)
     rig.animation_data.action=None
     if slug in ("dog","rabbit","fish","angelfish"):
         for track in rig.animation_data.nla_tracks:
