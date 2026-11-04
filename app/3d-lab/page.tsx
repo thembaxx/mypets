@@ -2,7 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AnimalAnimationContext } from '@/components/shared';
+import { readData } from '@/lib/storage';
 import { ArrowLeftIcon, CubeTransparentIcon, PawPrintIcon } from '@phosphor-icons/react';
 import {
   animalCandidateIds,
@@ -20,6 +22,17 @@ const ThreeDCatStudio = dynamic(() => import('@/components/tripo-pet'), { ssr: f
  */
 export default function ThreeDLabPage() {
   const [open, setOpen] = useState(false);
+  const [animationEnabled, setAnimationEnabled] = useState(true);
+  useEffect(() => {
+    const sync = () => setAnimationEnabled(readData()?.animalAnimations !== false);
+    sync();
+    window.addEventListener('focus', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('focus', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
   const [selected, setSelected] = useState<AnimalCandidateId>('cat');
   const [visualStyle, setVisualStyle] = useState<'video' | 'previous'>('video');
   const cat = selected === 'cat';
@@ -28,6 +41,7 @@ export default function ThreeDLabPage() {
     visualStyle === 'video' && videoStyleUrl ? videoStyleUrl : candidateModelUrl(selected);
 
   return (
+    <AnimalAnimationContext.Provider value={animationEnabled}>
     <main className="cat-lab-page">
       <section className="cat-lab-content" aria-labelledby="cat-lab-title">
         <a className="cat-lab-back" href="/">
@@ -69,6 +83,10 @@ export default function ThreeDLabPage() {
             Original 2D reference — compare the 3D model against this artwork.
           </figcaption>
         </figure>
+        <p className="cat-lab-disclaimer">
+          Animations: {animationEnabled ? 'On' : 'Off'} — controlled from the main app Settings.
+          You can still rotate and inspect static 3D models.
+        </p>
         {videoStyleUrl && (
           <div className="cat-lab-style-picker" role="group" aria-label="Choose 3D character style">
             <button
@@ -103,10 +121,12 @@ export default function ThreeDLabPage() {
           name={cat ? 'Calico cat' : candidateDisplayName(selected)}
           defaultCandidate
           candidateUrl={selectedUrl}
+          referenceImageUrl={'/animals/' + selected + '.webp'}
           allowProceduralCat={cat}
           onClose={() => setOpen(false)}
         />
       )}
     </main>
+    </AnimalAnimationContext.Provider>
   );
 }
