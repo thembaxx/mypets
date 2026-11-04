@@ -28,6 +28,7 @@ import {
   PlayIcon,
   VideoCameraIcon,
   UploadSimpleIcon,
+  PawPrintIcon,
 } from '@phosphor-icons/react';
 import { AnimalAnimationContext } from './shared';
 import LivingCat, { FeedingBowl } from './living-cat';
@@ -85,12 +86,14 @@ function AnimalModel({
   mood,
   animated,
   onReport,
+  onPet,
 }: {
   url: string;
   activity: CatActivity;
   mood: CatMood;
   animated: boolean;
   onReport: (report: ModelReport) => void;
+  onPet: () => void;
 }) {
   const gltf = useLoader(GLTFLoader, url);
   const model = useMemo(() => {
@@ -226,7 +229,17 @@ function AnimalModel({
       if (target !== null) updateMeshMorph(mesh, index, target, dt);
     }
   });
-  return <primitive object={model} dispose={null} />;
+  // Actual model raycasts trigger play; the button also works by keyboard.
+  return (
+    <primitive
+      object={model}
+      dispose={null}
+      onClick={(event) => {
+        event.stopPropagation();
+        onPet();
+      }}
+    />
+  );
 }
 
 function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
@@ -295,6 +308,7 @@ export default function TripoPet({
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const localPreviewRef = useRef<string | null>(null);
   const [previewError, setPreviewError] = useState('');
+  const [touchFeedback, setTouchFeedback] = useState('');
   const [candidateMode, setCandidateMode] = useState(defaultCandidate);
   const [pageVisible, setPageVisible] = useState(true);
   useEffect(() => {
@@ -304,6 +318,18 @@ export default function TripoPet({
     return () => document.removeEventListener('visibilitychange', syncVisibility);
   }, []);
   const activeUrl = localPreview ?? (candidateMode ? candidateUrl : url);
+  const petAnimal = () => {
+    setMood('happy');
+    const canPlay = !activeUrl || (report !== null && findPetClip(report.clips, 'play') !== null);
+    if (canPlay) setActivity('play');
+    setTouchFeedback(
+      activeUrl && !report
+        ? 'The 3D model is still loading.'
+        : canPlay
+          ? 'Your pet is responding with its authored Play animation.'
+          : 'This generated 3D mesh has no Play animation yet. Rigging is needed.',
+    );
+  };
   // Sleeping background WebGL views saves GPU/battery on iPhone. Resume the
   // existing mixer position instead of restarting an action on visibility.
   const motionBlocked = systemReduced || !animationEnabled;
@@ -423,6 +449,7 @@ export default function TripoPet({
       };
       setRecordError('');
       setActivity('eat');
+      setTouchFeedback('');
       recorder.start(250);
       setRecording(true);
       recordTimeout.current = setTimeout(() => {
@@ -461,7 +488,7 @@ export default function TripoPet({
         <div className="tripo-heading">
           <div>
             <strong>{name} · 3D playroom</strong>
-            <span>Drag to rotate · pinch to zoom</span>
+            <span>Tap the pet to play · drag to rotate · pinch to zoom</span>
           </div>
           <button
             type="button"
@@ -525,10 +552,18 @@ export default function TripoPet({
                       mood={mood}
                       animated={!reduced}
                       onReport={setReport}
+                      onPet={petAnimal}
                     />
                   </group>
                 ) : (
-                  <LivingCat activity={activity} mood={mood} paused={reduced} />
+                  <group
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      petAnimal();
+                    }}
+                  >
+                    <LivingCat activity={activity} mood={mood} paused={reduced} />
+                  </group>
                 )}
               </Suspense>
               {activeUrl && activity === 'eat' && <FeedingBowl distance={1.05} />}
@@ -577,13 +612,22 @@ export default function TripoPet({
             </p>
           )}
           <div className="tripo-activity-picker" role="group" aria-label="Animal behaviour">
+            <button
+              type="button"
+              onClick={petAnimal}
+              disabled={recording}
+              aria-label={'Pet ' + name + ' to start a playful animation'}
+            >
+              <PawPrintIcon size={19} aria-hidden="true" />
+              Pet
+            </button>
             {actions.map(({ activity: next, label, Icon }) => (
               <button
                 key={next}
                 type="button"
                 aria-pressed={activity === next}
                 className={activity === next ? 'active' : ''}
-                onClick={() => setActivity(next)}
+                onClick={() => { setTouchFeedback(''); setActivity(next); }}
                 disabled={recording}
               >
                 <Icon size={19} aria-hidden="true" />
@@ -637,7 +681,7 @@ export default function TripoPet({
             </button>
           </div>
           <p className="tripo-living-status" role="status">
-            {recordError || status}
+            {recordError || touchFeedback || status}
           </p>
           {((candidateMode && !localPreview) || !activeUrl) && (
             <details className="tripo-living-disclosure">
