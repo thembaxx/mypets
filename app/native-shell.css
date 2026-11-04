@@ -26,6 +26,10 @@
   .app-shell {
     padding-left: max(16px, var(--nuzzle-safe-left));
     padding-right: max(16px, var(--nuzzle-safe-right));
+    padding-bottom: calc(122px + var(--nuzzle-safe-bottom));
+  }
+  .app-header {
+    min-height: calc(80px + var(--nuzzle-safe-top));
   }
   .tripo-living-controls {
     padding-bottom: max(16px, var(--nuzzle-safe-bottom));
