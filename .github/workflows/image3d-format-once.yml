@@ -1,0 +1,42 @@
+name: Format MyPets image-to-3D branch once
+on:
+  push:
+    branches:
+      - feat/image-to-3d-blender-studio-20261104
+    paths:
+      - .github/workflows/image3d-format-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+    steps:
+      - name: Checkout exact feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/image-to-3d-blender-studio-20261104
+          persist-credentials: true
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Fix formatting without touching dependency files
+        run: |
+          npx oxfmt app/3d-lab/page.tsx app/living-cat.css components/tripo-pet.tsx docs/image-to-3d-studio.md public/3d-viewer.js tests/local-glb.test.ts tests/source-fidelity.test.ts
+          npx oxfmt --check app/3d-lab/page.tsx app/living-cat.css components/tripo-pet.tsx docs/image-to-3d-studio.md public/3d-viewer.js tests/local-glb.test.ts tests/source-fidelity.test.ts
+      - name: Commit formatter-only changes to branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/3d-lab/page.tsx app/living-cat.css components/tripo-pet.tsx docs/image-to-3d-studio.md public/3d-viewer.js tests/local-glb.test.ts tests/source-fidelity.test.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(3d): apply exact Oxfmt formatting to image-to-3D updates'
+            git push origin HEAD:feat/image-to-3d-blender-studio-20261104
+          fi
