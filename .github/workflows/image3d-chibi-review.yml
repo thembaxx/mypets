@@ -1,0 +1,40 @@
+name: Source-faithful chibi Blender review
+on:
+  push:
+    branches:
+      - feat/image-to-3d-blender-studio-20261104
+    paths:
+      - .github/workflows/image3d-chibi-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  characters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install offline Blender
+        run: |
+          set -euo pipefail
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1 -o Acquire::http::Timeout=30
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Acquire::Retries=1 blender python3-numpy libegl1 libgl1-mesa-dri xvfb
+          python3 -m py_compile scripts/author-chibi-heroes.py
+      - name: Render all three original-like rigged candidate characters
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/source-chibi"
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup --python-exit-code 1 --python scripts/author-chibi-heroes.py -- --output-dir "$RUNNER_TEMP/source-chibi"
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/source-chibi" --require-assets
+          node scripts/verify-chibi-heroes.mjs "$RUNNER_TEMP/source-chibi"
+          cp assets/animal-originals/cat.jpg assets/animal-originals/dog.jpg assets/animal-originals/rabbit.jpg "$RUNNER_TEMP/source-chibi/"
+      - name: Upload visually reviewable but unapproved Blender sources
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-faithful-chibi-model-review
+          path: ${{ runner.temp }}/source-chibi/
+          if-no-files-found: warn
+          retention-days: 14
