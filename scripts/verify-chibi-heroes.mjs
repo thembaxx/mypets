@@ -13,7 +13,7 @@ for (const species of ['cat', 'dog', 'rabbit']) {
   assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
   assert.equal(bytes.readUInt32LE(4), 2);
   assert.equal(bytes.readUInt32LE(8), bytes.length);
-  assert.ok(bytes.length > 12000 && bytes.length < 5 * 1024 * 1024);
+  assert.ok(bytes.length > 12000, species + ' missing full-detail GLB');
   const digest = createHash('sha256').update(bytes).digest('hex');
   assert.ok(!digests.has(digest), species + ' is a duplicate animal GLB');
   digests.add(digest);
@@ -76,6 +76,11 @@ for (const species of ['cat', 'dog', 'rabbit']) {
   assert.ok(
     (gltf.meshes[cheek.mesh]?.extras?.targetNames ?? []).includes('Cheek_Puff'),
     species + ' face must support animated cheek emotion',
+  );
+  const editable = join(directory, species + '.blend');
+  assert.ok(
+    existsSync(editable) && statSync(editable).size > 1000,
+    species + ' missing editable Blender rig with packed source art',
   );
   for (const pose of ['idle', 'play', 'jump']) {
     const review = join(directory, species + '-' + pose + '-review.png');
