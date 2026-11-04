@@ -327,10 +327,16 @@ export default function TripoPet({
       ).filter((element) => element.getClientRects().length > 0);
       const first = controls[0];
       const last = controls[controls.length - 1];
-      if (event.shiftKey && (document.activeElement === first || !root.contains(document.activeElement))) {
+      if (
+        event.shiftKey &&
+        (document.activeElement === first || !root.contains(document.activeElement))
+      ) {
         event.preventDefault();
         last?.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !root.contains(document.activeElement))) {
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last || !root.contains(document.activeElement))
+      ) {
         event.preventDefault();
         first?.focus();
       }
