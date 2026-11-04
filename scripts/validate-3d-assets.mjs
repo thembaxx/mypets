@@ -2,12 +2,11 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MAX_BYTES = 8 * 1024 * 1024;
-const MAX_POSITIONS = 160_000;
-
-export function inspectGlb(bytes, maxBytes = MAX_BYTES) {
+// Fidelity-first: no default artifact byte or vertex-position budget.
+// A caller can optionally request a device-specific byte cap.
+export function inspectGlb(bytes, maxBytes = Number.POSITIVE_INFINITY) {
   if (bytes.length < 20 || bytes.length > maxBytes)
-    throw new Error('GLB size is invalid or exceeds the 8 MiB asset budget');
+    throw new Error('GLB is truncated or exceeds the caller-provided device budget');
   if (bytes.toString('ascii', 0, 4) !== 'glTF') throw new Error('Invalid GLB magic');
   if (bytes.readUInt32LE(4) !== 2 || bytes.readUInt32LE(8) !== bytes.length)
     throw new Error('Invalid GLB version or declared length');
@@ -43,8 +42,6 @@ export function inspectGlb(bytes, maxBytes = MAX_BYTES) {
       const index = primitive.attributes?.POSITION;
       return sum + (index === undefined ? 0 : (json.accessors?.[index]?.count ?? 0));
     }, 0);
-  if (positions > MAX_POSITIONS)
-    throw new Error(`Geometry exceeds ${MAX_POSITIONS} vertex-position budget`);
   if (
     (json.extensionsRequired ?? []).some(
       (extension) =>
