@@ -5,6 +5,19 @@
   flex-direction: column;
   isolation: isolate;
 }
+/* Keep the heading in its own layout row, never overlay the model's face.
+   The old absolute header obscured ears in the 375px browser QA captures. */
+.tripo-living-dialog > .tripo-heading {
+  position: relative;
+  inset: auto;
+  z-index: 5;
+  flex: 0 0 auto;
+  min-height: 66px;
+  padding: 14px 17px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border, #b6ae9d44);
+  pointer-events: auto;
+}
 .tripo-living-stage {
   position: relative;
   flex: 1 1 auto;
