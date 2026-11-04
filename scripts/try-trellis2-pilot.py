@@ -10,6 +10,7 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 import re
 import shutil
 from pathlib import Path
@@ -135,7 +136,12 @@ def main():
     try:
         make_conditioned_source(args.source, input_png)
         report["conditioned_sha256"] = sha256_file(input_png)
-        client = Client(SPACE, verbose=False)
+        # Optional read-only HF token uses a free account's 5-minute daily
+        # quota. No token means the stricter anonymous 2-minute allowance.
+        # Never log or persist the credential in review artifacts.
+        token = os.environ.get("HF_TOKEN") or None
+        report["authenticated_free_account"] = token is not None
+        client = Client(SPACE, token=token, verbose=False)
         api = client.view_api(return_format="dict")
         named = api.get("named_endpoints", {})
         if "/image_to_3d" not in named or "/extract_glb" not in named:
