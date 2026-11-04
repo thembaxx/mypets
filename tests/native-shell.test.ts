@@ -10,7 +10,7 @@ test('Nuzzle launches as standalone and retains an accessible fullscreen option'
   assert.deepEqual(manifest.display_override, ['standalone', 'minimal-ui']);
   const app = read('components/pet-app.tsx');
   assert.ok(app.includes('document.documentElement.requestFullscreen()'));
-  assert.ok(app.includes("fullscreenchange"));
+  assert.ok(app.includes('fullscreenchange'));
   assert.ok(app.includes('Exit fullscreen'));
 });
 
