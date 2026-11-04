@@ -1,0 +1,6 @@
+MyPets replacement animal credits
+
+No third-party replacement model is approved in this foundation release.
+Original MyPets illustrations remain available for all 17 animal categories.
+Individual replacement provenance and license records accompany the preview assets.
+See docs/replacement-animals.md in https://github.com/thembaxx/mypets.

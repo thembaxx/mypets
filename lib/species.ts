@@ -33,7 +33,7 @@ export const speciesNames: Record<Species, string> = {
 };
 export function animalAsset(species: Species, breed = '') {
   if (species === 'fish' && /angelfish/i.test(breed)) return 'angelfish';
-  if (species === 'bird' && /english/i.test(breed)) return 'budgie';
+  if (species === 'bird' && /budgie|budgerigar|english/i.test(breed)) return 'budgie';
   if (species === 'bird' && /canary/i.test(breed)) return 'canary';
   return species;
 }

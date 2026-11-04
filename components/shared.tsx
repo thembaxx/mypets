@@ -2,6 +2,8 @@
 import { createContext, useContext, useRef, useState, useEffect, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { approvedTripoModels, type AnimalAsset } from '@/lib/tripo-models';
+import { replacementFor } from '@/lib/pet-replacements';
+const ReplacementPet = dynamic(() => import('./replacement-pet'), { ssr: false });
 const TripoPet = dynamic(() => import('./tripo-pet'), { ssr: false });
 import { motion, AnimatePresence, useReducedMotion, useDragControls } from 'motion/react';
 import {
@@ -98,6 +100,7 @@ export function Animal({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const asset = animalAsset(species, breed);
   const modelUrl = approvedTripoModels[asset as AnimalAsset];
+  const replacement = replacementFor(asset);
   const animated = enabled && !reduced && !photo;
   const swimmer = ['fish', 'snake', 'salamander'].includes(species);
   const flier = ['bird', 'chicken'].includes(species);
@@ -156,7 +159,6 @@ export function Animal({
 
   // Keep the same footprint even when the illustration is entirely still.
   if (!interactive) return graphic;
-  if (!animated) return <div className="animal-interaction is-static">{graphic}</div>;
 
   return (
     <>
@@ -164,13 +166,14 @@ export function Animal({
         type="button"
         className="animal-interaction"
         aria-label={'Play with the ' + speciesNames[species].toLowerCase() + ' illustration'}
-        drag
+        drag={animated}
         dragConstraints={{ left: -12, right: 12, top: -9, bottom: 9 }}
         dragElastic={0.1}
         dragSnapToOrigin
-        whileHover={{ scale: 1.018, rotate: swimmer ? 1.5 : -1 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={animated ? { scale: 1.018, rotate: swimmer ? 1.5 : -1 } : undefined}
+        whileTap={animated ? { scale: 0.97 } : undefined}
         onClick={() => {
+          if (!animated) return;
           setReaction((value) => value + 1);
           setDelighted(true);
           haptic(true);
@@ -196,14 +199,21 @@ export function Animal({
           )}
         </AnimatePresence>
       </motion.button>
-      {(modelUrl || species === 'cat') && (
+      {(replacement || modelUrl || species === 'cat') && (
         <button type="button" className="animal-3d-launch" onClick={() => setView3d(true)}>
-          {modelUrl ? 'Explore in 3D' : 'Meet the 3D cat prototype'}
+          {replacement || modelUrl ? 'Explore in 3D' : 'Meet the 3D cat prototype'}
         </button>
       )}
-      {view3d && (modelUrl || species === 'cat') && (
-        <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
-      )}
+      {view3d &&
+        (replacement ? (
+          <ReplacementPet
+            asset={replacement}
+            name={speciesNames[species]}
+            onClose={() => setView3d(false)}
+          />
+        ) : modelUrl || species === 'cat' ? (
+          <TripoPet url={modelUrl} name={speciesNames[species]} onClose={() => setView3d(false)} />
+        ) : null)}
     </>
   );
 }

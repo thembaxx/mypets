@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './living-cat.css';
+import './replacement-pet.css';
 import './mobile-ux.css';
 import './native-shell.css';
 import { appearanceBootstrap } from '@/lib/appearance';

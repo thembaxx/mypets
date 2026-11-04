@@ -2,18 +2,15 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MAX_BYTES = 8 * 1024 * 1024;
-const MAX_POSITIONS = 160_000;
-
-export function inspectGlb(bytes, maxBytes = MAX_BYTES) {
-  if (bytes.length < 20 || bytes.length > maxBytes)
-    throw new Error('GLB size is invalid or exceeds the 8 MiB asset budget');
+export function inspectGlb(bytes) {
+  if (bytes.length < 20) throw new Error('GLB is too short for its header and JSON chunk');
   if (bytes.toString('ascii', 0, 4) !== 'glTF') throw new Error('Invalid GLB magic');
   if (bytes.readUInt32LE(4) !== 2 || bytes.readUInt32LE(8) !== bytes.length)
     throw new Error('Invalid GLB version or declared length');
   let offset = 12;
   let json;
-  let hasBinary = false;
+  let binaryLength = null;
+  let chunks = 0;
   while (offset < bytes.length) {
     if (offset + 8 > bytes.length) throw new Error('Truncated GLB chunk header');
     const length = bytes.readUInt32LE(offset);
@@ -21,12 +18,18 @@ export function inspectGlb(bytes, maxBytes = MAX_BYTES) {
     offset += 8;
     if (length % 4 !== 0 || offset + length > bytes.length)
       throw new Error('Truncated or unaligned GLB chunk');
+    if (chunks === 0 && type !== 0x4e4f534a) throw new Error('GLB JSON must be the first chunk');
     if (type === 0x4e4f534a) {
       if (json) throw new Error('Multiple JSON chunks');
       json = JSON.parse(bytes.toString('utf8', offset, offset + length).trim());
     }
-    if (type === 0x004e4942) hasBinary = true;
+    if (type === 0x004e4942) {
+      if (binaryLength !== null || chunks !== 1)
+        throw new Error('GLB BIN chunk must follow JSON once');
+      binaryLength = length;
+    }
     offset += length;
+    chunks++;
   }
   if (!json || json.asset?.version !== '2.0') throw new Error('Missing glTF 2.0 asset metadata');
   if (!Array.isArray(json.nodes) || !Array.isArray(json.scenes))
@@ -35,24 +38,57 @@ export function inspectGlb(bytes, maxBytes = MAX_BYTES) {
     if (item.uri && !item.uri.startsWith('data:'))
       throw new Error('External asset URI is forbidden; embed textures and buffers');
   }
-  if ((json.buffers ?? []).some((buffer) => !buffer.uri) && !hasBinary)
-    throw new Error('Embedded buffer missing BIN chunk');
+  for (const [index, buffer] of (json.buffers ?? []).entries()) {
+    if (!Number.isSafeInteger(buffer.byteLength) || buffer.byteLength < 0)
+      throw new Error('Invalid GLB buffer length');
+    if (!buffer.uri && (index !== 0 || binaryLength === null))
+      throw new Error('Embedded buffer missing BIN chunk');
+    if (
+      !buffer.uri &&
+      binaryLength !== null &&
+      (buffer.byteLength > binaryLength || binaryLength - buffer.byteLength > 3)
+    )
+      throw new Error('GLB buffer length does not match BIN chunk');
+  }
+  for (const view of json.bufferViews ?? []) {
+    const buffer = json.buffers?.[view.buffer];
+    const start = view.byteOffset ?? 0;
+    if (
+      !buffer ||
+      !Number.isSafeInteger(view.buffer) ||
+      !Number.isSafeInteger(start) ||
+      !Number.isSafeInteger(view.byteLength) ||
+      start < 0 ||
+      view.byteLength < 0 ||
+      start + view.byteLength > buffer.byteLength
+    )
+      throw new Error('GLB buffer view exceeds buffer bounds');
+  }
   const positions = (json.meshes ?? [])
     .flatMap((mesh) => mesh.primitives ?? [])
     .reduce((sum, primitive) => {
       const index = primitive.attributes?.POSITION;
       return sum + (index === undefined ? 0 : (json.accessors?.[index]?.count ?? 0));
     }, 0);
-  if (positions > MAX_POSITIONS)
-    throw new Error(`Geometry exceeds ${MAX_POSITIONS} vertex-position budget`);
   if (
     (json.extensionsRequired ?? []).some(
       (extension) =>
         ![
-          'KHR_draco_mesh_compression',
-          'KHR_texture_basisu',
-          'EXT_meshopt_compression',
           'KHR_mesh_quantization',
+          'KHR_lights_punctual',
+          'KHR_materials_unlit',
+          'KHR_texture_transform',
+          'KHR_materials_clearcoat',
+          'KHR_materials_diffuse_roughness',
+          'KHR_materials_dispersion',
+          'KHR_materials_ior',
+          'KHR_materials_sheen',
+          'KHR_materials_specular',
+          'KHR_materials_transmission',
+          'KHR_materials_iridescence',
+          'KHR_materials_anisotropy',
+          'KHR_materials_volume',
+          'KHR_materials_emissive_strength',
         ].includes(extension),
     )
   ) {
