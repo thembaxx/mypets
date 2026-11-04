@@ -443,6 +443,13 @@ def review(slug, rig, out):
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
     scene.cycles.samples = 24
+    # Ubuntu Blender can be built without OpenImageDenoiser. Cycles enables
+    # render denoising by default, and aborts before producing a single frame
+    # when its optional native library is unavailable. The source-fidelity
+    # review does not require denoising: retain the true PBR output instead.
+    for view_layer in scene.view_layers:
+        if hasattr(view_layer, "cycles"):
+            view_layer.cycles.use_denoising = False
     scene.render.resolution_x = 800
     scene.render.resolution_y = 800
     scene.render.resolution_percentage = 100
