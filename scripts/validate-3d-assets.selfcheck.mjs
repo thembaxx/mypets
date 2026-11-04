@@ -18,7 +18,7 @@ const valid = { asset: { version: '2.0' }, scenes: [{ nodes: [] }], nodes: [] };
 test('accepts a self-contained glTF 2.0 scene', () => {
   assert.deepEqual(inspectGlb(glb(valid)), { meshes: 0, positions: 0, animations: 0 });
 });
-test('rejects malformed magic, file length, and oversize assets', () => {
+test('rejects malformed magic, file length, and caller-defined capacity limits', () => {
   const binary = glb(valid);
   assert.throws(
     () => inspectGlb(Buffer.concat([Buffer.from('nope'), binary.subarray(4)])),
@@ -37,13 +37,13 @@ test('rejects remote buffers and texture URIs', () => {
     /External asset URI/,
   );
 });
-test('enforces mesh vertex budget and supported required extensions', () => {
+test('allows high-detail meshes but rejects unsupported required extensions', () => {
   const large = {
     ...valid,
     meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
     accessors: [{ count: 160_001 }],
   };
-  assert.throws(() => inspectGlb(glb(large)), /Geometry exceeds/);
+  assert.equal(inspectGlb(glb(large)).positions, 160_001);
   assert.throws(
     () => inspectGlb(glb({ ...valid, extensionsRequired: ['KHR_unknown'] })),
     /Unsupported mandatory/,
