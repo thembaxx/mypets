@@ -243,18 +243,25 @@ function AnimalModel({
 }
 
 function PetOrbit({ reducedMotion, resetView }: { reducedMotion: boolean; resetView: number }) {
-  const { camera, gl, invalidate } = useThree();
+  const { camera, gl, invalidate, size } = useThree();
+  // The mobile stage is much shorter than the desktop 3D lab. Do not use
+  // desktop camera framing on 375px-wide screens: character ears and head
+  // can disappear underneath the accessible modal heading.
+  const compact = size.width <= 520 || size.height <= 450;
+  const distance = compact ? 6.1 : 4.8;
+  const cameraY = compact ? 1.48 : 1.25;
+  const targetY = compact ? 1.2 : 0.91;
   const controls = useMemo(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
     orbit.enableDamping = !reducedMotion;
     orbit.enablePan = false;
-    orbit.target.set(0, 0.91, 0);
-    orbit.minDistance = 2.7;
-    orbit.maxDistance = 7;
+    orbit.target.set(0, targetY, 0);
+    orbit.minDistance = compact ? 3.2 : 2.7;
+    orbit.maxDistance = 8;
     orbit.maxPolarAngle = Math.PI / 2.06;
     orbit.update();
     return orbit;
-  }, [camera, gl, reducedMotion]);
+  }, [camera, gl, reducedMotion, compact, targetY]);
   useEffect(() => {
     const repaint = () => invalidate();
     controls.addEventListener('change', repaint);
@@ -264,12 +271,20 @@ function PetOrbit({ reducedMotion, resetView }: { reducedMotion: boolean; resetV
     };
   }, [controls, invalidate]);
   useEffect(() => {
-    if (!resetView) return;
-    camera.position.set(0, 1.25, 4.8);
-    controls.target.set(0, 0.91, 0);
+    // Reframe when switching from portrait to landscape or resizing the
+    // standalone app; keep the whole character visible, including raised paws.
+    camera.position.set(0, cameraY, distance);
+    controls.target.set(0, targetY, 0);
     controls.update();
     invalidate();
-  }, [resetView, camera, controls, invalidate]);
+  }, [camera, cameraY, distance, targetY, controls, invalidate]);
+  useEffect(() => {
+    if (!resetView) return;
+    camera.position.set(0, cameraY, distance);
+    controls.target.set(0, targetY, 0);
+    controls.update();
+    invalidate();
+  }, [resetView, camera, cameraY, distance, targetY, controls, invalidate]);
   useFrame(() => controls.update());
   return null;
 }
