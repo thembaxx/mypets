@@ -4,7 +4,7 @@
 
 References:
 
-- [Fursund's 3 November 2026 example](https://x.com/fursund/status/2117550901250412957) suggests an image-to-3D route. For the referenced [Speridlabs Idol model](https://github.com/speridlabs/idol-sdk), note that its actual output is a **3D Gaussian-splat PLY**, *not* a riggable triangle-mesh GLB. [Convert3D](https://convert3d.org/image-to-3d) offers a separate browser image-to-3D workflow, but generated model capability and quality require per-asset verification.
+- [Fursund's 3 November 2026 example](https://x.com/fursund/status/2117550901250412957) suggests an image-to-3D route. For the referenced [Speridlabs Idol model](https://github.com/speridlabs/idol-sdk), note that its actual output is a **3D Gaussian-splat PLY**, _not_ a riggable triangle-mesh GLB. [Convert3D](https://convert3d.org/image-to-3d) offers a separate browser image-to-3D workflow, but generated model capability and quality require per-asset verification.
 - [Ithielix's 2 November 2026 post](https://x.com/ithielix/status/2117127490208485397) links a seven-minute AI-assisted responsive 3D website tutorial. It informs the interactive viewer, not the modeling or rigging process.
 
 These are _complementary_ tools. A single-image 3D generator can output a mesh and surface appearance, but cannot reliably reconstruct hidden anatomical surfaces or invent real animal biomechanics, rigging, facial shapes and animation from one view.
@@ -20,7 +20,7 @@ These are _complementary_ tools. A single-image 3D generator can output a mesh a
 
 Idol's official SDK generates `.ply` files containing 3D Gaussians and an estimated input camera from a single image. It needs a compatible GPU (the official documentation reports roughly 7.2 GB VRAM for inference); this is **not** a standard animated triangle mesh. A Gaussian splat may preserve the look of the source illustration from multiple angles, but cannot be directly skin-weighted to the Blender armature in this repository. Do **not** rename `.ply` to `.glb`, treat its points as watertight geometry, or imply that rigid rotation is organic character animation.
 
-For fidelity work, use the Idol splat as an optional high-detail *visual target*. The animated model still needs a retopologized, textured **mesh** with bones, deforming skin and facial shapes. The current `scripts/import-image3d-blender.py` and the batch workflow accept actual GLB triangle meshes, not Idol PLYs. Follow the supplied chibi illustrations as the final likeness reference, not a generic realistic cat or dog.
+For fidelity work, use the Idol splat as an optional high-detail _visual target_. The animated model still needs a retopologized, textured **mesh** with bones, deforming skin and facial shapes. The current `scripts/import-image3d-blender.py` and the batch workflow accept actual GLB triangle meshes, not Idol PLYs. Follow the supplied chibi illustrations as the final likeness reference, not a generic realistic cat or dog.
 
 ## Turn an original illustration into an editable Blender candidate
 
