@@ -14,7 +14,10 @@ type Receipt = {
 };
 
 const manifest = JSON.parse(
-  readFileSync(new URL('../assets/blender-source/chibi/review-manifest.json', import.meta.url), 'utf8'),
+  readFileSync(
+    new URL('../assets/blender-source/chibi/review-manifest.json', import.meta.url),
+    'utf8',
+  ),
 ) as Receipt;
 const sha256 = (data: Buffer) => createHash('sha256').update(data).digest('hex');
 
@@ -32,9 +35,7 @@ test('the published original-derived references remain entirely unapproved', () 
 for (const species of ['cat', 'dog', 'rabbit']) {
   test(`${species} real Blender sources, original art and rigged GLB match source-reviewed SHA-256`, () => {
     const receipt = manifest.originalImageSHA256AndEditableSources[species];
-    const jpg = readFileSync(
-      new URL(`../assets/animal-originals/${species}.jpg`, import.meta.url),
-    );
+    const jpg = readFileSync(new URL(`../assets/animal-originals/${species}.jpg`, import.meta.url));
     const blender = readFileSync(
       new URL(`../assets/blender-source/chibi/${species}.blend`, import.meta.url),
     );
