@@ -25,7 +25,7 @@ test('rejects malformed magic, file length, and caller-defined capacity limits',
     /magic/,
   );
   assert.throws(() => inspectGlb(binary.subarray(0, binary.length - 4)), /length/);
-  assert.throws(() => inspectGlb(binary, 10), /size/);
+  assert.throws(() => inspectGlb(binary, 10), /budget/);
 });
 test('rejects remote buffers and texture URIs', () => {
   assert.throws(
