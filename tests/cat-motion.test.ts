@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { catActivities, catMoods, catPoseAt, clamp } from '../lib/cat-motion';
+import { catActivities, catMoods, catPoseAt, catTailTipAt, clamp } from '../lib/cat-motion';
 
 test('poses remain finite and feet never penetrate the simple ground plane', () => {
   for (const activity of catActivities)
@@ -50,4 +50,19 @@ test('grooming lifts one forepaw and actuates the tongue while sniffing varies t
   assert.ok(sniff.some((pose) => pose.eyeOpen > 0.7));
   assert.ok(sniff.some((pose) => Math.abs(pose.earTilt) > 0.08));
   assert.ok(sniff.some((pose) => Math.abs(pose.headYaw) > 0.16));
+});
+
+test('secondary tail gesture is smooth, bounded, and nearly still when resting', () => {
+  for (const activity of catActivities) for (const mood of catMoods) {
+    let previous = catTailTipAt(activity, mood, 0);
+    for (let i = 1; i <= 900; i++) {
+      const current = catTailTipAt(activity, mood, i / 60);
+      assert.ok(Number.isFinite(current));
+      assert.ok(current >= -0.8 && current <= -0.18);
+      assert.ok(Math.abs(current - previous) < 0.04, activity);
+      previous = current;
+    }
+  }
+  assert.ok(Math.abs(catTailTipAt('rest', 'sleepy', 2) + 0.48) < 0.02);
+  assert.equal(catTailTipAt('idle', 'curious', Number.NaN), catTailTipAt('idle', 'curious', 0));
 });
