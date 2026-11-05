@@ -138,7 +138,8 @@ export function catPoseAt(activity: CatActivity, mood: CatMood, time: number): C
  */
 export function catTailTipAt(activity: CatActivity, mood: CatMood, time: number): number {
   const t = Math.max(0, Number.isFinite(time) ? time : 0);
-  const amplitude = activity === 'rest' ? 0.018 : activity === 'play' ? 0.3 : mood === 'curious' ? 0.18 : 0.11;
+  const amplitude =
+    activity === 'rest' ? 0.018 : activity === 'play' ? 0.3 : mood === 'curious' ? 0.18 : 0.11;
   const frequency = activity === 'play' ? 4.2 : activity === 'rest' ? 0.7 : 1.35;
   return -0.48 + Math.sin(t * frequency + 0.58) * amplitude;
 }
