@@ -1,0 +1,56 @@
+name: Format reference bunny source
+
+on:
+  push:
+    branches:
+      - feat/reference-bunny-rig-pipeline
+    paths:
+      - .github/workflows/format-reference-bunny.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Apply repository Oxfmt formatting to new files only
+        run: |
+          npx oxfmt \
+            components/bunny/reference-bunny.tsx \
+            lib/bunny/animation-controller.ts \
+            tests/bunny-animation.test.ts \
+            scripts/audit-reference-bunny.mjs \
+            scripts/validate-reference-bunny.mjs \
+            scripts/validate-reference-bunny.selfcheck.mjs \
+            docs/reference-bunny-pipeline.md
+      - name: Commit only formatting changes to the same feature branch
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            components/bunny/reference-bunny.tsx \
+            lib/bunny/animation-controller.ts \
+            tests/bunny-animation.test.ts \
+            scripts/audit-reference-bunny.mjs \
+            scripts/validate-reference-bunny.mjs \
+            scripts/validate-reference-bunny.selfcheck.mjs \
+            docs/reference-bunny-pipeline.md
+          if git diff --cached --quiet; then
+            echo "Already formatted"
+            exit 0
+          fi
+          git commit -m 'style: format reference bunny source'
+          git push origin HEAD:feat/reference-bunny-rig-pipeline
