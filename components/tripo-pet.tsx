@@ -33,6 +33,7 @@ import { AnimalAnimationContext } from './shared';
 import LivingCat, { FeedingBowl } from './living-cat';
 import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
+import { petFacialMorphTarget } from '@/lib/pet-face';
 import { PetStudioEnvironment } from './pet-studio-environment';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
@@ -185,46 +186,9 @@ function AnimalModel({
     mixer.update(dt);
     // Only animate morphs that actually exist on the authored model.
     // Body motion cannot be invented from an unrigged, static photograph.
-    const celebrating = expressiveCandidate && activity === 'play' && mood === 'happy';
-    const blink = celebrating ? 0.88 : state.clock.elapsedTime % 4.1 < 0.14 ? 1 : 0;
-    const chew =
-      activity === 'eat' || activity === 'groom'
-        ? Math.max(0, Math.sin(state.clock.elapsedTime * 10))
-        : 0;
-    const sniff = activity === 'sniff' ? 0.35 + Math.sin(state.clock.elapsedTime * 9) * 0.2 : 0;
-    const happyMouth = celebrating ? 0.75 + 0.08 * Math.sin(state.clock.elapsedTime * 8) : 0;
     for (const { mesh, index, name } of morphTargetsRef.current) {
-      const influences = mesh.morphTargetInfluences;
-      if (!influences) continue;
-      const target = /blink|eye.?close/i.test(name)
-        ? mood === 'sleepy'
-          ? 0.65
-          : blink
-        : /jaw.?open|mouth.?open/i.test(name)
-          ? Math.max(chew * 0.8, happyMouth)
-          : /sniff|nose.?flare/i.test(name)
-            ? sniff
-            : /cheek.?puff/i.test(name)
-              ? activity === 'groom'
-                ? 0.25
-                : celebrating
-                  ? 0.58
-                  : mood === 'happy'
-                    ? 0.18
-                    : 0
-              : /eye.?wide/i.test(name)
-                ? mood === 'curious'
-                  ? 0.9
-                  : 0
-                : /smile|happy/i.test(name)
-                  ? mood === 'happy'
-                    ? celebrating
-                      ? 0.97
-                      : 0.7
-                    : 0
-                  : /ears?.?back|fear|angry/i.test(name)
-                    ? 0
-                    : null;
+      if (!mesh.morphTargetInfluences) continue;
+      const target = petFacialMorphTarget(name, activity, mood, state.clock.elapsedTime);
       if (target !== null) updateMeshMorph(mesh, index, target, dt);
     }
   });
