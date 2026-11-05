@@ -33,6 +33,7 @@ import { AnimalAnimationContext } from './shared';
 import LivingCat, { FeedingBowl } from './living-cat';
 import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
+import { PetStudioEnvironment } from './pet-studio-environment';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
@@ -495,6 +496,7 @@ export default function TripoPet({
                 canvasRef.current = gl.domElement;
               }}
             >
+              <PetStudioEnvironment />
               <hemisphereLight args={['#fff5e5', '#7b91a1', 1.7]} />
               <ambientLight intensity={0.5} />
               <directionalLight

@@ -49,6 +49,7 @@ import {
   resolvePetAnimation,
 } from '@/lib/pet-animation';
 import { disposePetScene, preparePetScene, petRenderQuality } from '@/lib/pet-scene';
+import { requestHaptic } from '@/lib/haptic-feedback';
 import PetTouchMotes from './pet-touch-motes';
 
 const activities: { id: PetActivity; label: string }[] = [
@@ -404,6 +405,7 @@ export default function ReplacementPet({
   const changeView = (type: ViewCommand['type']) =>
     setCommand((previous) => ({ type, sequence: previous.sequence + 1 }));
   const touch = () => {
+    requestHaptic('confirm');
     setActivity('touch');
     setTouchSequence((sequence) => sequence + 1);
   };
@@ -563,7 +565,13 @@ export default function ReplacementPet({
                     ? undefined
                     : 'This model has no ' + item.id + ' animation'
                 }
-                onClick={() => (item.id === 'touch' ? touch() : setActivity(item.id))}
+                onClick={() => {
+                  if (item.id === 'touch') touch();
+                  else {
+                    setActivity(item.id);
+                    requestHaptic(item.id === 'play' ? 'confirm' : 'select');
+                  }
+                }}
               >
                 {item.label}
               </button>
