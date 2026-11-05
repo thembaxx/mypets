@@ -3,7 +3,7 @@
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import type { Group, Mesh } from 'three';
-import { catPoseAt, type CatActivity, type CatMood } from '@/lib/cat-motion';
+import { catPoseAt, catTailTipAt, type CatActivity, type CatMood } from '@/lib/cat-motion';
 
 /**
  * Original, fully three-dimensional calico character study.
@@ -144,6 +144,7 @@ export default function LivingCat({
   const leftRear = useRef<Group>(null);
   const rightRear = useRef<Group>(null);
   const tail = useRef<Group>(null);
+  const tailTip = useRef<Group>(null);
   const tailVelocity = useRef(0);
   const mouth = useRef<Mesh>(null);
   const tongue = useRef<Mesh>(null);
@@ -155,7 +156,9 @@ export default function LivingCat({
   useFrame((_, delta) => {
     if (!root.current || !head.current || !torso.current) return;
     const dt = Math.min(0.05, delta);
-    if (!paused) elapsed.current += dt;
+    // Pause means pose, springs, and breathing all freeze, including on low-FPS devices.
+    if (paused) return;
+    elapsed.current += dt;
     const p = catPoseAt(activity, mood, elapsed.current);
     root.current.position.x = p.x;
     root.current.rotation.y = p.heading;
@@ -194,6 +197,10 @@ export default function LivingCat({
       tailVelocity.current += acceleration * dt;
       tail.current.rotation.z += tailVelocity.current * dt;
     }
+    if (tailTip.current) {
+      const target = catTailTipAt(activity, mood, elapsed.current);
+      tailTip.current.rotation.z += (target - tailTip.current.rotation.z) * (1 - Math.exp(-dt * 9));
+    }
   });
   return (
     <group>
@@ -218,24 +225,22 @@ export default function LivingCat({
           </mesh>
         </group>
         <group ref={tail} position={[-0.49, 0.56, -0.5]} rotation={[0.3, 0, -0.3]}>
-          <mesh
-            position={[-0.34, 0.06, -0.3]}
-            rotation={[0, 0, -0.7]}
-            scale={[0.23, 0.54, 0.23]}
-            castShadow
-          >
-            <sphereGeometry args={[1, 24, 16]} />
-            <meshStandardMaterial color="#e9a34a" roughness={0.84} />
+          {/* Three overlapping tapered segments form a continuous silhouette.
+              The tip has independent lag rather than a rigid wagging stick. */}
+          <mesh castShadow position={[-0.25, 0.1, -0.2]} rotation={[0, 0, -0.57]}>
+            <capsuleGeometry args={[0.18, 0.38, 10, 18]} />
+            <meshStandardMaterial color="#e9a34a" roughness={0.96} />
           </mesh>
-          <mesh
-            position={[-0.62, 0.24, -0.37]}
-            rotation={[0, 0, -0.55]}
-            scale={[0.24, 0.35, 0.22]}
-            castShadow
-          >
-            <sphereGeometry args={[1, 24, 16]} />
-            <meshStandardMaterial color="#784836" roughness={0.85} />
-          </mesh>
+          <group ref={tailTip} position={[-0.51, 0.31, -0.3]} rotation={[0, 0, -0.48]}>
+            <mesh castShadow position={[-0.14, 0.14, 0]} rotation={[0, 0, -0.62]}>
+              <capsuleGeometry args={[0.15, 0.25, 10, 18]} />
+              <meshStandardMaterial color="#784836" roughness={0.98} />
+            </mesh>
+            <mesh castShadow position={[-0.32, 0.34, 0]} rotation={[0, 0, -0.38]}>
+              <capsuleGeometry args={[0.12, 0.16, 10, 18]} />
+              <meshStandardMaterial color="#784836" roughness={0.98} />
+            </mesh>
+          </group>
         </group>
         <group ref={leftRear} position={[-0.46, 0.6, -0.4]} scale={[0.82, 0.76, 0.85]}>
           <Paw rear />
@@ -298,7 +303,17 @@ export default function LivingCat({
                 scale={[0.095, 0.06, 0.044]}
               >
                 <sphereGeometry args={[1, 20, 16]} />
-                <meshStandardMaterial color="#352820" roughness={0.38} />
+                <meshPhysicalMaterial
+                  color="#352820"
+                  roughness={0.12}
+                  clearcoat={1}
+                  clearcoatRoughness={0.06}
+                />
+              </mesh>
+              {/* Small specular cornea reflection improves the sense of gaze. */}
+              <mesh position={[side * 0.285, 0.155, 0.594]} scale={[0.025, 0.02, 0.012]}>
+                <sphereGeometry args={[1, 12, 8]} />
+                <meshBasicMaterial color="#fffaf3" />
               </mesh>
               {[-1, 0, 1].map((n) => (
                 <mesh
