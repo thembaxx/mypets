@@ -40,6 +40,7 @@ import {
   resolvePetAnimation,
 } from '@/lib/pet-animation';
 import { disposePetScene, preparePetScene } from '@/lib/pet-scene';
+import PetTouchMotes from './pet-touch-motes';
 
 const activities: { id: PetActivity; label: string }[] = [
   { id: 'idle', label: 'Idle' },
@@ -254,6 +255,7 @@ function PetScene({
       />
       <directionalLight position={[4, 3, -4]} color="#dde8ff" intensity={1.2} />
       <primitive object={prepared} dispose={null} onClick={touch} />
+      <PetTouchMotes center={sphere.center} radius={sphere.radius} trigger={touchSequence} enabled={enabled} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.008, 0]} receiveShadow>
         <circleGeometry args={[3.2, 64]} />
         <shadowMaterial transparent opacity={0.22} depthWrite={false} />
