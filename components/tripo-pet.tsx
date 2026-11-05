@@ -11,13 +11,11 @@ import {
   Box3,
   LoopRepeat,
   Mesh,
-  PMREMGenerator,
   SkinnedMesh,
   Vector3,
   type AnimationAction,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {
@@ -36,8 +34,8 @@ import { AnimalAnimationContext } from './shared';
 import LivingCat, { FeedingBowl } from './living-cat';
 import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
+import { PetStudioEnvironment } from './pet-studio-environment';
 import { requestHaptic } from '@/lib/haptic-feedback';
-import { petRenderQuality } from '@/lib/pet-scene';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
@@ -236,43 +234,7 @@ function AnimalModel({
 }
 
 function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
-  const { camera, gl, scene, size, invalidate, setDpr } = useThree();
-  const quality = useMemo(() => {
-    const context = gl.getContext();
-    const debugInfo = context.getExtension('WEBGL_debug_renderer_info');
-    const renderer = String(
-      context.getParameter(debugInfo ? debugInfo.UNMASKED_RENDERER_WEBGL : context.RENDERER),
-    );
-    return petRenderQuality(
-      renderer,
-      size.width,
-      size.height,
-      typeof window === 'undefined' ? 1 : window.devicePixelRatio,
-    );
-  }, [gl, size.width, size.height]);
-  useEffect(() => {
-    setDpr(quality.dpr);
-  }, [setDpr, quality.dpr]);
-  useEffect(() => {
-    // PBR reflections add depth to imported glTF materials, without requiring
-    // external textures or allocating a room cubemap on software renderers.
-    if (quality.software) return;
-    const generator = new PMREMGenerator(gl);
-    const room = new RoomEnvironment();
-    const environment = generator.fromScene(room, 0.05);
-    const previous = scene.environment;
-    const previousIntensity = scene.environmentIntensity;
-    scene.environment = environment.texture;
-    scene.environmentIntensity = 0.72;
-    room.dispose();
-    generator.dispose();
-    invalidate();
-    return () => {
-      scene.environment = previous;
-      scene.environmentIntensity = previousIntensity;
-      environment.dispose();
-    };
-  }, [gl, scene, invalidate, quality.software]);
+  const { camera, gl, invalidate } = useThree();
   const controls = useMemo(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
     orbit.enableDamping = !reducedMotion;
@@ -538,6 +500,7 @@ export default function TripoPet({
                 gl.toneMappingExposure = 1.05;
               }}
             >
+              <PetStudioEnvironment />
               <hemisphereLight args={['#fff5e5', '#7b91a1', 1.7]} />
               <ambientLight intensity={0.5} />
               <directionalLight
