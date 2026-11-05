@@ -55,18 +55,15 @@ test('grooming lifts one forepaw and actuates the tongue while sniffing varies t
 test('secondary tail gesture is smooth, bounded, and nearly still when resting', () => {
   for (const activity of catActivities)
     for (const mood of catMoods) {
-    let previous = catTailTipAt(activity, mood, 0);
-    for (let i = 1; i <= 900; i++) {
-      const current = catTailTipAt(activity, mood, i / 60);
-      assert.ok(Number.isFinite(current));
-      assert.ok(current >= -0.8 && current <= -0.18);
-      assert.ok(Math.abs(current - previous) < 0.04, activity);
-      previous = current;
+      let previous = catTailTipAt(activity, mood, 0);
+      for (let i = 1; i <= 900; i++) {
+        const current = catTailTipAt(activity, mood, i / 60);
+        assert.ok(Number.isFinite(current));
+        assert.ok(current >= -0.8 && current <= -0.18);
+        assert.ok(Math.abs(current - previous) < 0.04, activity);
+        previous = current;
+      }
     }
-  }
   assert.ok(Math.abs(catTailTipAt('rest', 'sleepy', 2) + 0.48) < 0.02);
-  assert.equal(
-    catTailTipAt('idle', 'curious', Number.NaN),
-    catTailTipAt('idle', 'curious', 0),
-  );
+  assert.equal(catTailTipAt('idle', 'curious', Number.NaN), catTailTipAt('idle', 'curious', 0));
 });

@@ -199,8 +199,7 @@ export default function LivingCat({
     }
     if (tailTip.current) {
       const target = catTailTipAt(activity, mood, elapsed.current);
-      tailTip.current.rotation.z +=
-        (target - tailTip.current.rotation.z) * (1 - Math.exp(-dt * 9));
+      tailTip.current.rotation.z += (target - tailTip.current.rotation.z) * (1 - Math.exp(-dt * 9));
     }
   });
   return (
@@ -228,11 +227,11 @@ export default function LivingCat({
         <group ref={tail} position={[-0.49, 0.56, -0.5]} rotation={[0.3, 0, -0.3]}>
           {/* Three overlapping tapered segments form a continuous silhouette.
               The tip has independent lag rather than a rigid wagging stick. */}
-          <mesh castShadow position={[-0.25, 0.10, -0.20]} rotation={[0, 0, -0.57]}>
+          <mesh castShadow position={[-0.25, 0.1, -0.2]} rotation={[0, 0, -0.57]}>
             <capsuleGeometry args={[0.18, 0.38, 10, 18]} />
             <meshStandardMaterial color="#e9a34a" roughness={0.96} />
           </mesh>
-          <group ref={tailTip} position={[-0.51, 0.31, -0.30]} rotation={[0, 0, -0.48]}>
+          <group ref={tailTip} position={[-0.51, 0.31, -0.3]} rotation={[0, 0, -0.48]}>
             <mesh castShadow position={[-0.14, 0.14, 0]} rotation={[0, 0, -0.62]}>
               <capsuleGeometry args={[0.15, 0.25, 10, 18]} />
               <meshStandardMaterial color="#784836" roughness={0.98} />
