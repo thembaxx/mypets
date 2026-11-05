@@ -55,7 +55,7 @@ type Preset = Partial<Record<MorphName, number>>;
 const PRESETS: Record<BunnyEmotion, Preset> = {
   neutral: {},
   happy: {
-    eyeBlink_L: 0.95,
+    eyeBlink_R: 0.95,
     mouthSmile: 1,
     mouthOpen: 0.8,
     cheekPuff: 0.4,
