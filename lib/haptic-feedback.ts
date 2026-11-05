@@ -10,7 +10,10 @@ export function hapticPattern(intent: HapticIntent): number | number[] {
 export function requestHaptic(intent: HapticIntent = 'select'): boolean {
   if (typeof navigator === 'undefined' || typeof document === 'undefined') return false;
   if (document.visibilityState !== 'visible' || !document.hasFocus()) return false;
-  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  )
     return false;
   if (typeof navigator.vibrate !== 'function') return false;
   return navigator.vibrate(hapticPattern(intent));
