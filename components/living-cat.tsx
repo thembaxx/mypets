@@ -199,7 +199,8 @@ export default function LivingCat({
     }
     if (tailTip.current) {
       const target = catTailTipAt(activity, mood, elapsed.current);
-      tailTip.current.rotation.z += (target - tailTip.current.rotation.z) * (1 - Math.exp(-dt * 9));
+      tailTip.current.rotation.z +=
+        (target - tailTip.current.rotation.z) * (1 - Math.exp(-dt * 9));
     }
   });
   return (
@@ -303,7 +304,12 @@ export default function LivingCat({
                 scale={[0.095, 0.06, 0.044]}
               >
                 <sphereGeometry args={[1, 20, 16]} />
-                <meshPhysicalMaterial color="#352820" roughness={0.12} clearcoat={1} clearcoatRoughness={0.06} />
+                <meshPhysicalMaterial
+                  color="#352820"
+                  roughness={0.12}
+                  clearcoat={1}
+                  clearcoatRoughness={0.06}
+                />
               </mesh>
               {/* Small specular cornea reflection improves the sense of gaze. */}
               <mesh position={[side * 0.285, 0.155, 0.594]} scale={[0.025, 0.02, 0.012]}>
