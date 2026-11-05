@@ -433,6 +433,10 @@ def review(rig_obj,out):
     # Material-aware transparent renders, not misleading Workbench previews.
     scene.render.engine="CYCLES"
     scene.cycles.samples=24
+    # Ubuntu Blender packages can be built without OpenImageDenoise.
+    # Never require the optional denoiser to obtain faithful review frames.
+    if hasattr(bpy.context.view_layer, "cycles"):
+        bpy.context.view_layer.cycles.use_denoising=False
     scene.render.film_transparent=True
     for label, pos, power, size in (
         ("Soft key", (2, 4, 6), 460, 4.0),
