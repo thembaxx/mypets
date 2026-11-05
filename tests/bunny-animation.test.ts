@@ -49,7 +49,7 @@ test('blends happiness into independently addressable morph targets', () => {
   controller.play('Idle');
   controller.express('happy');
   for (let i = 0; i < 10; i++) controller.update(0.05);
-  const blink = face.morphTargetDictionary?.eyeBlink_L;
+  const blink = face.morphTargetDictionary?.eyeBlink_R;
   const smile = face.morphTargetDictionary?.mouthSmile;
   const frown = face.morphTargetDictionary?.mouthFrown;
   assert.ok(face.morphTargetInfluences![blink!] > 0.7);
