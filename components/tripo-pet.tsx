@@ -6,7 +6,6 @@ import { createPortal } from 'react-dom';
 import { useReducedMotion } from 'motion/react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import {
-  ACESFilmicToneMapping,
   AnimationMixer,
   Box3,
   LoopRepeat,
@@ -35,7 +34,6 @@ import LivingCat, { FeedingBowl } from './living-cat';
 import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
 import { PetStudioEnvironment } from './pet-studio-environment';
-import { requestHaptic } from '@/lib/haptic-feedback';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
@@ -496,8 +494,6 @@ export default function TripoPet({
               shadows
               onCreated={({ gl }) => {
                 canvasRef.current = gl.domElement;
-                gl.toneMapping = ACESFilmicToneMapping;
-                gl.toneMappingExposure = 1.05;
               }}
             >
               <PetStudioEnvironment />
@@ -570,12 +566,12 @@ export default function TripoPet({
             >
               {candidateMode
                 ? 'Return to original procedural 3D cat'
-                : 'Preview rigged 3D cat (experimental)'}
+                : 'Preview rigged Blender cat (experimental)'}
             </button>
           )}
           <label className="tripo-local-file">
             <UploadSimpleIcon size={18} aria-hidden="true" />
-            <span>Review a 3D model (.glb, on-device only)</span>
+            <span>Review a downloaded Blender GLB (on-device only)</span>
             <input
               type="file"
               accept=".glb,model/gltf-binary"
@@ -599,10 +595,7 @@ export default function TripoPet({
                 type="button"
                 aria-pressed={activity === next}
                 className={activity === next ? 'active' : ''}
-                onClick={() => {
-                  setActivity(next);
-                  requestHaptic(next === 'play' ? 'confirm' : 'select');
-                }}
+                onClick={() => setActivity(next)}
                 disabled={recording}
               >
                 <Icon size={19} aria-hidden="true" />
@@ -616,10 +609,7 @@ export default function TripoPet({
               Expression
               <select
                 value={mood}
-                onChange={(event) => {
-                  setMood(event.target.value as CatMood);
-                  requestHaptic('select');
-                }}
+                onChange={(event) => setMood(event.target.value as CatMood)}
                 disabled={recording}
                 aria-label={
                   allowProceduralCat ? 'Cat facial expression' : 'Animal facial expression'
@@ -666,7 +656,7 @@ export default function TripoPet({
               <summary>About this 3D model</summary>
               {candidateMode && !localPreview && (
                 <p className="tripo-living-note">
-                  Experimental 3D rig. Compare anatomy and motion with the original
+                  Experimental Blender rig. Compare anatomy and motion with the original
                   illustration before adopting the model.
                 </p>
               )}
