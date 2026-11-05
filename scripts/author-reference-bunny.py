@@ -391,6 +391,10 @@ def animate(rig_obj):
                 right.rotation_euler.x=-.57-.10*jump
                 head.rotation_euler.y=.08*math.sin(w)
                 jaw.rotation_euler.x=.10*jump
+                # Reference-image signature: one broad sideways floppy ear
+                # with the other reaching diagonally behind the head.
+                ears[0].rotation_euler.y=-1.02
+                ears[1].rotation_euler.y=-.30
             elif action_name=="Sad":
                 ease=math.sin(math.pi*t/2)**2
                 head.rotation_euler.x=.23*ease
@@ -464,6 +468,28 @@ def review(rig_obj,out):
         scene.frame_set(1)
         scene.render.filepath=str(out/("bunny-"+name+".png"))
         bpy.ops.render.render(write_still=True)
+    # Render the image-specific joyful expression with the asymmetrical ears
+    # and the wink. This is the primary comparison against the uploaded art.
+    for track in rig_obj.animation_data.nla_tracks:
+        track.mute=(track.name!="Happy")
+    scene.frame_set(25)
+    for obj in scene.objects:
+        if obj.type!="MESH" or not obj.data.shape_keys:
+            continue
+        for key in obj.data.shape_keys.key_blocks:
+            key.value={
+                "eyeBlink_L":1.0, "mouthSmile":1.0, "mouthOpen":.9,
+                "cheekPuff":.35, "muzzleRaise_L":.45,
+                "muzzleRaise_R":.45,
+            }.get(key.name,0.0)
+    cam.location=(3.2,5.5,2.55)
+    cam.rotation_euler=(Vector((0,0,1.38))-cam.location).to_track_quat("-Z","Y").to_euler()
+    scene.render.filepath=str(out/"bunny-reference-pose.png")
+    bpy.ops.render.render(write_still=True)
+    for obj in scene.objects:
+        if obj.type=="MESH" and obj.data.shape_keys:
+            for key in obj.data.shape_keys.key_blocks:
+                key.value=0.0
     bpy.data.objects.remove(cam,do_unlink=True)
     for track in rig_obj.animation_data.nla_tracks:
         track.mute=False
