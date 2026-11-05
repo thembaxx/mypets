@@ -113,7 +113,11 @@ self.addEventListener('fetch', (event) => {
         (await fetch(event.request).then((response) => {
           if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE).then((c) => c.put(event.request, copy));
+            // Optional model/image caching must never turn a successful load into a quota error.
+            caches
+              .open(CACHE)
+              .then((c) => c.put(event.request, copy))
+              .catch(() => {});
           }
           return response;
         }));

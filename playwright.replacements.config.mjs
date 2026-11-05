@@ -7,7 +7,7 @@ const { defineConfig } = await import(
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: 'replacements-browser.spec.mjs',
+  testMatch: ['replacements-browser.spec.mjs', 'replacement-gestures.spec.mjs'],
   outputDir: './test-results/replacements',
   timeout: 120_000,
   expect: { timeout: 20_000 },

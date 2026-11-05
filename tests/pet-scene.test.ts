@@ -35,3 +35,17 @@ test('shared GPU geometry, material and image resources are released once per ow
   disposePetScene(scene);
   assert.deepEqual([images, textures, materials, geometries], [1, 1, 1, 1]);
 });
+
+test('render quality preserves hardware fidelity and bounds software rasterization work', async () => {
+  const { petRenderQuality } = await import('../lib/pet-scene');
+  const hardware = petRenderQuality('ANGLE Apple GPU', 920, 600, 3);
+  assert.equal(hardware.dpr, 1.75);
+  assert.equal(hardware.shadowSize, 1024);
+  assert.equal(hardware.software, false);
+  const software = petRenderQuality('ANGLE Vulkan SwiftShader Device', 920, 600, 2);
+  assert.ok(software.dpr < 1);
+  assert.ok(920 * 600 * software.dpr ** 2 <= 180001);
+  assert.equal(software.shadowSize, 512);
+  assert.equal(software.software, true);
+  assert.ok(petRenderQuality('llvmpipe', 390, 568, 1).dpr <= 1);
+});

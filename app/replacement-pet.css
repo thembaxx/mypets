@@ -220,3 +220,8 @@
     margin-left: 0;
   }
 }
+
+/* Fish remain suspended in a quiet aquatic setting, without a terrestrial contact floor. */
+.replacement-stage.replacement-aquatic {
+  background: radial-gradient(ellipse at 50% 30%, #d5edf2 0%, #a8cdd6 58%, #7facbb 100%);
+}

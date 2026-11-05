@@ -5,7 +5,16 @@
 // The canvas region is keyboard-operable; application role scopes its arrow-key controls.
 /* oxlint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 
-import { Component, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  Component,
+  useContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useReducedMotion } from 'motion/react';
@@ -39,7 +48,7 @@ import {
   resolvePetClip,
   resolvePetAnimation,
 } from '@/lib/pet-animation';
-import { disposePetScene, preparePetScene } from '@/lib/pet-scene';
+import { disposePetScene, preparePetScene, petRenderQuality } from '@/lib/pet-scene';
 import PetTouchMotes from './pet-touch-motes';
 
 const activities: { id: PetActivity; label: string }[] = [
@@ -92,7 +101,9 @@ function PetScene({
   enabled,
   command,
   onTouch,
-  onContextLost,
+  onReady,
+  onDpr,
+  onSoftwareRenderer,
   onIdle,
 }: {
   gltf: GLTF;
@@ -102,10 +113,32 @@ function PetScene({
   enabled: boolean;
   command: ViewCommand;
   onTouch: () => void;
-  onContextLost: () => void;
+  onReady: () => void;
+  onDpr: (dpr: number) => void;
+  onSoftwareRenderer: (software: boolean) => void;
   onIdle: () => void;
 }) {
   const { camera, gl, scene, size, invalidate } = useThree();
+  const aquatic = asset.speciesId === 'fish' || asset.speciesId === 'angelfish';
+  const rendererName = useMemo(() => {
+    const context = gl.getContext();
+    const extension = context.getExtension('WEBGL_debug_renderer_info');
+    return String(
+      context.getParameter(extension ? extension.UNMASKED_RENDERER_WEBGL : context.RENDERER),
+    );
+  }, [gl]);
+  const quality = petRenderQuality(rendererName, size.width, size.height, window.devicePixelRatio);
+  useEffect(() => {
+    onDpr(quality.dpr);
+    onSoftwareRenderer(quality.software);
+  }, [quality.dpr, quality.software, onDpr, onSoftwareRenderer]);
+  useEffect(() => {
+    if (!enabled || !quality.software) return;
+    // Bound submissions on CPU rasterizers so interaction is not queued behind continuous frames.
+    const timer = window.setInterval(() => invalidate(), 125);
+    return () => window.clearInterval(timer);
+  }, [enabled, quality.software, invalidate]);
+
   const prepared = useMemo(
     () => preparePetScene(gltf.scene, asset.orientation),
     [gltf.scene, asset.orientation],
@@ -213,15 +246,10 @@ function PetScene({
     };
   }, [gl, scene, invalidate]);
   useEffect(() => {
-    const lost = (event: Event) => {
-      event.preventDefault();
-      onContextLost();
-    };
-    gl.domElement.addEventListener('webglcontextlost', lost);
-    return () => gl.domElement.removeEventListener('webglcontextlost', lost);
-  }, [gl, onContextLost]);
+    onReady();
+  }, [onReady]);
   useFrame((_, delta) => {
-    if (enabled) controller.update(Math.min(delta, 0.05));
+    if (enabled) controller.update(Math.min(delta, 0.25));
     controls.current?.update();
   });
   const touch = (event: ThreeEvent<MouseEvent>) => {
@@ -243,8 +271,8 @@ function PetScene({
       <directionalLight
         position={[-3, 6, 5]}
         intensity={2.5}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
+        castShadow={!aquatic}
+        shadow-mapSize={[quality.shadowSize, quality.shadowSize]}
         shadow-camera-left={-3}
         shadow-camera-right={3}
         shadow-camera-top={4}
@@ -261,10 +289,12 @@ function PetScene({
         trigger={touchSequence}
         enabled={enabled}
       />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.008, 0]} receiveShadow>
-        <circleGeometry args={[3.2, 64]} />
-        <shadowMaterial transparent opacity={0.22} depthWrite={false} />
-      </mesh>
+      {!aquatic && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.008, 0]} receiveShadow>
+          <circleGeometry args={[3.2, 64]} />
+          <shadowMaterial transparent opacity={0.22} depthWrite={false} />
+        </mesh>
+      )}
     </>
   );
 }
@@ -279,6 +309,7 @@ export default function ReplacementPet({
   name: string;
   onClose: () => void;
 }) {
+  const aquatic = asset.speciesId === 'fish' || asset.speciesId === 'angelfish';
   const dialog = useRef<HTMLDialogElement>(null);
   const closeCallback = useRef(onClose);
   const contextEnabled = useContext(AnimalAnimationContext);
@@ -289,6 +320,12 @@ export default function ReplacementPet({
   const [paused, setPaused] = useState(false);
   const [gltf, setGltf] = useState<GLTF | null>(null);
   const [failed, setFailed] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
+  const [renderDpr, setRenderDpr] = useState<number | [number, number]>([1, 1.75]);
+  const [softwareRenderer, setSoftwareRenderer] = useState(false);
+  const markReady = useCallback(() => setSceneReady(true), []);
+  const contextLossCleanup = useRef<(() => void) | null>(null);
+  useEffect(() => () => contextLossCleanup.current?.(), []);
   const [activity, setActivity] = useState<PetActivity>('idle');
   const [touchSequence, setTouchSequence] = useState(0);
   const [command, setCommand] = useState<ViewCommand>({ type: 'reset', sequence: 0 });
@@ -335,6 +372,7 @@ export default function ReplacementPet({
     let owned: GLTF | null = null;
     setGltf(null);
     setFailed(false);
+    setSceneReady(false);
     setActivity('idle');
     const load = async () => {
       try {
@@ -358,6 +396,8 @@ export default function ReplacementPet({
     void load();
     return () => {
       abort.abort();
+      contextLossCleanup.current?.();
+      contextLossCleanup.current = null;
       if (owned) disposePetScene(owned.scene);
     };
   }, [asset.modelUrl]);
@@ -376,7 +416,7 @@ export default function ReplacementPet({
         event.preventDefault();
         closeCallback.current();
       }}
-      data-ready={!!gltf && !failed}
+      data-ready={!!gltf && sceneReady && !failed}
       data-animation-enabled={enabled}
     >
       <div className="replacement-shell">
@@ -398,7 +438,7 @@ export default function ReplacementPet({
           </button>
         </header>
         <div
-          className="replacement-stage"
+          className={'replacement-stage' + (aquatic ? ' replacement-aquatic' : '')}
           role="application"
           tabIndex={0}
           aria-label="Animal view. Arrow keys rotate, plus and minus zoom, Home resets."
@@ -426,12 +466,21 @@ export default function ReplacementPet({
           ) : gltf ? (
             <RenderBoundary asset={asset}>
               <Canvas
-                frameloop={enabled && selectedClip.clip ? 'always' : 'demand'}
-                dpr={[1, 1.75]}
-                shadows
+                frameloop={enabled && selectedClip.clip && !softwareRenderer ? 'always' : 'demand'}
+                dpr={renderDpr}
+                shadows={!aquatic}
                 camera={{ position: [0, 1, 5], fov: 38 }}
                 gl={{ alpha: true, antialias: true, powerPreference: 'default' }}
                 onCreated={({ gl }) => {
+                  // Attach before scene effects: context loss can occur during GPU initialization.
+                  contextLossCleanup.current?.();
+                  const lost = (event: Event) => {
+                    event.preventDefault();
+                    setFailed(true);
+                  };
+                  gl.domElement.addEventListener('webglcontextlost', lost);
+                  contextLossCleanup.current = () =>
+                    gl.domElement.removeEventListener('webglcontextlost', lost);
                   gl.toneMapping = ACESFilmicToneMapping;
                   gl.toneMappingExposure = 1;
                 }}
@@ -451,7 +500,9 @@ export default function ReplacementPet({
                   command={command}
                   onIdle={() => setActivity('idle')}
                   onTouch={touch}
-                  onContextLost={() => setFailed(true)}
+                  onReady={markReady}
+                  onDpr={setRenderDpr}
+                  onSoftwareRenderer={setSoftwareRenderer}
                 />
               </Canvas>
             </RenderBoundary>
@@ -503,7 +554,9 @@ export default function ReplacementPet({
               <button
                 type="button"
                 key={item.id}
-                disabled={!gltf || failed || !resolvePetClip(names, item.id, asset.aliases)}
+                disabled={
+                  !gltf || !sceneReady || failed || !resolvePetClip(names, item.id, asset.aliases)
+                }
                 aria-pressed={activity === item.id}
                 title={
                   resolvePetClip(names, item.id, asset.aliases)
@@ -519,7 +572,7 @@ export default function ReplacementPet({
           <p className="replacement-status" role="status">
             {failed
               ? 'Showing the original illustration.'
-              : !gltf
+              : !gltf || !sceneReady
                 ? 'Loading the 3D model.'
                 : !enabled
                   ? 'Animations paused. You can still rotate and zoom.'

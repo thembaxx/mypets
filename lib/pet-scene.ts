@@ -47,6 +47,16 @@ export function preparePetScene(scene: Object3D, orientation = 0): Group {
     if (!(object instanceof Mesh)) return;
     object.castShadow = true;
     object.receiveShadow = true;
+    // Preserve soft hair coverage without sorting every transparent fur layer.
+    // These materials already use core glTF cutouts in the measured runtime derivative.
+    if (/fur/i.test(object.name)) {
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+        if (material.alphaTest > 0) {
+          material.alphaHash = true;
+          material.alphaToCoverage = true;
+        }
+      }
+    }
     if (object instanceof SkinnedMesh) object.skeleton.update();
   });
   const bounds = new Box3().setFromObject(scene, true);
@@ -66,4 +76,23 @@ export function preparePetScene(scene: Object3D, orientation = 0): Group {
   oriented.rotation.y = orientation;
   oriented.updateMatrixWorld(true);
   return oriented;
+}
+
+/** Full detail on hardware GPUs; reduce framebuffer/shadow work on measured software renderers. */
+export function petRenderQuality(
+  renderer: string,
+  width: number,
+  height: number,
+  deviceDpr: number,
+) {
+  const hardwareDpr = Math.min(1.75, Math.max(1, Number.isFinite(deviceDpr) ? deviceDpr : 1));
+  const software = /swiftshader|llvmpipe|softpipe|software rasterizer/i.test(renderer);
+  if (!software) return { dpr: hardwareDpr, shadowSize: 1024, software: false };
+  // The ~180k-pixel mobile stage stayed interactive in software WebGL; wide stages did not.
+  const pixels = Math.max(1, width) * Math.max(1, height);
+  return {
+    dpr: Math.max(0.5, Math.min(1, Math.sqrt(180000 / pixels))),
+    shadowSize: 512,
+    software: true,
+  };
 }

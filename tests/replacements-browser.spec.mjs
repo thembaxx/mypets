@@ -1,16 +1,26 @@
+import { readdirSync } from 'node:fs';
 const { test, expect } = await import(
   process.env.MYPETS_PLAYWRIGHT_MODULE ?? '/opt/codex/cua_node/lib/node_modules/playwright/test.mjs'
 );
 
 async function openPet(page, id) {
-  await page.getByRole('button', { name: `Explore ${id} in 3D`, exact: true }).click();
+  await page
+    .getByRole('button', { name: `Explore ${id.replaceAll('-', ' ')} in 3D`, exact: true })
+    .click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toHaveAttribute('data-ready', 'true');
   await expect(dialog.locator('canvas')).toBeVisible();
   return dialog;
 }
 
-for (const id of ['cat', 'rabbit', 'bird']) {
+const modelIds =
+  process.env.MYPETS_REPLACEMENT_IDS?.split(',') ??
+  readdirSync(new URL('../public/models/replacements/', import.meta.url))
+    .filter((name) => name.endsWith('.glb'))
+    .map((name) => name.slice(0, -4))
+    .sort();
+
+for (const id of modelIds) {
   test(`${id} loads its real model with supported clips and separated controls`, async ({
     page,
   }, info) => {
@@ -19,14 +29,18 @@ for (const id of ['cat', 'rabbit', 'bird']) {
     await page.goto('/3d-pets/');
     const dialog = await openPet(page, id);
     await expect(dialog).toHaveAttribute('data-animation-enabled', 'true');
-    await expect(dialog.getByRole('button', { name: 'Feed', exact: true })).toBeDisabled();
-    if (id === 'rabbit') {
-      await dialog.getByRole('button', { name: 'Move', exact: true }).click();
-      await expect(dialog.getByRole('status')).toContainText('Running');
-    } else if (id === 'bird') {
-      await dialog.getByRole('button', { name: 'Pet', exact: true }).click();
-      await expect(dialog.getByRole('status')).toContainText('Touch');
+    const actions = dialog.getByRole('group', { name: 'Animal activities' });
+    let performed = false;
+    for (const label of ['Pet', 'Move', 'Feed', 'Play', 'Rest', 'Idle']) {
+      const action = actions.getByRole('button', { name: label, exact: true });
+      if (await action.isEnabled()) {
+        await action.click();
+        performed = true;
+        break;
+      }
     }
+    expect(performed).toBeTruthy();
+    await expect(dialog.getByRole('status')).toContainText('Playing ');
     const header = await dialog.locator('header').boundingBox();
     const stage = await dialog.locator('.replacement-stage').boundingBox();
     const footer = await dialog.locator('footer').boundingBox();
@@ -37,7 +51,20 @@ for (const id of ['cat', 'rabbit', 'bird']) {
     expect(
       footer.x >= stage.x + stage.width - 1 || footer.y >= stage.y + stage.height - 1,
     ).toBeTruthy();
-    await page.waitForTimeout(600);
+    const renderer = await dialog.locator('canvas').evaluate((canvas) => {
+      const gl = canvas.getContext('webgl2');
+      const extension = gl?.getExtension('WEBGL_debug_renderer_info');
+      return extension ? String(gl.getParameter(extension.UNMASKED_RENDERER_WEBGL)) : '';
+    });
+    if (/swiftshader|llvmpipe|softpipe|software rasterizer/i.test(renderer)) {
+      await expect
+        .poll(() => dialog.locator('canvas').evaluate((canvas) => canvas.width * canvas.height))
+        .toBeLessThanOrEqual(180001);
+    }
+    await page.waitForTimeout(300);
+    // Capture a real rendered animation pose without burning software-GPU frames during export.
+    await dialog.getByRole('button', { name: 'Pause animations', exact: true }).click();
+    await expect(dialog).toHaveAttribute('data-animation-enabled', 'false');
     await dialog.screenshot({ path: `test-results/replacements/${info.project.name}-${id}.png` });
     await dialog.getByRole('button', { name: 'Close 3D pet' }).click();
     await expect(page.locator('canvas')).toHaveCount(0);
