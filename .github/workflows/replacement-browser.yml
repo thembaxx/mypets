@@ -1,0 +1,56 @@
+name: 3D replacement browser regression
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  replacements:
+    name: Real 3D preview and touch controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    env:
+      CI: "1"
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+      NEXT_TELEMETRY_DISABLED: "1"
+      MYPETS_PLAYWRIGHT_MODULE: playwright/test
+      MYPETS_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install locked application dependencies
+        run: npm ci
+      - name: Use the version-matched Playwright test runner
+        run: npm install --no-save --package-lock=false playwright@1.64.1
+      - name: Validate installed GLB assets
+        run: npm run assets:check
+      - name: Build actual static production release
+        run: npm run build
+      - name: Resolve preinstalled Chromium binary
+        run: |
+          node --input-type=module -e 'import { chromium } from "playwright"; console.log(chromium.executablePath())' | sed 's/^/MYPETS_CHROMIUM_EXECUTABLE=/' >> "$GITHUB_ENV"
+      - name: Test real 3D models, mobile touch gestures and keyboard controls
+        run: |
+          npm run start > /tmp/mypets-static.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:3000/3d-pets/ >/dev/null; then break; fi
+            sleep 2
+          done
+          curl -fS http://127.0.0.1:3000/3d-pets/ >/dev/null
+          node node_modules/playwright/cli.js test --config=playwright.replacements.config.mjs
+      - name: Preserve browser failure screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mypets-replacement-browser-diagnostics
+          path: |
+            test-results/replacements/
+            playwright-report/
+            /tmp/mypets-static.log
+          if-no-files-found: warn
+          retention-days: 7
