@@ -47,7 +47,7 @@ Outputs:
 - reference-bunny-master.blend — editable source
 - reference-bunny-candidate.glb — experimental rigged GLB
 - bunny-front.png / bunny-three-quarter.png / bunny-side.png /
-  bunny-back.png — transparent material-aware renders
+  bunny-back.png and bunny-reference-pose.png — transparent material-aware renders
 - reference-bunny-manifest.json — source provenance and approval=false
 
 The uploaded original PNG is not bundled in the GitHub PR. Save a copy of
