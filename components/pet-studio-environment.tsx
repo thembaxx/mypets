@@ -1,5 +1,8 @@
 'use client';
 
+// Three.js owns mutable renderer and scene resources outside React.
+/* oxlint-disable react/immutability */
+
 import { useEffect, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
 import { PMREMGenerator } from 'three';
