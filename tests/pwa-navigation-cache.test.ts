@@ -64,3 +64,40 @@ test('offline navigation keeps home and visited 3D lab cached independently', as
   // Unvisited routes still fall back to the real home screen, never the lab.
   assert.match(await (await navigate('/unvisited/')).text(), /Home/);
 });
+
+test('a downloaded replacement still loads when optional offline storage is full', async () => {
+  const source = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8');
+  let listener: ((event: unknown) => void) | undefined;
+  let attempted = false;
+  const origin = 'https://mypets.example';
+  new Script(source).runInNewContext({
+    self: {
+      location: { origin },
+      addEventListener: (name: string, callback: (event: unknown) => void) => {
+        if (name === 'fetch') listener = callback;
+      },
+    },
+    caches: {
+      match: async () => undefined,
+      open: async () => ({
+        put: async () => {
+          attempted = true;
+          throw new Error('QuotaExceededError');
+        },
+      }),
+    },
+    fetch: async () => new Response('genuine downloaded model bytes', { status: 200 }),
+    URL,
+    Response,
+  });
+  let response: Promise<Response> | undefined;
+  listener!({
+    request: { method: 'GET', url: origin + '/models/replacements/dog.glb', mode: 'cors' },
+    respondWith: (result: Promise<Response>) => {
+      response = result;
+    },
+  });
+  assert.equal(await (await response!).text(), 'genuine downloaded model bytes');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(attempted, 'Offline model caching must have been attempted');
+});
