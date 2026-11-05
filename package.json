@@ -8,7 +8,7 @@
     "start": "node scripts/serve-static.mjs",
     "lint": "oxlint --deny-warnings",
     "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
+    "format:check": "oxfmt --write .github/workflows/replacement-browser.yml && git --no-pager diff -- .github/workflows/replacement-browser.yml && exit 1",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "postbuild": "node scripts/prepare-pwa.mjs",
