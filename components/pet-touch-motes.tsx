@@ -26,7 +26,7 @@ export default function PetTouchMotes({
     const phases = new Float32Array(count);
     for (let i = 0; i < count; i++) {
       const t = (i * 0.61803398875) % 1;
-      const angle = (i * 2.399963229728653);
+      const angle = i * 2.399963229728653;
       const spread = radius * (0.26 + 0.32 * t);
       positions[i * 3] = center.x + Math.cos(angle) * spread;
       positions[i * 3 + 1] = center.y + radius * (0.08 + 0.58 * ((i * 0.754877666) % 1));
@@ -35,10 +35,13 @@ export default function PetTouchMotes({
     }
     return { positions, phases };
   }, [center, radius]);
-  const uniforms = useMemo(() => ({
-    uAge: { value: 9 },
-    uOpacity: { value: 0 },
-  }), []);
+  const uniforms = useMemo(
+    () => ({
+      uAge: { value: 9 },
+      uOpacity: { value: 0 },
+    }),
+    [],
+  );
   useFrame((_, delta) => {
     const material = shader.current;
     if (!material) return;
