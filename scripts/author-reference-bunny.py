@@ -426,10 +426,23 @@ def animate(rig_obj):
 
 def review(rig_obj,out):
     scene=bpy.context.scene
-    scene.render.engine="BLENDER_WORKBENCH"
-    scene.display.shading.light="STUDIO"
-    scene.display.shading.color_type="MATERIAL"
-    scene.display.shading.show_cavity=True
+    # Material-aware transparent renders, not misleading Workbench previews.
+    scene.render.engine="CYCLES"
+    scene.cycles.samples=24
+    scene.render.film_transparent=True
+    for label, pos, power, size in (
+        ("Soft key", (2, 4, 6), 460, 4.0),
+        ("Soft fill", (-3, 2, 4), 220, 3.0),
+        ("Soft rim", (0, -4, 4), 260, 3.0),
+    ):
+        data=bpy.data.lights.new(label,"AREA")
+        data.energy=power
+        data.shape="DISK"
+        data.size=size
+        lamp=bpy.data.objects.new(label,data)
+        bpy.context.collection.objects.link(lamp)
+        lamp.location=pos
+        lamp.rotation_euler=(Vector((0,0,1.4))-lamp.location).to_track_quat("-Z","Y").to_euler()
     scene.render.resolution_x=760
     scene.render.resolution_y=760
     scene.render.resolution_percentage=100
