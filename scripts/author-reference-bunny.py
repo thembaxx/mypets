@@ -247,6 +247,10 @@ def make_ear(side, rig_obj, mats):
 def facial_features(rig_obj, mats):
     head = sphere("Bunny_Head", (0, .10, 1.58), (.76, .55, .63),
                   mats["ivory"], rig_obj, "Head", 64, 48)
+    # Head-only vertex-colour material. Never alter the shared ivory material:
+    # other objects do not have BunnyFaceColor and would render black.
+    head.data.materials[0] = mats["ivory"].copy()
+    head.data.materials[0].name = "Bunny facial gradient ivory"
     vertex_blush(head)
     for side in (-1, 1):
         s = "L" if side < 0 else "R"
