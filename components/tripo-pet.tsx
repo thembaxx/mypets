@@ -6,15 +6,18 @@ import { createPortal } from 'react-dom';
 import { useReducedMotion } from 'motion/react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import {
+  ACESFilmicToneMapping,
   AnimationMixer,
   Box3,
   LoopRepeat,
   Mesh,
+  PMREMGenerator,
   SkinnedMesh,
   Vector3,
   type AnimationAction,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import {
@@ -33,6 +36,8 @@ import { AnimalAnimationContext } from './shared';
 import LivingCat, { FeedingBowl } from './living-cat';
 import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
+import { requestHaptic } from '@/lib/haptic-feedback';
+import { petRenderQuality } from '@/lib/pet-scene';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
@@ -231,7 +236,43 @@ function AnimalModel({
 }
 
 function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
-  const { camera, gl, invalidate } = useThree();
+  const { camera, gl, scene, size, invalidate, setDpr } = useThree();
+  const quality = useMemo(() => {
+    const context = gl.getContext();
+    const debugInfo = context.getExtension('WEBGL_debug_renderer_info');
+    const renderer = String(
+      context.getParameter(debugInfo ? debugInfo.UNMASKED_RENDERER_WEBGL : context.RENDERER),
+    );
+    return petRenderQuality(
+      renderer,
+      size.width,
+      size.height,
+      typeof window === 'undefined' ? 1 : window.devicePixelRatio,
+    );
+  }, [gl, size.width, size.height]);
+  useEffect(() => {
+    setDpr(quality.dpr);
+  }, [setDpr, quality.dpr]);
+  useEffect(() => {
+    // PBR reflections add depth to imported glTF materials, without requiring
+    // external textures or allocating a room cubemap on software renderers.
+    if (quality.software) return;
+    const generator = new PMREMGenerator(gl);
+    const room = new RoomEnvironment();
+    const environment = generator.fromScene(room, 0.05);
+    const previous = scene.environment;
+    const previousIntensity = scene.environmentIntensity;
+    scene.environment = environment.texture;
+    scene.environmentIntensity = 0.72;
+    room.dispose();
+    generator.dispose();
+    invalidate();
+    return () => {
+      scene.environment = previous;
+      scene.environmentIntensity = previousIntensity;
+      environment.dispose();
+    };
+  }, [gl, scene, invalidate, quality.software]);
   const controls = useMemo(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
     orbit.enableDamping = !reducedMotion;
@@ -493,6 +534,8 @@ export default function TripoPet({
               shadows
               onCreated={({ gl }) => {
                 canvasRef.current = gl.domElement;
+                gl.toneMapping = ACESFilmicToneMapping;
+                gl.toneMappingExposure = 1.05;
               }}
             >
               <hemisphereLight args={['#fff5e5', '#7b91a1', 1.7]} />
@@ -564,12 +607,12 @@ export default function TripoPet({
             >
               {candidateMode
                 ? 'Return to original procedural 3D cat'
-                : 'Preview rigged Blender cat (experimental)'}
+                : 'Preview rigged 3D cat (experimental)'}
             </button>
           )}
           <label className="tripo-local-file">
             <UploadSimpleIcon size={18} aria-hidden="true" />
-            <span>Review a downloaded Blender GLB (on-device only)</span>
+            <span>Review a 3D model (.glb, on-device only)</span>
             <input
               type="file"
               accept=".glb,model/gltf-binary"
@@ -593,7 +636,10 @@ export default function TripoPet({
                 type="button"
                 aria-pressed={activity === next}
                 className={activity === next ? 'active' : ''}
-                onClick={() => setActivity(next)}
+                onClick={() => {
+                  setActivity(next);
+                  requestHaptic(next === 'play' ? 'confirm' : 'select');
+                }}
                 disabled={recording}
               >
                 <Icon size={19} aria-hidden="true" />
@@ -607,7 +653,10 @@ export default function TripoPet({
               Expression
               <select
                 value={mood}
-                onChange={(event) => setMood(event.target.value as CatMood)}
+                onChange={(event) => {
+                  setMood(event.target.value as CatMood);
+                  requestHaptic('select');
+                }}
                 disabled={recording}
                 aria-label={
                   allowProceduralCat ? 'Cat facial expression' : 'Animal facial expression'
@@ -654,7 +703,7 @@ export default function TripoPet({
               <summary>About this 3D model</summary>
               {candidateMode && !localPreview && (
                 <p className="tripo-living-note">
-                  Experimental Blender rig. Compare anatomy and motion with the original
+                  Experimental 3D rig. Compare anatomy and motion with the original
                   illustration before adopting the model.
                 </p>
               )}
