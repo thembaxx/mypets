@@ -37,7 +37,7 @@ MORPHS = (
     "browSad_L", "browSad_R", "mouthSmile", "mouthOpen", "mouthFrown",
     "cheekPuff", "muzzleRaise_L", "muzzleRaise_R", "noseScrunch",
 )
-IVORY = (.985, .971, .937)
+IVORY = (.993, .980, .953)
 ROSE = (1.0, .55, .59)
 BROWN = (.17, .080, .068)
 CORAL = (1.0, .25, .32)
@@ -180,9 +180,9 @@ def vertex_blush(head):
             w = 0.0
             for side in (-1, 1):
                 w += math.exp(-(
-                    ((vert.x-side*.49)/.17)**2
+                    ((vert.x-side*.53)/.19)**2
                     + ((vert.z-1.34)/.115)**2
-                    + ((vert.y-.43)/.19)**2
+                    + ((vert.y-.57)/.19)**2
                 ) * 1.5)
             w = min(.65, w*.6)
             layer.data[li].color = tuple(
@@ -204,8 +204,8 @@ def make_ear(side, rig_obj, mats):
         z = 1.90 + .89*t
         cx = side*(.36+.18*t + .035*math.sin(math.pi*t))
         cy = .035-.05*t
-        width = .15*max(.09, math.sin(math.pi*(t*.91+.055))**.6)
-        depth = .096*max(.09, math.sin(math.pi*(t*.91+.055))**.6)
+        width = .24*max(.09, math.sin(math.pi*(t*.91+.055))**.6)
+        depth = .102*max(.09, math.sin(math.pi*(t*.91+.055))**.6)
         for k in range(n_side):
             a = math.tau*k/n_side
             verts.append((cx+width*math.cos(a), cy+depth*math.sin(a), z))
@@ -238,14 +238,14 @@ def make_ear(side, rig_obj, mats):
     })
     # Inner ear lining: separate smooth surface attached to middle ear chain.
     inner = sphere("Bunny_EarInner_"+s,
-                   (side*.46, .132, 2.34), (.098, .021, .375),
+                   (side*.46, .141, 2.34), (.15, .024, .40),
                    mats["inner"], rig_obj, "Ear_02_"+s, 30, 22,
                    tilt=-side*.14)
     return obj, inner
 
 
 def facial_features(rig_obj, mats):
-    head = sphere("Bunny_Head", (0, .10, 1.58), (.76, .55, .63),
+    head = sphere("Bunny_Head", (0, .10, 1.57), (.88, .58, .70),
                   mats["ivory"], rig_obj, "Head", 64, 48)
     # Head-only vertex-colour material. Never alter the shared ivory material:
     # other objects do not have BunnyFaceColor and would render black.
@@ -254,8 +254,8 @@ def facial_features(rig_obj, mats):
     vertex_blush(head)
     for side in (-1, 1):
         s = "L" if side < 0 else "R"
-        center = (side*.335, .596, 1.64)
-        eye = sphere("Bunny_Eye_"+s, center, (.119, .043, .147),
+        center = (side*.36, .648, 1.64)
+        eye = sphere("Bunny_Eye_"+s, center, (.137, .041, .16),
                      mats["eye"], rig_obj, "Head", 36, 26)
         def blink(co, c=center):
             co.z = c[2] + (co.z-c[2])*.07 + .02*(co.x-c[0])**2
@@ -263,29 +263,29 @@ def facial_features(rig_obj, mats):
         shape(eye, "eyeWide_"+s,
               lambda co, c=center: setattr(co, "z", c[2]+(co.z-c[2])*1.22))
         glint = sphere("Bunny_EyeGlint_"+s,
-                       (side*.299, .639, 1.692), (.026, .012, .028),
+                       (side*.325, .702, 1.702), (.026, .012, .028),
                        mats["glint"], rig_obj, "Head", 18, 12)
         shape(glint, "eyeBlink_"+s,
               lambda co, c=center: setattr(co, "z", c[2]+(co.z-c[2])*.04))
         brow = tube("Bunny_Brow_"+s, [
-            (side*.47, .597, 1.86), (side*.34, .65, 1.89),
-            (side*.21, .61, 1.86)], .014, mats["eye"], rig_obj, "Head")
+            (side*.47, .65, 1.86), (side*.34, .69, 1.89),
+            (side*.21, .65, 1.86)], .012, mats["ivory"], rig_obj, "Head")
         shape(brow, "browSad_"+s,
               lambda co, side=side: setattr(co, "z", co.z-.06
                   + (co.x*side)*.05))
         muzzle = sphere("Bunny_Muzzle_"+s,
-                        (side*.155, .576, 1.382), (.23, .096, .125),
+                        (side*.15, .634, 1.382), (.245, .072, .12),
                         mats["ivory"], rig_obj, "Head", 32, 24)
         shape(muzzle, "cheekPuff", lambda co, side=side:
               setattr(co, "x", co.x + side*.045))
         shape(muzzle, "muzzleRaise_"+s, lambda co:
               setattr(co, "z", co.z+.038))
-    nose = sphere("Bunny_CoralNose", (0,.671,1.57),(.074,.047,.055),
+    nose = sphere("Bunny_CoralNose", (0,.702,1.57),(.064,.036,.050),
                   mats["nose"],rig_obj,"Nose",26,18)
     shape(nose, "noseScrunch", lambda co:
           setattr(co,"z",co.z+.018))
-    mouth_center=(0,.616,1.31)
-    mouth=sphere("Bunny_Mouth",mouth_center,(.187,.039,.139),
+    mouth_center=(0,.663,1.30)
+    mouth=sphere("Bunny_Mouth",mouth_center,(.21,.032,.17),
                  mats["mouth"],rig_obj,"Jaw",40,30)
     shape(mouth,"mouthSmile",lambda co:
           (setattr(co,"x",co.x*1.18),setattr(co,"z",co.z+.012)))
@@ -293,7 +293,7 @@ def facial_features(rig_obj, mats):
           setattr(co,"z",c[2]+(co.z-c[2])*1.65))
     shape(mouth,"mouthFrown",lambda co,c=mouth_center:
           setattr(co,"z",c[2]-(co.z-c[2])*.50))
-    tongue=sphere("Bunny_Tongue",(0,.667,1.233),(.112,.018,.055),
+    tongue=sphere("Bunny_Tongue",(0,.701,1.225),(.112,.016,.060),
                   mats["tongue"],rig_obj,"Jaw",26,18)
     shape(tongue,"mouthOpen",lambda co:
           setattr(co,"z",co.z-.034))
@@ -301,7 +301,7 @@ def facial_features(rig_obj, mats):
 
 
 def body_features(rig_obj,mats):
-    sphere("Bunny_Body",(0,-.065,.75),(.48,.414,.55),
+    sphere("Bunny_Body",(0,-.065,.75),(.43,.39,.54),
            mats["ivory"],rig_obj,"Spine",48,36)
     sphere("Bunny_Tail",(0,-.465,.68),(.175,.16,.19),
            mats["ivory"],rig_obj,"Tail")
@@ -393,8 +393,8 @@ def animate(rig_obj):
                 jaw.rotation_euler.x=.10*jump
                 # Reference-image signature: one broad sideways floppy ear
                 # with the other reaching diagonally behind the head.
-                ears[0].rotation_euler.y=-1.02
-                ears[1].rotation_euler.y=-.30
+                ears[0].rotation_euler.z=-.34
+                ears[1].rotation_euler.z=-1.12
             elif action_name=="Sad":
                 ease=math.sin(math.pi*t/2)**2
                 head.rotation_euler.x=.23*ease
@@ -461,7 +461,7 @@ def review(rig_obj,out):
     bpy.context.collection.objects.link(cam)
     scene.camera=cam
     cam_data.type="ORTHO"
-    cam_data.ortho_scale=3.5
+    cam_data.ortho_scale=3.6
     frames=[("front",(0,6.0,2.0)),("three-quarter",(3.2,5.5,2.55)),
             ("side",(6.0,0,2.0)),("back",(0,-6.0,2.0))]
     for name,position in frames:
@@ -476,13 +476,14 @@ def review(rig_obj,out):
     # and the wink. This is the primary comparison against the uploaded art.
     for track in rig_obj.animation_data.nla_tracks:
         track.mute=(track.name!="Happy")
+    rig_obj.animation_data.action=bpy.data.actions.get("Happy")
     scene.frame_set(25)
     for obj in scene.objects:
         if obj.type!="MESH" or not obj.data.shape_keys:
             continue
         for key in obj.data.shape_keys.key_blocks:
             key.value={
-                "eyeBlink_L":1.0, "mouthSmile":1.0, "mouthOpen":.9,
+                "eyeBlink_R":1.0, "mouthSmile":1.0, "mouthOpen":.9,
                 "cheekPuff":.35, "muzzleRaise_L":.45,
                 "muzzleRaise_R":.45,
             }.get(key.name,0.0)
@@ -494,6 +495,7 @@ def review(rig_obj,out):
         if obj.type=="MESH" and obj.data.shape_keys:
             for key in obj.data.shape_keys.key_blocks:
                 key.value=0.0
+    rig_obj.animation_data.action=None
     bpy.data.objects.remove(cam,do_unlink=True)
     for track in rig_obj.animation_data.nla_tracks:
         track.mute=False
