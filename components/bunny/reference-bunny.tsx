@@ -8,7 +8,8 @@ import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { AnimalAnimationContext } from '@/components/shared';
 import {
   BunnyAnimationController,
-  type BunnyAction, type BunnyEmotion,
+  type BunnyAction,
+  type BunnyEmotion,
   type BunnyTouchRegion,
 } from '@/lib/bunny/animation-controller';
 
@@ -26,8 +27,11 @@ type Props = {
  * experimental GLB or replace the original pet illustration.
  */
 export default function ReferenceBunny({
-  url, action = 'Idle', emotion = 'neutral',
-  paused = false, onTouch,
+  url,
+  action = 'Idle',
+  emotion = 'neutral',
+  paused = false,
+  onTouch,
 }: Props) {
   const gltf = useLoader(GLTFLoader, url);
   const root = useMemo(() => clone(gltf.scene), [gltf.scene]);
@@ -66,9 +70,13 @@ export default function ReferenceBunny({
     if (event.delta > 6 || !enabled) return;
     event.stopPropagation();
     const name = event.object.name.toLowerCase();
-    const region: BunnyTouchRegion = name.includes('ear') ? 'ear'
-      : name.includes('paw') || name.includes('foot') ? 'paw'
-      : name.includes('head') || name.includes('eye') ? 'head' : 'body';
+    const region: BunnyTouchRegion = name.includes('ear')
+      ? 'ear'
+      : name.includes('paw') || name.includes('foot')
+        ? 'paw'
+        : name.includes('head') || name.includes('eye')
+          ? 'head'
+          : 'body';
     if (onTouch) onTouch(region);
     else controller.reactToTouch(region);
   };

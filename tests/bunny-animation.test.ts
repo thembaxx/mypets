@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  AnimationClip, Group, Mesh, MeshBasicMaterial,
-  SphereGeometry, VectorKeyframeTrack,
+  AnimationClip,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  SphereGeometry,
+  VectorKeyframeTrack,
 } from 'three';
 import {
-  BunnyAnimationController, BUNNY_ACTIONS, REQUIRED_BUNNY_MORPHS,
+  BunnyAnimationController,
+  BUNNY_ACTIONS,
+  REQUIRED_BUNNY_MORPHS,
 } from '../lib/bunny/animation-controller';
 
 function fixture() {
@@ -17,9 +23,12 @@ function fixture() {
   );
   face.morphTargetInfluences = Array(REQUIRED_BUNNY_MORPHS.length).fill(0);
   root.add(face);
-  const clips = BUNNY_ACTIONS.map((name) => new AnimationClip(name, 0.45, [
-    new VectorKeyframeTrack('.position', [0, 0.45], [0, 0, 0, 0, 0.015, 0]),
-  ]));
+  const clips = BUNNY_ACTIONS.map(
+    (name) =>
+      new AnimationClip(name, 0.45, [
+        new VectorKeyframeTrack('.position', [0, 0.45], [0, 0, 0, 0, 0.015, 0]),
+      ]),
+  );
   return { root, face, clips };
 }
 

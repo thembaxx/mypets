@@ -1,23 +1,51 @@
 import {
-  AnimationMixer, LoopOnce, LoopRepeat, Mesh, SkinnedMesh,
-  type AnimationAction, type AnimationClip, type Object3D,
+  AnimationMixer,
+  LoopOnce,
+  LoopRepeat,
+  Mesh,
+  SkinnedMesh,
+  type AnimationAction,
+  type AnimationClip,
+  type Object3D,
 } from 'three';
 
 export const BUNNY_ACTIONS = [
-  'Idle', 'Walk', 'Hop', 'Sit', 'LieDown', 'Sleep',
-  'Happy', 'Sad', 'Play', 'PetReaction',
+  'Idle',
+  'Walk',
+  'Hop',
+  'Sit',
+  'LieDown',
+  'Sleep',
+  'Happy',
+  'Sad',
+  'Play',
+  'PetReaction',
 ] as const;
 export type BunnyAction = (typeof BUNNY_ACTIONS)[number];
 export type BunnyEmotion =
-  | 'neutral' | 'happy' | 'sad' | 'sleepy'
-  | 'surprised' | 'curious' | 'affectionate';
+  | 'neutral'
+  | 'happy'
+  | 'sad'
+  | 'sleepy'
+  | 'surprised'
+  | 'curious'
+  | 'affectionate';
 export type BunnyTouchRegion = 'head' | 'ear' | 'body' | 'paw';
 
 export const REQUIRED_BUNNY_MORPHS = [
-  'eyeBlink_L', 'eyeBlink_R', 'eyeWide_L', 'eyeWide_R',
-  'browSad_L', 'browSad_R', 'mouthSmile', 'mouthOpen',
-  'mouthFrown', 'cheekPuff', 'muzzleRaise_L',
-  'muzzleRaise_R', 'noseScrunch',
+  'eyeBlink_L',
+  'eyeBlink_R',
+  'eyeWide_L',
+  'eyeWide_R',
+  'browSad_L',
+  'browSad_R',
+  'mouthSmile',
+  'mouthOpen',
+  'mouthFrown',
+  'cheekPuff',
+  'muzzleRaise_L',
+  'muzzleRaise_R',
+  'noseScrunch',
 ] as const;
 
 type MorphName = (typeof REQUIRED_BUNNY_MORPHS)[number];
@@ -27,25 +55,33 @@ type Preset = Partial<Record<MorphName, number>>;
 const PRESETS: Record<BunnyEmotion, Preset> = {
   neutral: {},
   happy: {
-    eyeBlink_L: 0.95, mouthSmile: 1, mouthOpen: 0.8,
-    cheekPuff: 0.4, muzzleRaise_L: 0.5, muzzleRaise_R: 0.5,
+    eyeBlink_L: 0.95,
+    mouthSmile: 1,
+    mouthOpen: 0.8,
+    cheekPuff: 0.4,
+    muzzleRaise_L: 0.5,
+    muzzleRaise_R: 0.5,
   },
   sad: {
-    browSad_L: 0.95, browSad_R: 0.95,
-    mouthFrown: 0.85, eyeBlink_L: 0.3, eyeBlink_R: 0.3,
+    browSad_L: 0.95,
+    browSad_R: 0.95,
+    mouthFrown: 0.85,
+    eyeBlink_L: 0.3,
+    eyeBlink_R: 0.3,
   },
   sleepy: { eyeBlink_L: 1, eyeBlink_R: 1, mouthSmile: 0.12 },
   surprised: { eyeWide_L: 1, eyeWide_R: 1, mouthOpen: 0.9 },
   curious: { eyeWide_L: 0.32, eyeWide_R: 0.32, noseScrunch: 0.45 },
   affectionate: {
-    eyeBlink_L: 0.42, eyeBlink_R: 0.42,
-    mouthSmile: 0.72, muzzleRaise_L: 0.3, muzzleRaise_R: 0.3,
+    eyeBlink_L: 0.42,
+    eyeBlink_R: 0.42,
+    mouthSmile: 0.72,
+    muzzleRaise_L: 0.3,
+    muzzleRaise_R: 0.3,
   },
 };
 const LOOPING = new Set<BunnyAction>(['Idle', 'Walk', 'Sleep']);
-const RETURN_TO_IDLE = new Set<BunnyAction>(
-  ['Hop', 'Happy', 'Sad', 'Play', 'PetReaction']
-);
+const RETURN_TO_IDLE = new Set<BunnyAction>(['Hop', 'Happy', 'Sad', 'Play', 'PetReaction']);
 
 export class BunnyAnimationController {
   readonly mixer: AnimationMixer;
@@ -80,8 +116,7 @@ export class BunnyAnimationController {
       }
     });
     for (const morph of REQUIRED_BUNNY_MORPHS) {
-      if (!this.morphs.has(morph))
-        throw new Error('Bunny GLB missing facial morph: ' + morph);
+      if (!this.morphs.has(morph)) throw new Error('Bunny GLB missing facial morph: ' + morph);
     }
   }
 
@@ -116,8 +151,7 @@ export class BunnyAnimationController {
     next.enabled = true;
     next.paused = false;
     next.setEffectiveWeight(1);
-    next.setLoop(LOOPING.has(name) ? LoopRepeat : LoopOnce,
-      LOOPING.has(name) ? Infinity : 1);
+    next.setLoop(LOOPING.has(name) ? LoopRepeat : LoopOnce, LOOPING.has(name) ? Infinity : 1);
     next.clampWhenFinished = !LOOPING.has(name);
     if (previous && previous !== next) {
       next.crossFadeFrom(previous, 0.24, false);
@@ -135,8 +169,11 @@ export class BunnyAnimationController {
 
   reactToTouch(region: BunnyTouchRegion) {
     const emotion: BunnyEmotion =
-      region === 'head' || region === 'ear' ? 'affectionate'
-        : region === 'paw' ? 'curious' : 'happy';
+      region === 'head' || region === 'ear'
+        ? 'affectionate'
+        : region === 'paw'
+          ? 'curious'
+          : 'happy';
     this.express(emotion);
     this.play('PetReaction');
   }
@@ -171,7 +208,7 @@ export class BunnyAnimationController {
     // already control the eyelids; maintain deterministic behaviour per instance.
     if (this.emotion === 'neutral' || this.emotion === 'curious') {
       const phase = this.elapsed % 4.2;
-      const blink = phase < 0.12 ? Math.sin(phase / 0.12 * Math.PI) : 0;
+      const blink = phase < 0.12 ? Math.sin((phase / 0.12) * Math.PI) : 0;
       for (const name of ['eyeBlink_L', 'eyeBlink_R'] as const) {
         for (const { mesh, index } of this.morphs.get(name) ?? []) {
           const values = mesh.morphTargetInfluences;

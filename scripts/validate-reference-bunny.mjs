@@ -7,14 +7,31 @@ import { fileURLToPath } from 'node:url';
 import { inspectGlb } from './validate-3d-assets.mjs';
 
 export const BUNNY_ACTIONS = Object.freeze([
-  'Idle', 'Walk', 'Hop', 'Sit', 'LieDown',
-  'Sleep', 'Happy', 'Sad', 'Play', 'PetReaction',
+  'Idle',
+  'Walk',
+  'Hop',
+  'Sit',
+  'LieDown',
+  'Sleep',
+  'Happy',
+  'Sad',
+  'Play',
+  'PetReaction',
 ]);
 export const BUNNY_MORPHS = Object.freeze([
-  'eyeBlink_L', 'eyeBlink_R', 'eyeWide_L', 'eyeWide_R',
-  'browSad_L', 'browSad_R', 'mouthSmile', 'mouthOpen',
-  'mouthFrown', 'cheekPuff', 'muzzleRaise_L',
-  'muzzleRaise_R', 'noseScrunch',
+  'eyeBlink_L',
+  'eyeBlink_R',
+  'eyeWide_L',
+  'eyeWide_R',
+  'browSad_L',
+  'browSad_R',
+  'mouthSmile',
+  'mouthOpen',
+  'mouthFrown',
+  'cheekPuff',
+  'muzzleRaise_L',
+  'muzzleRaise_R',
+  'noseScrunch',
 ]);
 
 export function readGlbJson(bytes) {
@@ -23,7 +40,12 @@ export function readGlbJson(bytes) {
   const length = bytes.readUInt32LE(12);
   assert.ok(length > 0 && length % 4 === 0, 'Invalid JSON chunk length');
   assert.equal(bytes.readUInt32LE(16), 0x4e4f534a, 'First chunk must contain JSON');
-  return JSON.parse(bytes.subarray(20, 20 + length).toString('utf8').trim());
+  return JSON.parse(
+    bytes
+      .subarray(20, 20 + length)
+      .toString('utf8')
+      .trim(),
+  );
 }
 
 export function validateReferenceBunny(gltf) {
@@ -36,26 +58,40 @@ export function validateReferenceBunny(gltf) {
   assert.ok(skins.length >= 1, 'Bunny must be a real skeletal model');
   const jointIds = new Set();
   for (const skin of skins) {
-    assert.ok(Array.isArray(skin.joints) && skin.joints.length >= 16,
-      'Bunny skin needs a meaningful multi-bone skeleton (>= 16 joints)');
+    assert.ok(
+      Array.isArray(skin.joints) && skin.joints.length >= 16,
+      'Bunny skin needs a meaningful multi-bone skeleton (>= 16 joints)',
+    );
     for (const joint of skin.joints) {
       assert.ok(Number.isInteger(joint) && nodes[joint], 'Skin references an invalid bone');
       jointIds.add(joint);
     }
-    assert.ok(Number.isInteger(skin.inverseBindMatrices),
-      'Skin requires inverse bind matrices');
-    assert.equal(accessors[skin.inverseBindMatrices]?.count, skin.joints.length,
-      'Inverse bind matrix count must match joint count');
+    assert.ok(Number.isInteger(skin.inverseBindMatrices), 'Skin requires inverse bind matrices');
+    assert.equal(
+      accessors[skin.inverseBindMatrices]?.count,
+      skin.joints.length,
+      'Inverse bind matrix count must match joint count',
+    );
   }
-  assert.ok(nodes.some((node) => Number.isInteger(node.skin) && skins[node.skin]),
-    'A scene node must actually use the skeleton');
+  assert.ok(
+    nodes.some((node) => Number.isInteger(node.skin) && skins[node.skin]),
+    'A scene node must actually use the skeleton',
+  );
 
   const primitives = meshes.flatMap((mesh) => mesh.primitives ?? []);
-  assert.ok(primitives.some((p) => p.attributes?.JOINTS_0 !== undefined
-    && p.attributes?.WEIGHTS_0 !== undefined && p.attributes?.POSITION !== undefined),
-  'Real deformable geometry with joint weights is required');
-  const vertexCount = primitives.reduce((n, p) => n +
-    (accessors[p.attributes?.POSITION]?.count ?? 0), 0);
+  assert.ok(
+    primitives.some(
+      (p) =>
+        p.attributes?.JOINTS_0 !== undefined &&
+        p.attributes?.WEIGHTS_0 !== undefined &&
+        p.attributes?.POSITION !== undefined,
+    ),
+    'Real deformable geometry with joint weights is required',
+  );
+  const vertexCount = primitives.reduce(
+    (n, p) => n + (accessors[p.attributes?.POSITION]?.count ?? 0),
+    0,
+  );
   assert.ok(vertexCount >= 3000, 'Insufficient character geometry for the reference-detail target');
 
   const morphNames = new Set();
@@ -64,11 +100,16 @@ export function validateReferenceBunny(gltf) {
     for (const name of names) morphNames.add(name);
     const targets = mesh.primitives?.[0]?.targets ?? [];
     if (names.length) {
-      assert.equal(names.length, targets.length,
-        'Every named shape key must have exported target geometry');
+      assert.equal(
+        names.length,
+        targets.length,
+        'Every named shape key must have exported target geometry',
+      );
       for (const target of targets) {
-        assert.ok(Number.isInteger(target.POSITION) && accessors[target.POSITION],
-          'Morph target must change actual vertex positions');
+        assert.ok(
+          Number.isInteger(target.POSITION) && accessors[target.POSITION],
+          'Morph target must change actual vertex positions',
+        );
       }
     }
   }
@@ -82,15 +123,23 @@ export function validateReferenceBunny(gltf) {
     const clip = animations.find((a) => a.name === name);
     assert.ok(clip, 'Missing bunny action: ' + name);
     assert.ok(clip.channels?.length >= 2, name + ' must animate several channels');
-    const boneChannels = clip.channels.filter((channel) =>
-      jointIds.has(channel.target?.node)
-      && ['rotation', 'translation', 'scale'].includes(channel.target?.path));
-    assert.ok(boneChannels.length >= 2,
-      name + ' must animate skeletal bones; static placeholder clips are rejected');
-    const timeRanges = (clip.samplers ?? []).map((sample) => accessors[sample.input])
-      .filter(Boolean).filter((input) => input.min && input.max);
-    assert.ok(timeRanges.some((input) => input.max[0] - input.min[0] > 0.05),
-      name + ' must have a nonzero authored timeline');
+    const boneChannels = clip.channels.filter(
+      (channel) =>
+        jointIds.has(channel.target?.node) &&
+        ['rotation', 'translation', 'scale'].includes(channel.target?.path),
+    );
+    assert.ok(
+      boneChannels.length >= 2,
+      name + ' must animate skeletal bones; static placeholder clips are rejected',
+    );
+    const timeRanges = (clip.samplers ?? [])
+      .map((sample) => accessors[sample.input])
+      .filter(Boolean)
+      .filter((input) => input.min && input.max);
+    assert.ok(
+      timeRanges.some((input) => input.max[0] - input.min[0] > 0.05),
+      name + ' must have a nonzero authored timeline',
+    );
   }
 
   return {

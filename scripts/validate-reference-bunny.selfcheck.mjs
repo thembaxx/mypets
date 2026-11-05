@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BUNNY_ACTIONS, BUNNY_MORPHS, validateReferenceBunny } from './validate-reference-bunny.mjs';
+import {
+  BUNNY_ACTIONS,
+  BUNNY_MORPHS,
+  validateReferenceBunny,
+} from './validate-reference-bunny.mjs';
 
 function validFixture() {
   const nodes = Array.from({ length: 16 }, (_, i) => ({ name: 'BunnyBone_' + i }));
@@ -14,10 +18,12 @@ function validFixture() {
   const mesh = {
     name: 'BunnyFace',
     extras: { targetNames: [...BUNNY_MORPHS] },
-    primitives: [{
-      attributes: { JOINTS_0: 1, WEIGHTS_0: 1, POSITION: 1 },
-      targets: BUNNY_MORPHS.map((_, i) => ({ POSITION: i + 3 })),
-    }],
+    primitives: [
+      {
+        attributes: { JOINTS_0: 1, WEIGHTS_0: 1, POSITION: 1 },
+        targets: BUNNY_MORPHS.map((_, i) => ({ POSITION: i + 3 })),
+      },
+    ],
   };
   const animations = BUNNY_ACTIONS.map((name) => ({
     name,
@@ -28,7 +34,9 @@ function validFixture() {
     ],
   }));
   return {
-    nodes, accessors, meshes: [mesh],
+    nodes,
+    accessors,
+    meshes: [mesh],
     skins: [{ joints: Array.from({ length: 16 }, (_, i) => i), inverseBindMatrices: 0 }],
     animations,
   };

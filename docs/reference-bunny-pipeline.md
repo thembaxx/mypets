@@ -44,6 +44,7 @@ Run these commands from the repository root with Blender 4.5+ installed:
     npm test
 
 Outputs:
+
 - reference-bunny-master.blend — editable source
 - reference-bunny-candidate.glb — experimental rigged GLB
 - bunny-front.png / bunny-three-quarter.png / bunny-side.png /
