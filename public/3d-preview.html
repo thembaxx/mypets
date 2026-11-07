@@ -197,25 +197,23 @@
         <div role="status" aria-live="polite" id="status">Loading model…</div>
       </div>
       <div class="controls">
-        <label for="variant">Model</label>
-        <select id="variant" aria-label="3D model version">
+        <label for="variant">Model</label
+        ><select id="variant" aria-label="3D model version">
           <option value="blender">Blender original</option>
           <option value="animated">Previous animated</option>
           <option value="static">Original static</option>
-          <option value="local" disabled>Local review</option>
-        </select>
-        <label for="candidate">Review candidate</label>
-        <input
+          <option value="local" disabled>Local review</option></select
+        ><label for="candidate">Review candidate</label
+        ><input
           id="candidate"
           type="file"
           accept=".glb,model/gltf-binary"
           aria-label="Open local GLB file for private preview"
-        />
-        <button id="animate" type="button" aria-pressed="false">Pause animation</button>
-        <button id="reset" type="button">Reset</button>
-        <button id="top" type="button">Top view</button>
-        <button id="zoom" type="button">Zoom in</button>
-        <button id="save" type="button" class="primary">Save PNG</button>
+        /><button id="animate" type="button" aria-pressed="false">Pause animation</button
+        ><button id="reset" type="button">Reset</button
+        ><button id="top" type="button">Top view</button
+        ><button id="zoom" type="button">Zoom in</button
+        ><button id="save" type="button" class="primary">Save PNG</button>
       </div>
       <footer>
         Loads the exact GLB committed to this repository, including separate mesh materials and

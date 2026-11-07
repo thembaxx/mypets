@@ -24,7 +24,6 @@ export function SplashScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
-    setPlaying(false);
     const video = videoRef.current;
     if (!playVideo || !video) return;
     let cancelled = false;
