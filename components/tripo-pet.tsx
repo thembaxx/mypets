@@ -10,10 +10,12 @@ import {
   Box3,
   LoopRepeat,
   Mesh,
+  MeshStandardMaterial,
   PerspectiveCamera,
   SkinnedMesh,
   Vector3,
   type AnimationAction,
+  type Material,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -37,6 +39,7 @@ import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
 import { petFacialMorphTarget } from '@/lib/pet-face';
 import { PetStudioEnvironment } from './pet-studio-environment';
 import { fitPetCameraDistance } from '@/lib/pet-camera';
+import { enhancePetCoatMaterial } from '@/lib/pet-coat-material';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
@@ -106,6 +109,11 @@ function AnimalModel({
       if (object instanceof Mesh || object instanceof SkinnedMesh) {
         object.castShadow = true;
         object.receiveShadow = true;
+        const enhance = (material: Material) =>
+          material instanceof MeshStandardMaterial ? enhancePetCoatMaterial(material) : material;
+        object.material = Array.isArray(object.material)
+          ? object.material.map(enhance)
+          : enhance(object.material);
       }
     });
     const bounds = new Box3().setFromObject(copy);
@@ -555,7 +563,7 @@ export default function TripoPet({
             >
               {candidateMode
                 ? 'Return to original procedural 3D cat'
-                : 'Preview rigged Blender cat (experimental)'}
+                : 'Preview rigged calico (experimental)'}
             </button>
           )}
           <label className="tripo-local-file">
@@ -645,8 +653,7 @@ export default function TripoPet({
               <summary>About this 3D model</summary>
               {candidateMode && !localPreview && (
                 <p className="tripo-living-note">
-                  Experimental Blender rig. Compare anatomy and motion with the original
-                  illustration before adopting the model.
+                  Experimental calico rig. Compare its anatomy and motion with the original artwork.
                 </p>
               )}
               {!activeUrl && (
