@@ -11,7 +11,7 @@ test('procedural rabbit exposes independently named anatomical parts', () => {
   const rabbit = createProceduralRabbit();
   const names = new Set<string>();
   rabbit.traverse((node) => names.add(node.name));
-  for (const name of [
+  const expectedParts = [
     'rabbit-body',
     'rabbit-head',
     'ear-left',
@@ -23,7 +23,10 @@ test('procedural rabbit exposes independently named anatomical parts', () => {
     'eye-left',
     'eye-right',
     'nose',
-  ]) assert.ok(names.has(name), 'missing ' + name);
+  ];
+  for (const name of expectedParts) {
+    assert.ok(names.has(name), 'missing ' + name);
+  }
   assert.equal(rabbit.userData.proceduralSource, 'threejs-code-native');
   disposeProceduralRabbit(rabbit);
 });
