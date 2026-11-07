@@ -9,8 +9,8 @@ import { ArrowLeftIcon, CubeTransparentIcon, PawPrintIcon } from '@phosphor-icon
 const ThreeDCatStudio = dynamic(() => import('@/components/tripo-pet'), { ssr: false });
 
 /**
- * An explicit review route for rig fidelity and interaction QA.
- * It does not replace the original pet illustrations or approve the model.
+ * An explicit review route for the code-native procedural cat and interaction QA.
+ * It does not replace the original pet illustrations.
  */
 export default function ThreeDLabPage() {
   const [open, setOpen] = useState(false);
@@ -37,9 +37,7 @@ export default function ThreeDLabPage() {
           </div>
           <a href="/3d-pets/">Explore the new replacement models →</a>
           <p className="cat-lab-eyebrow">Experimental 3D character laboratory</p>
-          <h1 id="cat-lab-title">
-            A living calico, built in code.
-          </h1>
+          <h1 id="cat-lab-title">A living calico, built in code.</h1>
           <p>
             Explore a code-native Three.js cat prototype with procedural materials, expressive
             movement and interactive behaviours. The original illustrated pets remain unchanged.
