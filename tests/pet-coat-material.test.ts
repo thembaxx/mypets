@@ -33,8 +33,8 @@ test('GLB coat enhancement preserves source PBR maps and injects subtle shader d
   assert.equal(enhanced.roughness, source.roughness);
   const shader = {
     uniforms: {},
-    vertexShader: '#include <common>\\nvoid main() {\\n#include <begin_vertex>\\n}',
-    fragmentShader: '#include <common>\\nvoid main() {\\n#include <color_fragment>\\n}',
+    vertexShader: '#include <common>\nvoid main() {\n#include <begin_vertex>\n}',
+    fragmentShader: '#include <common>\nvoid main() {\n#include <color_fragment>\n}',
   } as Parameters<typeof enhanced.onBeforeCompile>[0];
   enhanced.onBeforeCompile(shader, {} as WebGLRenderer);
   assert.match(shader.vertexShader, /vPetCoatPosition/);
