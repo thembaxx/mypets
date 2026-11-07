@@ -29,7 +29,7 @@ export default function ProceduralRabbitPreview() {
         <h2 id="procedural-rabbit-title">Blender-free rabbit prototype</h2>
         <p>Named anatomical parts and deterministic poses, generated directly from Three.js geometry.</p>
       </div>
-      <div className="procedural-rabbit-preview__stage">
+      <div className="procedural-rabbit-preview__stage" style={{ height: 320, overflow: "hidden", borderRadius: 24 }}>
         <Canvas camera={{ position: [0, 1.65, 4.8], fov: 36 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'low-power' }}>
           <color attach="background" args={['#e9e7e1']} />
           <ambientLight intensity={1.15} />
