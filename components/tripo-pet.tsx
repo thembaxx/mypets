@@ -9,6 +9,7 @@ import {
   AnimationMixer,
   Box3,
   LoopRepeat,
+  Material,
   Mesh,
   MeshStandardMaterial,
   PerspectiveCamera,
@@ -108,7 +109,7 @@ function AnimalModel({
       if (object instanceof Mesh || object instanceof SkinnedMesh) {
         object.castShadow = true;
         object.receiveShadow = true;
-        const enhance = (material: Mesh['material'][number]) =>
+        const enhance = (material: Material) =>
           material instanceof MeshStandardMaterial
             ? enhancePetCoatMaterial(material)
             : material;
