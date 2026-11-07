@@ -40,18 +40,16 @@ export default function ThreeDLabPage() {
           <h1 id="cat-lab-title">A living calico, built in code.</h1>
           <p>
             Explore a code-native Three.js cat prototype with procedural materials, expressive
-            movement and interactive behaviours. The original illustrated pets remain
-            unchanged. No Blender or external model-authoring pipeline is used for this
-            prototype.
+            movement and interactive behaviours. The original illustrated pets remain unchanged. No
+            Blender or external model-authoring pipeline is used for this prototype.
           </p>
           <button className="cat-lab-launch" onClick={() => setOpen(true)}>
             <PawPrintIcon size={22} aria-hidden="true" />
             Open the code-native cat studio
           </button>
           <p className="cat-lab-disclaimer">
-            The prototype is authored directly with Three.js and custom WebGL shader code.
-            Imported models are not used in this review. Original illustrated pets stay
-            unchanged.
+            The prototype is authored directly with Three.js and custom WebGL shader code. Imported
+            models are not used in this review. Original illustrated pets stay unchanged.
           </p>
         </section>
         {open && (
