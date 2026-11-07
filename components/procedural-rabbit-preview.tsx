@@ -45,7 +45,9 @@ export default function ProceduralRabbitPreview() {
       <div className="procedural-rabbit-preview__heading">
         <p className="cat-lab-eyebrow">Three.js procedural study</p>
         <h2 id="procedural-rabbit-title">Blender-free rabbit prototype</h2>
-        <p>Named anatomical parts and deterministic poses, generated directly from Three.js geometry.</p>
+        <p>
+          Named anatomical parts and deterministic poses, generated directly from Three.js geometry.
+        </p>
       </div>
       <div
         className="procedural-rabbit-preview__stage"
