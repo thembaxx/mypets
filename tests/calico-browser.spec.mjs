@@ -4,6 +4,7 @@ test.use({ reducedMotion: 'no-preference' });
 
 test.describe('code-native Three.js cat lab', () => {
   test('discovery artwork and launch control stay inside the card at responsive widths', async ({ page }) => {
+    test.setTimeout(90_000);
     for (const width of [320, 390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('http://127.0.0.1:3000/');
@@ -38,7 +39,11 @@ test.describe('code-native Three.js cat lab', () => {
     // despite a responsive control and valid animation frames.
     test.setTimeout(90_000);
     const errors = [];
+    const modelRequests = [];
     page.on('pageerror', (error) => errors.push(error.message));
+    page.on('request', (request) => {
+      if (/\\.glb(?:\\?|$)/i.test(request.url())) modelRequests.push(request.url());
+    });
     await page.goto('http://127.0.0.1:3000/3d-lab');
     await page.getByRole('button', { name: 'Open the code-native cat studio' }).click();
     const dialog = page.getByRole('dialog', { name: /calico cat interactive 3d studio/i });
@@ -92,6 +97,7 @@ test.describe('code-native Three.js cat lab', () => {
     await dialog.getByRole('button', { name: 'Close 3D studio' }).click();
     await expect(dialog).not.toBeVisible();
     expect(errors).toEqual([]);
+    expect(modelRequests).toEqual([]);
   });
 
   test('mobile: studio actions remain accessible with touch controls', async ({ page }) => {
