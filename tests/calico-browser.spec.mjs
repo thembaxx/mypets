@@ -16,8 +16,9 @@ test.describe('code-native Three.js cat lab', () => {
       const bounds = await page.evaluate(() => {
         const card = document.querySelector('.discovery-card');
         const animal = card?.querySelector('.discovery-art .animal-interaction');
+        const image = card?.querySelector('.discovery-art .animal-interaction .animal-art img');
         const launch = card?.querySelector('.discovery-art .animal-3d-launch');
-        if (!card || !animal) return null;
+        if (!card || !animal || !image) return null;
         const rect = (element) => {
           const value = element.getBoundingClientRect();
           return { left: value.left, right: value.right, top: value.top, bottom: value.bottom };
@@ -25,12 +26,15 @@ test.describe('code-native Three.js cat lab', () => {
         return {
           card: rect(card),
           animal: rect(animal),
+          image: rect(image),
           launch: launch ? rect(launch) : null,
         };
       });
       expect(bounds).not.toBeNull();
       expect(bounds.animal.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
       expect(bounds.animal.right).toBeLessThanOrEqual(bounds.card.right + 1);
+      expect(bounds.image.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
+      expect(bounds.image.right).toBeLessThanOrEqual(bounds.card.right + 1);
       if (bounds.launch) {
         expect(bounds.launch.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
         expect(bounds.launch.right).toBeLessThanOrEqual(bounds.card.right + 1);
