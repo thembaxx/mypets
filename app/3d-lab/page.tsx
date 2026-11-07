@@ -103,9 +103,9 @@ export default function ThreeDLabPage() {
           </button>
           {selected === 'rabbit' && <ProceduralRabbitPreview />}
           <p className="cat-lab-disclaimer">
-            Video-inspired chibi characters and previous anatomical studies are separately rigged
-            experimental GLBs. Neither is a photoreal reconstruction or motion capture. Original
-            illustrated pets stay unchanged.
+            Video-inspired chibi characters and previous anatomical studies are experimental GLBs.
+            Neither is a photoreal reconstruction or motion capture. Original illustrated pets stay
+            unchanged.
           </p>
         </section>
         {open && (
