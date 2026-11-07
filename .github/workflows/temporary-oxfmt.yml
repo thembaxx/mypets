@@ -1,10 +1,16 @@
 name: Temporary PR formatting pass
 on:
-  push:
-    branches:
-      - fix/pet-animation-framing-threejs-20261107
+  pull_request:
+    types: [opened, synchronize, reopened]
     paths:
       - .github/workflows/temporary-oxfmt.yml
+      - app/3d-lab/page.tsx
+      - app/globals.css
+      - components/living-cat.tsx
+      - lib/pet-camera.ts
+      - lib/pet-coat-material.ts
+      - lib/procedural-animal.ts
+      - tests/pet-camera.test.ts
 permissions:
   contents: write
 jobs:
