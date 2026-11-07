@@ -55,8 +55,8 @@ export default function ThreeDLabPage() {
             {cat ? 'A living calico, not a moving picture.' : 'A 3D study of every pet.'}
           </h1>
           <p>
-            Review the earlier experimental character studies. The new code-native rabbit prototype prioritizes quality and
-            natural movement independently of the original illustrations. Try each species’ anatomy,
+            Review the earlier experimental character studies. The new code-native rabbit prototype
+            prioritizes quality and natural movement independently of the original illustrations. Try each species’ anatomy,
             movement, eating, expression and touch controls. Every candidate requires individual
             visual approval before replacing any artwork.
           </p>
