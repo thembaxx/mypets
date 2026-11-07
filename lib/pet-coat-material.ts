@@ -4,10 +4,7 @@ import { MeshPhysicalMaterial, type ColorRepresentation } from 'three';
  * Lightweight, code-authored coat shading for procedural pets.
  * No texture bake, DCC project, external asset, or additional dependency.
  */
-export function createPetCoatMaterial(
-  color: ColorRepresentation,
-  roughness = 0.86,
-) {
+export function createPetCoatMaterial(color: ColorRepresentation, roughness = 0.86) {
   const material = new MeshPhysicalMaterial({
     color,
     roughness,

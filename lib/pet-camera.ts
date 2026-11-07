@@ -20,9 +20,7 @@ export function fitPetCameraDistance(
   const safeHalfHeight = Number.isFinite(halfHeight) ? Math.max(0.01, halfHeight) : 1.75;
   const safeMargin = Number.isFinite(margin) ? Math.max(1, margin) : 1.18;
   const verticalHalfFov = (safeFov * Math.PI) / 360;
-  const horizontalHalfFov = Math.atan(
-    Math.tan(verticalHalfFov) * (safeWidth / safeHeight),
-  );
+  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * (safeWidth / safeHeight));
   return (
     Math.max(
       safeHalfHeight / Math.tan(verticalHalfFov),

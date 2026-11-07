@@ -12,9 +12,7 @@ test('portrait framing backs the camera away enough to contain the full pet widt
 test('wide and tall viewports retain the requested safety margin', () => {
   const distance = fitPetCameraDistance(390, 844, 39);
   const verticalHalfFov = (39 * Math.PI) / 360;
-  const horizontalHalfFov = Math.atan(
-    Math.tan(verticalHalfFov) * (390 / 844),
-  );
+  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * (390 / 844));
   assert.ok(distance * Math.tan(verticalHalfFov) >= 1.75 * 1.18);
   assert.ok(distance * Math.tan(horizontalHalfFov) >= 1.65 * 1.18);
 });

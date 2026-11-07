@@ -138,10 +138,13 @@ export default function LivingCat({
 }) {
   const coatMaterial = useMemo(() => createPetCoatMaterial('#fff0d6', 0.86), []);
   const faceMaterial = useMemo(() => createPetCoatMaterial('#fff4df', 0.84), []);
-  useEffect(() => () => {
-    coatMaterial.dispose();
-    faceMaterial.dispose();
-  }, [coatMaterial, faceMaterial]);
+  useEffect(
+    () => () => {
+      coatMaterial.dispose();
+      faceMaterial.dispose();
+    },
+    [coatMaterial, faceMaterial],
+  );
   const elapsed = useRef(0);
   const root = useRef<Group>(null);
   const torso = useRef<Group>(null);
