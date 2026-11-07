@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from 'three';
 
 export interface SceneInspectionOptions {
   /** Distance between adjacent parts after full separation. */
@@ -12,9 +12,9 @@ export interface SceneInspectionOptions {
 }
 
 export interface SceneInspectionController {
-  /** Deterministic 0..1 separation; safe to call from a scrubber or animation timeline. */
+  /** Deterministic 0..1 separation; safe for a scrubber or animation timeline. */
   setProgress(progress: number): void;
-  /** Restore every captured transform and release retained references. */
+  /** Restore captured transforms and release retained references. */
   dispose(restore?: boolean): void;
 }
 
@@ -27,10 +27,10 @@ interface PartTransform {
 /**
  * Creates a reversible exploded view for authored, non-deforming scene assemblies.
  *
- * Use semantic top-level groups (for example, building wings, cookware parts,
- * atom shells, turntable components). Do not apply this to skinned meshes or
- * arbitrary children of an animated character; those require a rig-aware layout.
- * The function does not create geometry, alter materials, or own GPU resources.
+ * Use semantic top-level groups (building wings, cookware parts, atom shells,
+ * turntable components, or pet accessories). Do not apply this to skinned meshes
+ * or arbitrary children of an animated character; those need a rig-aware layout.
+ * This function does not create geometry, alter materials, or own GPU resources.
  */
 export function createSceneInspectionController(
   root: THREE.Object3D,
@@ -49,16 +49,18 @@ export function createSceneInspectionController(
   const fallback = new THREE.Vector3();
 
   bounds.setFromObject(root);
-  if (bounds.isEmpty()) {
-    return { setProgress() {}, dispose() {} };
-  }
+  if (bounds.isEmpty()) return { setProgress() {}, dispose() {} };
   bounds.getCenter(center);
   root.worldToLocal(center);
 
   root.children.forEach((object, index) => {
     if (pinned.has(object.name) || options.exclude?.(object)) return;
-    if (object instanceof THREE.SkinnedMesh || object.getObjectByProperty("isSkinnedMesh", true))
+    if (
+      object instanceof THREE.SkinnedMesh ||
+      object.getObjectByProperty('isSkinnedMesh', true)
+    ) {
       return;
+    }
 
     const partBounds = new THREE.Box3().setFromObject(object);
     if (partBounds.isEmpty()) return;
@@ -103,12 +105,9 @@ export function createSceneInspectionController(
   };
 }
 
-/** Pure timeline helper: callers choose when to seek; no timers or hidden RAF loop. */
+/** Pure timeline helper; callers choose when to seek, with no timers or hidden RAF loop. */
 export function sceneTimelineProgress(elapsedMs: number, durationMs: number): number {
   if (!Number.isFinite(durationMs) || durationMs <= 0) return 1;
-  return THREE.MathUtils.clamp(
-    (Number.isFinite(elapsedMs) ? elapsedMs : 0) / durationMs,
-    0,
-    1,
-  );
+  const elapsed = Number.isFinite(elapsedMs) ? elapsedMs : 0;
+  return THREE.MathUtils.clamp(elapsed / durationMs, 0, 1);
 }
