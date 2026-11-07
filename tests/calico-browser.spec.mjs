@@ -37,12 +37,18 @@ test.describe('code-native Three.js cat lab', () => {
       expect(bounds).not.toBeNull();
       expect(bounds.animal.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
       expect(bounds.animal.right).toBeLessThanOrEqual(bounds.card.right + 1);
+      expect(bounds.animal.top).toBeGreaterThanOrEqual(bounds.card.top - 1);
+      expect(bounds.animal.bottom).toBeLessThanOrEqual(bounds.card.bottom + 1);
       expect(bounds.image.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
       expect(bounds.image.right).toBeLessThanOrEqual(bounds.card.right + 1);
+      expect(bounds.image.top).toBeGreaterThanOrEqual(bounds.card.top - 1);
+      expect(bounds.image.bottom).toBeLessThanOrEqual(bounds.card.bottom + 1);
       if (bounds.launch) {
         expect(bounds.launch.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
         expect(bounds.launch.right).toBeLessThanOrEqual(bounds.card.right + 1);
+        expect(bounds.launch.top).toBeGreaterThanOrEqual(bounds.card.top - 1);
         expect(bounds.launch.bottom).toBeLessThanOrEqual(bounds.card.bottom + 1);
+        expect(bounds.launch.top).toBeGreaterThanOrEqual(bounds.animal.bottom - 1);
       }
     }
   });
