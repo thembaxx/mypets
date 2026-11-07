@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useReducedMotion } from 'motion/react';
-import * as THREE from 'three';
 import { createProceduralRabbit, disposeProceduralRabbit, setProceduralRabbitPose, type ProceduralRabbitPose } from '@/lib/procedural-animal';
 
 const poses: { id: ProceduralRabbitPose; label: string }[] = [
