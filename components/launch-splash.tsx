@@ -29,7 +29,6 @@ export function SplashScreen({
     if (!playVideo || !video) return;
     let cancelled = false;
     // Muted inline playback also works on iOS. A rejected autoplay falls back to the poster.
-    video.muted = true;
     void video.play()?.catch(() => {
       if (!cancelled) onPlaybackError?.();
     });
