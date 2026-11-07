@@ -23,9 +23,7 @@ export interface ProceduralRabbitOptions {
  * Named anatomical groups keep each part independently inspectable
  * and replaceable.
  */
-export function createProceduralRabbit(
-  options: ProceduralRabbitOptions = {},
-): THREE.Group {
+export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): THREE.Group {
   const root = new THREE.Group();
   root.name = 'mypets-procedural-rabbit';
   const coat = new THREE.MeshPhysicalMaterial({
@@ -77,14 +75,7 @@ export function createProceduralRabbit(
   };
 
   const body = group('rabbit-body');
-  mesh(
-    body,
-    'torso',
-    new THREE.SphereGeometry(0.5, 32, 24),
-    coat,
-    [0, 0.76, 0],
-    [0.58, 0.7, 0.92],
-  );
+  mesh(body, 'torso', new THREE.SphereGeometry(0.5, 32, 24), coat, [0, 0.76, 0], [0.58, 0.7, 0.92]);
   mesh(
     body,
     'chest',
@@ -93,14 +84,7 @@ export function createProceduralRabbit(
     [0, 0.94, 0.37],
     [0.74, 0.95, 0.7],
   );
-  mesh(
-    body,
-    'tail',
-    new THREE.SphereGeometry(0.2, 24, 18),
-    coat,
-    [0, 0.72, -0.86],
-    [1, 1, 1],
-  );
+  mesh(body, 'tail', new THREE.SphereGeometry(0.2, 24, 18), coat, [0, 0.72, -0.86], [1, 1, 1]);
 
   const head = group('rabbit-head');
   head.position.set(0, 1.47, 0.53);
@@ -221,9 +205,7 @@ export function setProceduralRabbitPose(
   pose: ProceduralRabbitPose,
   time = 0,
 ): void {
-  const parts = root.userData.proceduralParts as
-    | Map<string, THREE.Group>
-    | undefined;
+  const parts = root.userData.proceduralParts as Map<string, THREE.Group> | undefined;
   if (!parts) return;
   const t = Number.isFinite(time) ? time : 0;
   const wave = Math.sin(t * Math.PI * 2);
@@ -260,13 +242,7 @@ export function setProceduralRabbitPose(
     if (name.startsWith('ear-')) {
       const side = name.endsWith('left') ? -1 : 1;
       const base = side * -0.12;
-      part.rotation.z =
-        base +
-        (pose === 'sad'
-          ? side * -0.22
-          : pose === 'happy'
-            ? side * 0.16
-            : 0.045 * wave);
+      part.rotation.z = base + (pose === 'sad' ? side * -0.22 : pose === 'happy' ? side * 0.16 : 0.045 * wave);
     } else if (name.startsWith('fore-leg-')) {
       const side = name.endsWith('left') ? 1 : -1;
       part.rotation.x =
@@ -298,9 +274,7 @@ export function disposeProceduralRabbit(root: THREE.Object3D): void {
   root.traverse((node) => {
     if (!(node instanceof THREE.Mesh)) return;
     geometries.add(node.geometry);
-    const ownedMaterials = Array.isArray(node.material)
-      ? node.material
-      : [node.material];
+    const ownedMaterials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of ownedMaterials) {
       materials.add(material);
     }
