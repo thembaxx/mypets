@@ -149,7 +149,8 @@ export default function AmbientScene() {
   useEffect(() => {
     if (!supported || !sceneRef.current) return;
     const element = sceneRef.current;
-    const refresh = () => setInViewport(isVisible.current && document.visibilityState === 'visible');
+    const refresh = () =>
+      setInViewport(isVisible.current && document.visibilityState === 'visible');
     const observer =
       typeof IntersectionObserver === 'undefined'
         ? null
