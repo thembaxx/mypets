@@ -10,6 +10,7 @@ import {
   Box3,
   LoopRepeat,
   Mesh,
+  MeshStandardMaterial,
   PerspectiveCamera,
   SkinnedMesh,
   Vector3,
@@ -37,6 +38,7 @@ import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
 import { petFacialMorphTarget } from '@/lib/pet-face';
 import { PetStudioEnvironment } from './pet-studio-environment';
 import { fitPetCameraDistance } from '@/lib/pet-camera';
+import { enhancePetCoatMaterial } from '@/lib/pet-coat-material';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
@@ -106,6 +108,13 @@ function AnimalModel({
       if (object instanceof Mesh || object instanceof SkinnedMesh) {
         object.castShadow = true;
         object.receiveShadow = true;
+        const enhance = (material: Mesh['material'][number]) =>
+          material instanceof MeshStandardMaterial
+            ? enhancePetCoatMaterial(material)
+            : material;
+        object.material = Array.isArray(object.material)
+          ? object.material.map(enhance)
+          : enhance(object.material);
       }
     });
     const bounds = new Box3().setFromObject(copy);
