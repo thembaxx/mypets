@@ -5,10 +5,14 @@ test.use({ reducedMotion: 'no-preference' });
 test.describe('code-native Three.js cat lab', () => {
   test('discovery pet stays inside its card at responsive widths', async ({ page }) => {
     test.setTimeout(90_000);
+    await page.goto('http://127.0.0.1:3000/');
+    await page.getByRole('button', { name: 'Explore with Milo' }).click({ timeout: 15_000 });
+    await page.getByRole('button', { name: 'Your pets' }).click();
+    await page.getByRole('button', { name: 'View Cleo' }).click();
+    await page.getByRole('button', { name: 'Spend the day with Cleo' }).click();
+    const card = page.locator('.discovery-card').first();
     for (const width of [320, 390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto('http://127.0.0.1:3000/');
-      const card = page.locator('.discovery-card').first();
       const artwork = card.locator('.discovery-art');
       const animal = artwork.locator('.animal-interaction');
       await expect(card).toBeVisible();
@@ -122,7 +126,7 @@ test.describe('code-native Three.js cat lab', () => {
     await dialog.getByRole('button', { name: 'Pause motion' }).click();
     await expect(dialog.getByRole('button', { name: 'Resume motion' })).toBeVisible();
     await dialog.getByRole('button', { name: 'Resume motion' }).click();
-    await dialog.getByRole('combobox', { name: 'Cat facial expression' }).selectOption('curious');
+    await dialog.getByRole('combobox', { name: 'Animal facial expression' }).selectOption('curious');
     await expect(dialog.getByRole('combobox', { name: 'Cat facial expression' })).toHaveValue(
       'curious',
     );
