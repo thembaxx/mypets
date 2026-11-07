@@ -29,12 +29,9 @@ test('procedural rabbit exposes independently named anatomical parts', () => {
   }
   assert.equal(rabbit.userData.proceduralSource, 'threejs-code-native');
   disposeProceduralRabbit(rabbit);
-  },
-);
+});
 
-test(
-  'pose sampling is deterministic and keeps generated transforms finite',
-  () => {
+test('pose sampling is deterministic and keeps generated transforms finite', () => {
   const rabbit = createProceduralRabbit();
   setProceduralRabbitPose(rabbit, 'hop', 0.25);
   const first = new THREE.Vector3();
