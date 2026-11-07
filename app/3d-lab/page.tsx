@@ -14,9 +14,10 @@ import {
 } from '@/lib/species-3d';
 
 const ThreeDCatStudio = dynamic(() => import('@/components/tripo-pet'), { ssr: false });
-const ProceduralRabbitPreview = dynamic(() => import('@/components/procedural-rabbit-preview'), {
-  ssr: false,
-});
+const ProceduralRabbitPreview = dynamic(
+  () => import('@/components/procedural-rabbit-preview'),
+  { ssr: false },
+);
 
 /**
  * An explicit review route for rig fidelity and interaction QA.
@@ -39,7 +40,9 @@ export default function ThreeDLabPage() {
   const cat = selected === 'cat';
   const videoStyleUrl = chibiCandidateModelUrl(selected);
   const selectedUrl =
-    visualStyle === 'video' && videoStyleUrl ? videoStyleUrl : candidateModelUrl(selected);
+    visualStyle === 'video' && videoStyleUrl
+      ? videoStyleUrl
+      : candidateModelUrl(selected);
 
   return (
     <AnimalAnimationContext.Provider value={animationEnabled}>
@@ -60,8 +63,8 @@ export default function ThreeDLabPage() {
             Review the earlier experimental character studies. The new code-native rabbit
             prototype prioritizes quality and natural movement independently of the original
             illustrations. Try each species’ anatomy, movement, eating, expression and touch
-            controls. Every candidate requires individual visual approval before replacing any
-            artwork.
+            controls. Every candidate requires individual visual approval before replacing
+            any artwork.
           </p>
           <label htmlFor="animal-study-select">Choose an animal to review</label>
           <select
@@ -103,9 +106,9 @@ export default function ThreeDLabPage() {
           </button>
           {selected === 'rabbit' && <ProceduralRabbitPreview />}
           <p className="cat-lab-disclaimer">
-            Video-inspired chibi characters and previous anatomical studies are
-            experimental GLBs. Neither is a photoreal reconstruction or motion capture.
-            Original illustrated pets stay unchanged.
+            Video-inspired chibi characters and previous anatomical studies are experimental
+            GLBs. Neither is a photoreal reconstruction or motion capture. Original illustrated
+            pets stay unchanged.
           </p>
         </section>
         {open && (
