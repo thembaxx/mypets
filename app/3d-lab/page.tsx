@@ -14,7 +14,10 @@ import {
 } from '@/lib/species-3d';
 
 const ThreeDCatStudio = dynamic(() => import('@/components/tripo-pet'), { ssr: false });
-const ProceduralRabbitPreview = dynamic(() => import('@/components/procedural-rabbit-preview'), { ssr: false });
+const ProceduralRabbitPreview = dynamic(
+  () => import('@/components/procedural-rabbit-preview'),
+  { ssr: false },
+);
 
 /**
  * An explicit review route for rig fidelity and interaction QA.
