@@ -565,7 +565,7 @@ export default function TripoPet({
             >
               {candidateMode
                 ? 'Return to original procedural 3D cat'
-                : 'Preview rigged Blender cat (experimental)'}
+                : 'Preview rigged calico (experimental)'}
             </button>
           )}
           <label className="tripo-local-file">
@@ -655,7 +655,7 @@ export default function TripoPet({
               <summary>About this 3D model</summary>
               {candidateMode && !localPreview && (
                 <p className="tripo-living-note">
-                  Experimental Blender rig. Compare anatomy and motion with the original
+                  Experimental rigged calico model. Compare anatomy and motion with the original
                   illustration before adopting the model.
                 </p>
               )}
