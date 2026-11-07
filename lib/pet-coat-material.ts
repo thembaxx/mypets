@@ -78,8 +78,7 @@ float petCoatVariation = petCoatNoise(vPetCoatPosition);
 diffuseColor.rgb *= 1.0 + petCoatVariation * 0.035;`,
     );
   };
-  material.customProgramCacheKey = () =>
-    `${previousKey.call(material)}|mypets-glb-coat-detail-v1`;
+  material.customProgramCacheKey = () => `${previousKey.call(material)}|mypets-glb-coat-detail-v1`;
   material.needsUpdate = true;
   return material;
 }

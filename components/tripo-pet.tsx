@@ -110,9 +110,7 @@ function AnimalModel({
         object.castShadow = true;
         object.receiveShadow = true;
         const enhance = (material: Material) =>
-          material instanceof MeshStandardMaterial
-            ? enhancePetCoatMaterial(material)
-            : material;
+          material instanceof MeshStandardMaterial ? enhancePetCoatMaterial(material) : material;
         object.material = Array.isArray(object.material)
           ? object.material.map(enhance)
           : enhance(object.material);
