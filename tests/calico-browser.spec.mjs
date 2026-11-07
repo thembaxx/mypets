@@ -132,7 +132,9 @@ test.describe('code-native Three.js cat lab', () => {
     await dialog.getByRole('button', { name: 'Pause motion' }).click();
     await expect(dialog.getByRole('button', { name: 'Resume motion' })).toBeVisible();
     await dialog.getByRole('button', { name: 'Resume motion' }).click();
-    await dialog.getByRole('combobox', { name: 'Animal facial expression' }).selectOption('curious');
+    await dialog
+      .getByRole('combobox', { name: 'Animal facial expression' })
+      .selectOption('curious');
     await expect(dialog.getByRole('combobox', { name: 'Cat facial expression' })).toHaveValue(
       'curious',
     );
