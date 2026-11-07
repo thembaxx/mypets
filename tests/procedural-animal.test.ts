@@ -54,12 +54,8 @@ test('pose sampling is deterministic and keeps generated transforms finite', () 
   ] as const) {
     setProceduralRabbitPose(rabbit, pose, 1.25);
     rabbit.traverse((node) => {
-      assert.ok(
-        Number.isFinite(node.position.x + node.position.y + node.position.z),
-      );
-      assert.ok(
-        Number.isFinite(node.rotation.x + node.rotation.y + node.rotation.z),
-      );
+      assert.ok(Number.isFinite(node.position.x + node.position.y + node.position.z));
+      assert.ok(Number.isFinite(node.rotation.x + node.rotation.y + node.rotation.z));
     });
   }
   disposeProceduralRabbit(rabbit);
