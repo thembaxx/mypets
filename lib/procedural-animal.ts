@@ -20,7 +20,8 @@ export interface ProceduralRabbitOptions {
 
 /**
  * Code-native rabbit study for previews and fallback states.
- * Named anatomical groups keep each part independently inspectable and replaceable.
+ * Named anatomical groups keep each part independently inspectable
+ * and replaceable.
  */
 export function createProceduralRabbit(
   options: ProceduralRabbitOptions = {},
@@ -212,13 +213,17 @@ export function createProceduralRabbit(
   return root;
 }
 
-/** Deterministic, bounded poses suitable for screenshot capture and timeline scrubbing. */
+/**
+ * Deterministic, bounded poses suitable for screenshot capture and timeline scrubbing.
+ */
 export function setProceduralRabbitPose(
   root: THREE.Group,
   pose: ProceduralRabbitPose,
   time = 0,
 ): void {
-  const parts = root.userData.proceduralParts as Map<string, THREE.Group> | undefined;
+  const parts = root.userData.proceduralParts as
+    | Map<string, THREE.Group>
+    | undefined;
   if (!parts) return;
   const t = Number.isFinite(time) ? time : 0;
   const wave = Math.sin(t * Math.PI * 2);
@@ -293,7 +298,9 @@ export function disposeProceduralRabbit(root: THREE.Object3D): void {
   root.traverse((node) => {
     if (!(node instanceof THREE.Mesh)) return;
     geometries.add(node.geometry);
-    const ownedMaterials = Array.isArray(node.material) ? node.material : [node.material];
+    const ownedMaterials = Array.isArray(node.material)
+      ? node.material
+      : [node.material];
     for (const material of ownedMaterials) {
       materials.add(material);
     }
