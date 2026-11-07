@@ -8,7 +8,7 @@
     "start": "node scripts/serve-static.mjs",
     "lint": "oxlint --deny-warnings",
     "format": "oxfmt .",
-    "format:check": "oxfmt --write app/3d-lab/page.tsx lib/procedural-animal.ts && git diff -- app/3d-lab/page.tsx lib/procedural-animal.ts && oxfmt --check .",
+    "format:check": "oxfmt --check .",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "postbuild": "node scripts/prepare-pwa.mjs",
