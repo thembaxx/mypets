@@ -9,7 +9,7 @@ import {
   AnimationMixer,
   Box3,
   LoopRepeat,
-  Material,
+  type Material,
   Mesh,
   MeshStandardMaterial,
   PerspectiveCamera,
