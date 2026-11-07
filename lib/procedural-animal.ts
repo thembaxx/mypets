@@ -42,8 +42,12 @@ export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): T
     roughness: 0.16,
     clearcoat: 1,
   });
-  const noseMaterial = new THREE.MeshStandardMaterial({ color: '#bd8587', roughness: 0.62 });
+  const noseMaterial = new THREE.MeshStandardMaterial({
+    color: '#bd8587',
+    roughness: 0.62,
+  });
   const parts = new Map<string, THREE.Group>();
+
   const group = (name: string, parent: THREE.Object3D = root) => {
     const value = new THREE.Group();
     value.name = name;
@@ -51,6 +55,7 @@ export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): T
     parts.set(name, value);
     return value;
   };
+
   const mesh = (
     parent: THREE.Object3D,
     name: string,
@@ -68,16 +73,68 @@ export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): T
     parent.add(value);
     return value;
   };
+
   const body = group('rabbit-body');
-  mesh(body, 'torso', new THREE.SphereGeometry(0.5, 32, 24), coat, [0, 0.76, 0], [0.58, 0.7, 0.92]);
-  mesh(body, 'chest', new THREE.SphereGeometry(0.34, 28, 20), coat, [0, 0.94, 0.37], [0.74, 0.95, 0.7]);
-  mesh(body, 'tail', new THREE.SphereGeometry(0.2, 24, 18), coat, [0, 0.72, -0.86], [1, 1, 1]);
+  mesh(
+    body,
+    'torso',
+    new THREE.SphereGeometry(0.5, 32, 24),
+    coat,
+    [0, 0.76, 0],
+    [0.58, 0.7, 0.92],
+  );
+  mesh(
+    body,
+    'chest',
+    new THREE.SphereGeometry(0.34, 28, 20),
+    coat,
+    [0, 0.94, 0.37],
+    [0.74, 0.95, 0.7],
+  );
+  mesh(
+    body,
+    'tail',
+    new THREE.SphereGeometry(0.2, 24, 18),
+    coat,
+    [0, 0.72, -0.86],
+    [1, 1, 1],
+  );
+
   const head = group('rabbit-head');
   head.position.set(0, 1.47, 0.53);
-  mesh(head, 'head-skull', new THREE.SphereGeometry(0.39, 32, 24), coat, [0, 0, 0.08], [0.94, 0.92, 0.9]);
-  mesh(head, 'muzzle-left', new THREE.SphereGeometry(0.16, 24, 16), coat, [-0.12, -0.13, 0.36], [1, 0.82, 0.86]);
-  mesh(head, 'muzzle-right', new THREE.SphereGeometry(0.16, 24, 16), coat, [0.12, -0.13, 0.36], [1, 0.82, 0.86]);
-  mesh(head, 'nose', new THREE.SphereGeometry(0.07, 20, 16), noseMaterial, [0, -0.035, 0.49], [1.1, 0.8, 0.8]);
+  mesh(
+    head,
+    'head-skull',
+    new THREE.SphereGeometry(0.39, 32, 24),
+    coat,
+    [0, 0, 0.08],
+    [0.94, 0.92, 0.9],
+  );
+  mesh(
+    head,
+    'muzzle-left',
+    new THREE.SphereGeometry(0.16, 24, 16),
+    coat,
+    [-0.12, -0.13, 0.36],
+    [1, 0.82, 0.86],
+  );
+  mesh(
+    head,
+    'muzzle-right',
+    new THREE.SphereGeometry(0.16, 24, 16),
+    coat,
+    [0.12, -0.13, 0.36],
+    [1, 0.82, 0.86],
+  );
+  mesh(
+    head,
+    'nose',
+    new THREE.SphereGeometry(0.07, 20, 16),
+    noseMaterial,
+    [0, -0.035, 0.49],
+    [1.1, 0.8, 0.8],
+  );
+
   for (const side of [-1, 1]) {
     mesh(
       head,
@@ -107,6 +164,7 @@ export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): T
       [0.62, 1.55, 0.16],
     );
   }
+
   for (const side of [-1, 1]) {
     const hind = group(side < 0 ? 'hind-leg-left' : 'hind-leg-right');
     hind.position.set(side * 0.34, 0.43, -0.31);
@@ -126,6 +184,7 @@ export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): T
       [0, -0.24, 0.22],
       [0.82, 0.55, 1.4],
     );
+
     const fore = group(side < 0 ? 'fore-leg-left' : 'fore-leg-right');
     fore.position.set(side * 0.24, 0.48, 0.48);
     mesh(
@@ -145,6 +204,7 @@ export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): T
       [0.9, 0.55, 1.2],
     );
   }
+
   root.userData.proceduralParts = parts;
   root.userData.proceduralSource = 'threejs-code-native';
   root.scale.setScalar(1.15);
@@ -152,13 +212,18 @@ export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): T
 }
 
 /** Deterministic, bounded poses suitable for screenshot capture and timeline scrubbing. */
-export function setProceduralRabbitPose(root: THREE.Group, pose: ProceduralRabbitPose, time = 0): void {
+export function setProceduralRabbitPose(
+  root: THREE.Group,
+  pose: ProceduralRabbitPose,
+  time = 0,
+): void {
   const parts = root.userData.proceduralParts as Map<string, THREE.Group> | undefined;
   if (!parts) return;
   const t = Number.isFinite(time) ? time : 0;
   const wave = Math.sin(t * Math.PI * 2);
   const body = parts.get('rabbit-body');
   const head = parts.get('rabbit-head');
+
   if (body) {
     body.position.y =
       pose === 'hop'
@@ -170,15 +235,30 @@ export function setProceduralRabbitPose(root: THREE.Group, pose: ProceduralRabbi
             : 0;
     body.rotation.z = pose === 'sad' ? 0.09 : pose === 'happy' ? -0.035 : 0;
   }
+
   if (head) {
-    head.rotation.z = pose === 'sad' ? 0.16 : pose === 'happy' ? -0.08 : pose === 'pet' ? 0.12 * wave : 0.025 * wave;
+    head.rotation.z =
+      pose === 'sad'
+        ? 0.16
+        : pose === 'happy'
+          ? -0.08
+          : pose === 'pet'
+            ? 0.12 * wave
+            : 0.025 * wave;
     head.rotation.x = pose === 'lie' || pose === 'sleep' ? -0.72 : pose === 'play' ? 0.12 : 0;
   }
+
   for (const [name, part] of parts) {
     if (name.startsWith('ear-')) {
       const side = name.endsWith('left') ? -1 : 1;
       const base = side * -0.12;
-      part.rotation.z = base + (pose === 'sad' ? side * -0.22 : pose === 'happy' ? side * 0.16 : 0.045 * wave);
+      part.rotation.z =
+        base +
+        (pose === 'sad'
+          ? side * -0.22
+          : pose === 'happy'
+            ? side * 0.16
+            : 0.045 * wave);
     } else if (name.startsWith('fore-leg-')) {
       const side = name.endsWith('left') ? 1 : -1;
       part.rotation.x =
@@ -210,7 +290,9 @@ export function disposeProceduralRabbit(root: THREE.Object3D): void {
   root.traverse((node) => {
     if (!(node instanceof THREE.Mesh)) return;
     geometries.add(node.geometry);
-    for (const material of Array.isArray(node.material) ? node.material : [node.material]) materials.add(material);
+    for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+      materials.add(material);
+    }
   });
   geometries.forEach((geometry) => geometry.dispose());
   materials.forEach((material) => material.dispose());
