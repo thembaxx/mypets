@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.use({ reducedMotion: 'no-preference' });
 
 test.describe('code-native Three.js cat lab', () => {
-  test('discovery artwork and launch control stay inside the card at responsive widths', async ({ page }) => {
+  test('discovery pet stays inside its card at responsive widths', async ({ page }) => {
     test.setTimeout(90_000);
     for (const width of [320, 390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
@@ -22,7 +22,11 @@ test.describe('code-native Three.js cat lab', () => {
           const value = element.getBoundingClientRect();
           return { left: value.left, right: value.right, top: value.top, bottom: value.bottom };
         };
-        return { card: rect(card), animal: rect(animal), launch: launch ? rect(launch) : null };
+        return {
+          card: rect(card),
+          animal: rect(animal),
+          launch: launch ? rect(launch) : null,
+        };
       });
       expect(bounds).not.toBeNull();
       expect(bounds.animal.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
