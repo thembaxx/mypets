@@ -24,12 +24,10 @@ export function SplashScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
-    setPlaying(false);
     const video = videoRef.current;
     if (!playVideo || !video) return;
     let cancelled = false;
     // Muted inline playback also works on iOS. A rejected autoplay falls back to the poster.
-    video.muted = true;
     void video.play()?.catch(() => {
       if (!cancelled) onPlaybackError?.();
     });
