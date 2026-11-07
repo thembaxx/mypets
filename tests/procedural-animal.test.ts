@@ -60,3 +60,20 @@ test('pose sampling is deterministic and keeps generated transforms finite', () 
   }
   disposeProceduralRabbit(rabbit);
 });
+
+test('sleep closes the eyes, sit folds the hind legs, and walk alternates the gait', () => {
+  const rabbit = createProceduralRabbit();
+  const eye = rabbit.getObjectByName('eye-left') as THREE.Mesh;
+  const hind = rabbit.getObjectByName('hind-leg-left') as THREE.Group;
+  const fore = rabbit.getObjectByName('fore-leg-left') as THREE.Group;
+
+  setProceduralRabbitPose(rabbit, 'sleep');
+  assert.ok(eye.scale.y < 0.2);
+  setProceduralRabbitPose(rabbit, 'idle');
+  assert.equal(eye.scale.y, 1.05);
+  setProceduralRabbitPose(rabbit, 'sit');
+  assert.equal(hind.rotation.x, -0.55);
+  setProceduralRabbitPose(rabbit, 'walk', 0.25);
+  assert.ok(fore.rotation.x > 0);
+  disposeProceduralRabbit(rabbit);
+});
