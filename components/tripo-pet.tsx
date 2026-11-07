@@ -560,7 +560,7 @@ export default function TripoPet({
           )}
           <label className="tripo-local-file">
             <UploadSimpleIcon size={18} aria-hidden="true" />
-            <span>Review a downloaded Blender GLB (on-device only)</span>
+            <span>Review a local GLB model (on-device only)</span>
             <input
               type="file"
               accept=".glb,model/gltf-binary"
