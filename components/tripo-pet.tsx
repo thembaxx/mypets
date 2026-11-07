@@ -9,13 +9,13 @@ import {
   AnimationMixer,
   Box3,
   LoopRepeat,
-  type Material,
   Mesh,
   MeshStandardMaterial,
   PerspectiveCamera,
   SkinnedMesh,
   Vector3,
   type AnimationAction,
+  type Material,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
