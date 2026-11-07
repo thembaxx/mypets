@@ -59,10 +59,9 @@ export default function ThreeDLabPage() {
           </h1>
           <p>
             Review the earlier experimental character studies. The new code-native rabbit prototype
-            prioritizes quality and natural movement independently of the original illustrations.
-            Try each species’ anatomy,
-            movement, eating, expression and touch controls. Every candidate requires individual
-            visual approval before replacing any artwork.
+            prioritizes quality and natural movement independently of the original illustrations. Try
+            each species’ anatomy, movement, eating, expression and touch controls. Every candidate
+            requires individual visual approval before replacing any artwork.
           </p>
           <label htmlFor="animal-study-select">Choose an animal to review</label>
           <select
