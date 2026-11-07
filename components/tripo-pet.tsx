@@ -191,6 +191,23 @@ function AnimalModel({
   return <primitive object={model} dispose={null} />;
 }
 
+function applyPetCameraFrame(
+  camera: PerspectiveCamera,
+  controls: OrbitControls,
+  width: number,
+  height: number,
+) {
+  const distance = fitPetCameraDistance(width, height, camera.fov);
+  camera.near = Math.max(0.01, distance / 100);
+  camera.far = distance * 24;
+  camera.position.set(distance * 0.1, 1.12 + distance * 0.06, distance);
+  camera.updateProjectionMatrix();
+  controls.target.set(0, 1, 0);
+  controls.minDistance = distance * 0.68;
+  controls.maxDistance = distance * 2.1;
+  controls.update();
+}
+
 function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
   const { camera, gl, invalidate, size } = useThree();
   const frameSize = useRef('');
@@ -221,15 +238,7 @@ function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
 
     // Fit both axes: portrait canvases have a much narrower horizontal FOV,
     // while ears, tail and playful poses need a little breathing room.
-    const distance = fitPetCameraDistance(width, height, camera.fov);
-    camera.near = Math.max(0.01, distance / 100);
-    camera.far = distance * 24;
-    camera.position.set(distance * 0.1, 1.12 + distance * 0.06, distance);
-    camera.updateProjectionMatrix();
-    controls.target.set(0, 1, 0);
-    controls.minDistance = distance * 0.68;
-    controls.maxDistance = distance * 2.1;
-    controls.update();
+    applyPetCameraFrame(camera, controls, width, height);
     invalidate();
   }, [camera, controls, invalidate, size.height, size.width]);
   useFrame(() => controls.update());
