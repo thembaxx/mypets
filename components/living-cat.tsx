@@ -1,8 +1,9 @@
 'use client';
 
 import { useFrame } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Group, Mesh } from 'three';
+import { createPetCoatMaterial } from '@/lib/pet-coat-material';
 import { catPoseAt, catTailTipAt, type CatActivity, type CatMood } from '@/lib/cat-motion';
 
 /**
@@ -135,6 +136,15 @@ export default function LivingCat({
   mood: CatMood;
   paused: boolean;
 }) {
+  const coatMaterial = useMemo(() => createPetCoatMaterial('#fff0d6', 0.86), []);
+  const faceMaterial = useMemo(() => createPetCoatMaterial('#fff4df', 0.84), []);
+  useEffect(
+    () => () => {
+      coatMaterial.dispose();
+      faceMaterial.dispose();
+    },
+    [coatMaterial, faceMaterial],
+  );
   const elapsed = useRef(0);
   const root = useRef<Group>(null);
   const torso = useRef<Group>(null);
@@ -208,7 +218,7 @@ export default function LivingCat({
         <group ref={torso}>
           <mesh position={[0, 0.91, -0.15]} scale={[0.74, 0.73, 0.6]} castShadow receiveShadow>
             <sphereGeometry args={[1, 48, 32]} />
-            <meshStandardMaterial color="#fff0d6" roughness={0.85} />
+            <primitive object={coatMaterial} attach="material" />
           </mesh>
           <mesh
             position={[-0.5, 0.94, 0.14]}
@@ -257,7 +267,7 @@ export default function LivingCat({
         <group ref={head} position={[0, 1.48, 0.33]}>
           <mesh castShadow receiveShadow scale={[0.84, 0.69, 0.55]}>
             <sphereGeometry args={[1, 48, 32]} />
-            <meshStandardMaterial color="#fff4df" roughness={0.86} />
+            <primitive object={faceMaterial} attach="material" />
           </mesh>
           {/* The orange-left, chocolate-right calico silhouette is drawn in 3D. */}
           <mesh

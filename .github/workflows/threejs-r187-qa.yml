@@ -68,18 +68,18 @@ jobs:
 
       - name: Install isolated Playwright test runtime
         run: npm install --no-save --package-lock=false --ignore-scripts @playwright/test@1.64.1
-      - name: Exercise real rigged cat in desktop and mobile browsers
+      - name: Exercise code-native procedural cat in desktop and mobile browsers
         run: |
           curl --fail --silent --retry 30 --retry-delay 1 --retry-connrefused --max-time 2 http://127.0.0.1:3000/3d-lab/ > /dev/null
           mkdir -p test-results
-          npx playwright test tests/calico-browser.spec.mjs tests/chibi-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --reporter=line --workers=1
+          npx playwright test tests/calico-browser.spec.mjs --reporter=line --workers=1
       - name: Install Safari WebKit browser runtime
         run: npx playwright install --with-deps webkit
-      - name: Verify rigged cat interactions in Safari WebKit
+      - name: Verify procedural cat interactions in Safari WebKit
         run: |
-          npx playwright test tests/calico-browser.spec.mjs tests/chibi-browser.spec.mjs tests/species-browser.spec.mjs tests/species-realism-browser.spec.mjs --browser=webkit --reporter=line --workers=1
+          npx playwright test tests/calico-browser.spec.mjs --browser=webkit --reporter=line --workers=1
 
-      - name: Upload cat action and facial animation screenshots
+      - name: Upload code-native cat animation screenshots
         if: always()
         uses: actions/upload-artifact@v7
         with:

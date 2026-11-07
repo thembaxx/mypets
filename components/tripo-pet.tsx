@@ -10,6 +10,7 @@ import {
   Box3,
   LoopRepeat,
   Mesh,
+  PerspectiveCamera,
   SkinnedMesh,
   Vector3,
   type AnimationAction,
@@ -35,6 +36,7 @@ import { validateLocalGlb } from '@/lib/validate-local-glb';
 import { catMoods, type CatActivity, type CatMood } from '@/lib/cat-motion';
 import { petFacialMorphTarget } from '@/lib/pet-face';
 import { PetStudioEnvironment } from './pet-studio-environment';
+import { fitPetCameraDistance } from '@/lib/pet-camera';
 
 type ModelReport = { url: string; clips: string[]; morphs: string[] };
 const clipNames: Record<CatActivity, RegExp> = {
@@ -189,15 +191,31 @@ function AnimalModel({
   return <primitive object={model} dispose={null} />;
 }
 
+function applyPetCameraFrame(
+  camera: PerspectiveCamera,
+  controls: OrbitControls,
+  width: number,
+  height: number,
+) {
+  const distance = fitPetCameraDistance(width, height, camera.fov);
+  camera.near = Math.max(0.01, distance / 100);
+  camera.far = distance * 24;
+  camera.position.set(distance * 0.1, 1.12 + distance * 0.06, distance);
+  camera.updateProjectionMatrix();
+  controls.target.set(0, 1, 0);
+  controls.minDistance = distance * 0.68;
+  controls.maxDistance = distance * 2.1;
+  controls.update();
+}
+
 function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
-  const { camera, gl, invalidate } = useThree();
+  const { camera, gl, invalidate, size } = useThree();
+  const frameSize = useRef('');
   const controls = useMemo(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
     orbit.enableDamping = !reducedMotion;
     orbit.enablePan = false;
-    orbit.target.set(0, 0.91, 0);
-    orbit.minDistance = 2.7;
-    orbit.maxDistance = 7;
+    orbit.target.set(0, 1, 0);
     orbit.maxPolarAngle = Math.PI / 2.06;
     orbit.update();
     return orbit;
@@ -210,6 +228,19 @@ function PetOrbit({ reducedMotion }: { reducedMotion: boolean }) {
       controls.dispose();
     };
   }, [controls, invalidate]);
+  useEffect(() => {
+    if (!(camera instanceof PerspectiveCamera)) return;
+    const width = Math.max(1, size.width);
+    const height = Math.max(1, size.height);
+    const key = width + 'x' + height;
+    if (frameSize.current === key) return;
+    frameSize.current = key;
+
+    // Fit both axes: portrait canvases have a much narrower horizontal FOV,
+    // while ears, tail and playful poses need a little breathing room.
+    applyPetCameraFrame(camera, controls, width, height);
+    invalidate();
+  }, [camera, controls, invalidate, size.height, size.width]);
   useFrame(() => controls.update());
   return null;
 }
@@ -529,7 +560,7 @@ export default function TripoPet({
           )}
           <label className="tripo-local-file">
             <UploadSimpleIcon size={18} aria-hidden="true" />
-            <span>Review a downloaded Blender GLB (on-device only)</span>
+            <span>Review a local GLB model (on-device only)</span>
             <input
               type="file"
               accept=".glb,model/gltf-binary"
