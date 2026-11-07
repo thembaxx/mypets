@@ -20,10 +20,11 @@ export interface ProceduralRabbitOptions {
 
 /**
  * Code-native rabbit study for previews and fallback states.
- * It is deliberately assembled from named anatomical groups so each part can be
- * inspected, replaced, or driven by a future image-conditioned mesh without Blender.
+ * Named anatomical groups keep each part independently inspectable and replaceable.
  */
-export function createProceduralRabbit(options: ProceduralRabbitOptions = {}): THREE.Group {
+export function createProceduralRabbit(
+  options: ProceduralRabbitOptions = {},
+): THREE.Group {
   const root = new THREE.Group();
   root.name = 'mypets-procedural-rabbit';
   const coat = new THREE.MeshPhysicalMaterial({
@@ -245,7 +246,9 @@ export function setProceduralRabbitPose(
           : pose === 'pet'
             ? 0.12 * wave
             : 0.025 * wave;
-    head.rotation.x = pose === 'lie' || pose === 'sleep' ? -0.72 : pose === 'play' ? 0.12 : 0;
+    if (pose === 'lie' || pose === 'sleep') head.rotation.x = -0.72;
+    else if (pose === 'play') head.rotation.x = 0.12;
+    else head.rotation.x = 0;
   }
 
   for (const [name, part] of parts) {
@@ -290,7 +293,8 @@ export function disposeProceduralRabbit(root: THREE.Object3D): void {
   root.traverse((node) => {
     if (!(node instanceof THREE.Mesh)) return;
     geometries.add(node.geometry);
-    for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+    const ownedMaterials = Array.isArray(node.material) ? node.material : [node.material];
+    for (const material of ownedMaterials) {
       materials.add(material);
     }
   });
