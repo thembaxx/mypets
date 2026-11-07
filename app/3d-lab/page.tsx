@@ -14,6 +14,7 @@ import {
 } from '@/lib/species-3d';
 
 const ThreeDCatStudio = dynamic(() => import('@/components/tripo-pet'), { ssr: false });
+const ProceduralRabbitPreview = dynamic(() => import('@/components/procedural-rabbit-preview'), { ssr: false });
 
 /**
  * An explicit review route for rig fidelity and interaction QA.
@@ -54,7 +55,7 @@ export default function ThreeDLabPage() {
             {cat ? 'A living calico, not a moving picture.' : 'A 3D study of every pet.'}
           </h1>
           <p>
-            Review the earlier experimental Blender studies. New replacements prioritize quality and
+            Review the earlier experimental character studies. The new code-native rabbit prototype prioritizes quality and
             natural movement independently of the original illustrations. Try each species’ anatomy,
             movement, eating, expression and touch controls. Every candidate requires individual
             visual approval before replacing any artwork.
@@ -95,8 +96,9 @@ export default function ThreeDLabPage() {
           )}
           <button className="cat-lab-launch" onClick={() => setOpen(true)}>
             <PawPrintIcon size={22} aria-hidden="true" />
-            {cat ? 'Open the Blender cat studio' : 'Open the Blender animal studio'}
+            {cat ? 'Open the experimental cat studio' : 'Open the experimental animal studio'}
           </button>
+          {selected === 'rabbit' && <ProceduralRabbitPreview />}
           <p className="cat-lab-disclaimer">
             Video-inspired chibi characters and previous anatomical studies are separately rigged
             experimental GLBs. Neither is a photoreal reconstruction or motion capture. Original
