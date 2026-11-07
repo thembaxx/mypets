@@ -225,9 +225,12 @@ export function setProceduralRabbitPose(
         ? Math.max(0, wave) * 0.48
         : pose === 'walk'
           ? 0.035 + Math.abs(wave) * 0.025
-          : pose === 'lie' || pose === 'sleep'
-            ? -0.22
-            : 0;
+          : pose === 'sit'
+            ? -0.06
+            : pose === 'lie' || pose === 'sleep'
+              ? -0.22
+              : 0;
+    body.rotation.x = pose === 'sit' ? -0.16 : 0;
     body.rotation.z = pose === 'sad' ? 0.09 : pose === 'happy' ? -0.035 : 0;
   }
 
@@ -243,6 +246,11 @@ export function setProceduralRabbitPose(
     if (pose === 'lie' || pose === 'sleep') head.rotation.x = -0.72;
     else if (pose === 'play') head.rotation.x = 0.12;
     else head.rotation.x = 0;
+  }
+
+  for (const side of ['left', 'right']) {
+    const eye = root.getObjectByName(`eye-${side}`) as THREE.Mesh | undefined;
+    if (eye) eye.scale.y = pose === 'sleep' ? 0.16 : 1.05;
   }
 
   for (const [name, part] of parts) {
@@ -263,9 +271,11 @@ export function setProceduralRabbitPose(
           ? 0.5 + 0.15 * wave
           : pose === 'walk'
             ? side * wave * 0.34
-            : pose === 'lie' || pose === 'sleep'
-              ? -0.8
-              : 0;
+            : pose === 'sit'
+              ? -0.18
+              : pose === 'lie' || pose === 'sleep'
+                ? -0.8
+                : 0;
     } else if (name.startsWith('hind-leg-')) {
       const side = name.endsWith('left') ? 1 : -1;
       part.rotation.x =
@@ -273,9 +283,11 @@ export function setProceduralRabbitPose(
           ? -0.45
           : pose === 'walk'
             ? -side * wave * 0.38
-            : pose === 'lie' || pose === 'sleep'
-              ? -0.7
-              : 0;
+            : pose === 'sit'
+              ? -0.55
+              : pose === 'lie' || pose === 'sleep'
+                ? -0.7
+                : 0;
     }
   }
 }
