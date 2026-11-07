@@ -135,6 +135,7 @@ export default function AmbientScene() {
   const [supported, setSupported] = useState(false);
   const [inViewport, setInViewport] = useState(true);
   const sceneRef = useRef<HTMLDivElement>(null);
+  const isVisible = useRef(true);
   useEffect(() => {
     try {
       const canvas = document.createElement('canvas');
@@ -148,14 +149,14 @@ export default function AmbientScene() {
   useEffect(() => {
     if (!supported || !sceneRef.current) return;
     const element = sceneRef.current;
-    let visible = true;
-    const refresh = () => setInViewport(visible && document.visibilityState === 'visible');
+    const refresh = () =>
+      setInViewport(isVisible.current && document.visibilityState === 'visible');
     const observer =
       typeof IntersectionObserver === 'undefined'
         ? null
         : new IntersectionObserver(
             ([entry]) => {
-              visible = entry.isIntersecting;
+              isVisible.current = entry.isIntersecting;
               refresh();
             },
             { threshold: 0.02 },
