@@ -655,8 +655,7 @@ export default function TripoPet({
               <summary>About this 3D model</summary>
               {candidateMode && !localPreview && (
                 <p className="tripo-living-note">
-                  Experimental rigged calico model. Compare anatomy and motion with the original
-                  illustration before adopting the model.
+                  Experimental calico rig. Compare its anatomy and motion with the original artwork.
                 </p>
               )}
               {!activeUrl && (
