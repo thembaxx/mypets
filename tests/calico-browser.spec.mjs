@@ -3,6 +3,36 @@ import { test, expect } from '@playwright/test';
 test.use({ reducedMotion: 'no-preference' });
 
 test.describe('code-native Three.js cat lab', () => {
+  test('discovery artwork and launch control stay inside the card at responsive widths', async ({ page }) => {
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('http://127.0.0.1:3000/');
+      const card = page.locator('.discovery-card').first();
+      const artwork = card.locator('.discovery-art');
+      const animal = artwork.locator('.animal-interaction');
+      await expect(card).toBeVisible();
+      await expect(animal).toBeVisible();
+      const bounds = await page.evaluate(() => {
+        const card = document.querySelector('.discovery-card');
+        const animal = card?.querySelector('.discovery-art .animal-interaction');
+        const launch = card?.querySelector('.discovery-art .animal-3d-launch');
+        if (!card || !animal) return null;
+        const rect = (element) => {
+          const value = element.getBoundingClientRect();
+          return { left: value.left, right: value.right, top: value.top, bottom: value.bottom };
+        };
+        return { card: rect(card), animal: rect(animal), launch: launch ? rect(launch) : null };
+      });
+      expect(bounds).not.toBeNull();
+      expect(bounds.animal.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
+      expect(bounds.animal.right).toBeLessThanOrEqual(bounds.card.right + 1);
+      if (bounds.launch) {
+        expect(bounds.launch.left).toBeGreaterThanOrEqual(bounds.card.left - 1);
+        expect(bounds.launch.right).toBeLessThanOrEqual(bounds.card.right + 1);
+        expect(bounds.launch.bottom).toBeLessThanOrEqual(bounds.card.bottom + 1);
+      }
+    }
+  });
   test('desktop: procedural cat renders and facial actions animate', async ({ page }) => {
     // Software WebGL and four screenshots can exceed Playwright's default 30s
     // despite a responsive control and valid animation frames.
