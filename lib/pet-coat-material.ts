@@ -55,11 +55,11 @@ export function enhancePetCoatMaterial(source: MeshStandardMaterial) {
     previousCompile.call(material, shader, renderer);
     shader.vertexShader = shader.vertexShader.replace(
       '#include <common>',
-      '#include <common>\\nvarying vec3 vPetCoatPosition;',
+      '#include <common>\nvarying vec3 vPetCoatPosition;',
     );
     shader.vertexShader = shader.vertexShader.replace(
       '#include <project_vertex>',
-      '#include <project_vertex>\\nvPetCoatPosition = transformed;',
+      '#include <project_vertex>\nvPetCoatPosition = transformed;',
     );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <common>',
