@@ -1,0 +1,47 @@
+name: Reference bunny rig candidate
+
+on:
+  pull_request:
+    paths:
+      - scripts/author-reference-bunny.py
+      - scripts/validate-reference-bunny.mjs
+      - scripts/validate-reference-bunny.selfcheck.mjs
+      - .github/workflows/reference-bunny-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install headless Blender and software rendering
+        run: |
+          set -euo pipefail
+          timeout 360s sudo apt-get update -q -o Acquire::Retries=1
+          timeout 540s sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -q blender python3-numpy libegl1 libgl1-mesa-dri xvfb
+          blender --version | head -3
+      - name: Validate syntax and contract tests
+        run: |
+          python3 -m py_compile scripts/author-reference-bunny.py
+          node --check scripts/validate-reference-bunny.mjs
+          node --test scripts/validate-reference-bunny.selfcheck.mjs
+      - name: Generate reference-specific rigged GLB and material renders
+        run: |
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender -b -t 2 --factory-startup \
+            --python-exit-code 1 --python scripts/author-reference-bunny.py -- \
+            --output-dir "$RUNNER_TEMP/bunny"
+      - name: Validate generated binary bones, morphs and animation actions
+        run: |
+          node scripts/validate-reference-bunny.mjs "$RUNNER_TEMP/bunny/reference-bunny-candidate.glb"
+          node scripts/validate-3d-assets.mjs "$RUNNER_TEMP/bunny" --require-assets
+      - name: Preserve unapproved candidate and rendered evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: mypets-reference-bunny-unapproved
+          path: ${{ runner.temp }}/bunny/
+          retention-days: 14
+          if-no-files-found: error
